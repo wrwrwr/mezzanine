@@ -1,22 +1,22 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 #   <mathias.ettinger@gmail.com>, 2012.
 # Michał Oleniec <moleniec@gmail.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
 "POT-Creation-Date: 2012-11-17 16:51-0430\n"
 "PO-Revision-Date: 2012-10-26 14:26+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/language/pl/)\n"
-"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: pl\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: admin.py:20 models.py:67
@@ -25,11 +25,11 @@ msgstr "Użytkownik"
 
 #: defaults.py:24
 msgid "Accounts required for commenting"
-msgstr "Aby pozostawić komentarz należy posiadać konto"
+msgstr "Aby pozostawić komentarz należy założyć konto"
 
 #: defaults.py:25
 msgid "If ``True``, users must log in to comment."
-msgstr "Jeśli ``Prawda`` użytkownik musi się zalogować, aby zostawić komentarz."
+msgstr "Czy użytkownik musi się zalogować, aby zostawić komentarz?"
 
 #: defaults.py:32
 msgid "Disqus shortname"
@@ -37,7 +37,7 @@ msgstr "'Shortname' z Disqus"
 
 #: defaults.py:33
 msgid "Shortname for the http://disqus.com comments service."
-msgstr "'Shortname'  dla systemu komentarzy http://disqus.com."
+msgstr "'Shortname' dla systemu komentarzy http://disqus.com."
 
 #: defaults.py:41
 msgid "Disqus public key"
@@ -45,15 +45,15 @@ msgstr "Klucz publiczny Disqus"
 
 #: defaults.py:42
 msgid "Public key for http://disqus.com developer API"
-msgstr "Klucz publiczny do użytkowania API proponowanego przez http://disqus.com"
+msgstr "Klucz publiczny API, usługi oferowanej przez http://disqus.com"
 
 #: defaults.py:49
 msgid "Disqus secret key"
-msgstr "Tajny klucz Disqus"
+msgstr "Klucz prywatny Disqus"
 
 #: defaults.py:50
 msgid "Secret key for http://disqus.com developer API"
-msgstr "Tajny klucz do http://disqus.com API"
+msgstr "Klucz prywatny API http://disqus.com"
 
 #: defaults.py:57
 msgid "Auto-approve comments"
@@ -61,55 +61,71 @@ msgstr "Automatyczne zatwierdzanie komentarzy"
 
 #: defaults.py:58
 msgid "If ``True``, built-in comments are approved by default."
-msgstr "Jeżeli ``True``, komentarze są akceptowane automatycznie."
+msgstr "Czy wbudowane komentarze powinny być akceptowane automatycznie?"
 
 #: defaults.py:66
-msgid "Dotted path to the function to call on a comment's value before it is rendered to the template."
-msgstr "Punktowa scieżka dostępu do funcki przywołującej wartość komentarza zanim zostanie renderowana do szablonu."
+msgid ""
+"Dotted path to the function to call on a comment's value before it is "
+"rendered to the template."
+msgstr ""
+"Ścieżka (z kropkami) do funkcji, którą należy zaaplikować do treści komentarza"
+" zanim zostanie on wyświetlony we wzorcu."
 
 #: defaults.py:74
 msgid "Comment notification email addresses"
-msgstr "Adres e-mail do zasygnalizowania nowego komentarza"
+msgstr "Adresy e-mail do powiadamiania o komentarzach"
 
 #: defaults.py:75
-msgid "A comma separated list of email addresses that will receive an email notification each time a new comment is posted on the site."
-msgstr "Lista adresów e-mail oddzielonych przecinkami, które otrzymają e-mail z powiadomieniem przy każdym nowym komentarzu opublikowanym na stronie."
+msgid ""
+"A comma separated list of email addresses that will receive an email "
+"notification each time a new comment is posted on the site."
+msgstr ""
+"Lista adresów e-mail oddzielonych przecinkami, na które zostaną wysłane"
+" powiadomienia o każdym nowym komentarzu opublikowanym na stronie."
 
 #: defaults.py:84
 msgid "Admin comments"
-msgstr "Komentarze administratora"
+msgstr "Komentarze w administracji"
 
 #: defaults.py:85
 msgid "Number of latest comments shown in the admin dashboard."
-msgstr "Liczba ostatnich komentarzy wyświetlanych w kokpicie administratora"
+msgstr "Ilość ostatnich komentarzy wyświetlanych na pulpicie administracyjnym."
 
 #: defaults.py:93
 msgid "Show unapproved comments"
 msgstr "Pokazuj niezaakceptowane komentarze"
 
 #: defaults.py:94
-msgid "If ``True``, comments that have ``is_public`` unchecked will still be displayed, but replaced with a ``waiting to be approved`` message."
-msgstr "Jeśli ``True`` komentarze nie oznaczone jako ``opublikowane`` będą wyświetlane, ale zastąpione informacją ``czeka na akceptacje``"
+msgid ""
+"If ``True``, comments that have ``is_public`` unchecked will still be "
+"displayed, but replaced with a ``waiting to be approved`` message."
+msgstr ""
+"Czy komentarze nieoznaczone jako ``opublikowane`` powinny być wyświetlane"
+" jako ``czeka na akceptację``?"
 
 #: defaults.py:103
 msgid "Show removed comments"
-msgstr "Pokaż usunięte komentarze"
+msgstr "Pokazuj usunięte komentarze"
 
 #: defaults.py:104
-msgid "If ``True``, comments that have ``removed`` checked will still be displayed, but replaced with a ``removed`` message."
-msgstr "Jeśli ``True``, komentarze, które zostały oznaczone jako ``usunięte`` będą nadal wyświetlane, ale zastąpione komunikatem ``usunięty``."
+msgid ""
+"If ``True``, comments that have ``removed`` checked will still be displayed,"
+" but replaced with a ``removed`` message."
+msgstr ""
+"Czy komentarze, które zostały oznaczone jako ``usunięte`` powinny być"
+" wyświetlane -- zastąpione komunikatem ``usunięty``?"
 
 #: defaults.py:113
 msgid "Min value for a rating."
-msgstr "Minimalna wartość dla ocen."
+msgstr "Minimalna ocena."
 
 #: defaults.py:120
 msgid "Max value for a rating."
-msgstr "Maksymalna wartość dla ocen."
+msgstr "Maksymalna ocena."
 
 #: forms.py:79
 msgid "Name"
-msgstr "Imię"
+msgstr "Nazwa"
 
 #: forms.py:79
 msgid "required"
@@ -129,7 +145,7 @@ msgstr "Strona WWW"
 
 #: forms.py:83
 msgid "optional"
-msgstr "opcjonalnie"
+msgstr "opcjonalne"
 
 #: models.py:24
 msgid "By the blog author"
@@ -149,11 +165,11 @@ msgstr "Przejdź do strony"
 
 #: models.py:91
 msgid "Keyword"
-msgstr "Słowo-klucz"
+msgstr "Słowo kluczowe"
 
 #: models.py:92
 msgid "Keywords"
-msgstr "Słowa-klucze"
+msgstr "Słowa kluczowe"
 
 #: models.py:120
 msgid "Value"
@@ -168,8 +184,12 @@ msgid "Ratings"
 msgstr "Oceny"
 
 #: views.py:53
-msgid "You must log in to comment. Please log in or sign up, and your comment will be posted."
-msgstr "Musisz być zalogowany by dodawać komentarze. Prosze zaloguj się lub zarejestruj, a  komentarz zostanie dodany."
+msgid ""
+"You must log in to comment. Please log in or sign up, and your comment will "
+"be posted."
+msgstr ""
+"Musisz być zalogowany by dodawać komentarze. Zaloguj się lub zarejestruj,"
+" a Twój komentarz zostanie wyświetlony."
 
 #: views.py:89
 msgid "New comment for: "
@@ -188,7 +208,7 @@ msgstr "temu"
 
 #: templates/email/comment_notification.html:6
 msgid "A new comment has been posted on"
-msgstr "Został dodany nowy komentarz"
+msgstr "Został dodany nowy komentarz do"
 
 #: templates/email/comment_notification.html:10
 #, python-format
@@ -198,7 +218,7 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"Dnia %(submit_date)s %(user_name)s napisał:\n"
+"    Dnia %(submit_date)s %(user_name)s napisał:\n"
 "    "
 
 #: templates/email/comment_notification.txt:7
@@ -225,7 +245,7 @@ msgstr "Komentarz usunięty"
 
 #: templates/generic/includes/comment.html:61
 msgid "Comment awaiting approval"
-msgstr "Komentarz oczekujący na moderację"
+msgstr "Komentarz oczekujący na zatwierdzenie"
 
 #: templates/generic/includes/comment.html:72
 msgid "There are currently no comments"
