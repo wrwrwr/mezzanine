@@ -25,7 +25,7 @@ msgstr "Użytkownik"
 
 #: defaults.py:24
 msgid "Accounts required for commenting"
-msgstr "Aby pozostawić komentarz należy założyć konto"
+msgstr "Aby dodać komentarz trzeba mieć konto"
 
 #: defaults.py:25
 msgid "If ``True``, users must log in to comment."
@@ -33,11 +33,11 @@ msgstr "Czy użytkownik musi się zalogować, aby zostawić komentarz?"
 
 #: defaults.py:32
 msgid "Disqus shortname"
-msgstr "'Shortname' z Disqus"
+msgstr "Identyfikator Disqus"
 
 #: defaults.py:33
 msgid "Shortname for the http://disqus.com comments service."
-msgstr "'Shortname' dla systemu komentarzy http://disqus.com."
+msgstr "Krótka nazwa strony w systemie komentarzy http://disqus.com."
 
 #: defaults.py:41
 msgid "Disqus public key"
@@ -45,7 +45,7 @@ msgstr "Klucz publiczny Disqus"
 
 #: defaults.py:42
 msgid "Public key for http://disqus.com developer API"
-msgstr "Klucz publiczny API, usługi oferowanej przez http://disqus.com"
+msgstr "Klucz publiczny API, usługi oferowanej przez http://disqus.com."
 
 #: defaults.py:49
 msgid "Disqus secret key"
@@ -53,7 +53,7 @@ msgstr "Klucz prywatny Disqus"
 
 #: defaults.py:50
 msgid "Secret key for http://disqus.com developer API"
-msgstr "Klucz prywatny API http://disqus.com"
+msgstr "Klucz prywatny API http://disqus.com."
 
 #: defaults.py:57
 msgid "Auto-approve comments"
@@ -73,14 +73,14 @@ msgstr ""
 
 #: defaults.py:74
 msgid "Comment notification email addresses"
-msgstr "Adresy e-mail do powiadamiania o komentarzach"
+msgstr "Adresy e-mail powiadamiania o komentarzach"
 
 #: defaults.py:75
 msgid ""
 "A comma separated list of email addresses that will receive an email "
 "notification each time a new comment is posted on the site."
 msgstr ""
-"Lista adresów e-mail oddzielonych przecinkami, na które zostaną wysłane"
+"Lista adresów e-mail oddzielonych przecinkami, na które są wysłane"
 " powiadomienia o każdym nowym komentarzu opublikowanym na stronie."
 
 #: defaults.py:84

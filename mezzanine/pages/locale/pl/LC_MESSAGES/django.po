@@ -101,11 +101,11 @@ msgstr "Podstrony"
 
 #: models.py:225
 msgid "Rich text page"
-msgstr "Strona z tekstem formatowanym"
+msgstr "Strona ze wzbogaconym tekstem"
 
 #: models.py:226
 msgid "Rich text pages"
-msgstr "Strony z tekstem formatowanym"
+msgstr "Strony ze wzbogaconym tekstem"
 
 #: models.py:236
 msgid "Link"
