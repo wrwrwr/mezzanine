@@ -7,6 +7,7 @@ from django.core.urlresolvers import NoReverseMatch
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 
+from mezzanine.conf import settings
 from mezzanine.pages.models import Page, RichTextPage, Link
 from mezzanine.core.admin import DisplayableAdmin, DisplayableAdminForm
 from mezzanine.utils.urls import admin_url
@@ -52,20 +53,30 @@ class PageAdmin(DisplayableAdmin):
             # Make a copy so that we aren't modifying other Admin
             # classes' fieldsets.
             self.fieldsets = deepcopy(self.fieldsets)
+            # Don't add Page fields, translation fields handled by
+            # TranslationAdmin and respect excludes.
+            check_fields = set(f.name for f in Page._meta.fields)
+            check_fields.add("page_ptr")
+            if settings.USE_MODELTRANSLATION:
+                from modeltranslation.translator import (NotRegistered,
+                                                         translator)
+                try:
+                    trans_opts = translator.get_options_for_model(self.model)
+                    check_fields.update(trans_opts.fields.keys())
+                except NotRegistered:
+                    pass
+            try:
+                check_fields.update(self.exclude)
+            except (AttributeError, TypeError):
+                pass
+            try:
+                check_fields.update(self.form.Meta.exclude)
+            except (AttributeError, TypeError):
+                pass
             # Insert each field between the publishing fields and nav
             # fields. Do so in reverse order to retain the order of
             # the model's fields.
             for field in reversed(self.model._meta.fields):
-                check_fields = [f.name for f in Page._meta.fields]
-                check_fields.append("page_ptr")
-                try:
-                    check_fields.extend(self.exclude)
-                except (AttributeError, TypeError):
-                    pass
-                try:
-                    check_fields.extend(self.form.Meta.exclude)
-                except (AttributeError, TypeError):
-                    pass
                 if field.name not in check_fields and field.editable:
                     self.fieldsets[0][1]["fields"].insert(3, field.name)
 
