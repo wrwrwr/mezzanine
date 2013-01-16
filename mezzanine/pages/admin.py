@@ -70,6 +70,15 @@ class PageAdmin(DisplayableAdmin):
                 exclude_fields.extend(self.form.Meta.exclude)
             except (AttributeError, TypeError):
                 pass
+            if settings.USE_MODELTRANSLATION:
+                # Avoid adding fields handled by TranslationAdmin.
+                from modeltranslation.translator import (NotRegistered,
+                                                         translator)
+                try:
+                    trans_opts = translator.get_options_for_model(self.model)
+                    exclude_fields.update(trans_opts.fields.keys())
+                except NotRegistered:
+                    pass
             fields = self.model._meta.fields + self.model._meta.many_to_many
             for field in reversed(fields):
                 if field.name not in exclude_fields and field.editable:
