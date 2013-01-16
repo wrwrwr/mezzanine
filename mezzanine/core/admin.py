@@ -15,6 +15,12 @@ from mezzanine.core.models import (Orderable, SitePermission,
 from mezzanine.utils.urls import admin_url
 
 
+if settings.USE_MODELTRANSLATION:
+    from modeltranslation.admin import TranslationAdmin
+else:
+    TranslationAdmin = admin.ModelAdmin
+
+
 class DisplayableAdminForm(ModelForm):
     def clean_content(form):
         status = form.cleaned_data.get("status")
@@ -25,7 +31,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class DisplayableAdmin(admin.ModelAdmin):
+class DisplayableAdmin(TranslationAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
