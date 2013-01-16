@@ -20,6 +20,14 @@ from mezzanine.utils.models import get_user_model
 User = get_user_model()
 
 
+if settings.USE_MODELTRANSLATION:
+    from modeltranslation.admin import (TranslationAdmin,
+                                        TranslationInlineModelAdmin)
+else:
+    TranslationAdmin = admin.ModelAdmin
+    TranslationInlineModelAdmin = admin.options.InlineModelAdmin
+
+
 class DisplayableAdminForm(ModelForm):
 
     def clean_content(form):
@@ -31,7 +39,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class DisplayableAdmin(admin.ModelAdmin):
+class DisplayableAdmin(TranslationAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """

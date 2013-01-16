@@ -18,7 +18,8 @@ from django.template import RequestContext
 from django.utils.translation import ungettext, ugettext_lazy as _
 
 from mezzanine.conf import settings
-from mezzanine.core.admin import TabularDynamicInlineAdmin
+from mezzanine.core.admin import (TabularDynamicInlineAdmin,
+                                  TranslationInlineModelAdmin)
 from mezzanine.forms.forms import EntriesForm
 from mezzanine.forms.models import Form, Field, FormEntry, FieldEntry
 from mezzanine.pages.admin import PageAdmin
@@ -35,7 +36,7 @@ form_fieldsets.insert(1, (_("Email"), {"fields": ("send_email", "email_from",
     "email_copies", "email_subject", "email_message")}))
 
 
-class FieldAdmin(TabularDynamicInlineAdmin):
+class FieldAdmin(TabularDynamicInlineAdmin, TranslationInlineModelAdmin):
     """
     Admin class for the form field. Inherits from TabularDynamicInlineAdmin to
     add dynamic "Add another" link and drag/drop ordering.
