@@ -5,14 +5,26 @@ from _ast import PyCF_ONLY_AST
 import os
 from shutil import copyfile, copytree
 
+from django import VERSION
+from django.core.management import call_command
 from django.db import connection
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
 from django.test.client import RequestFactory
+from django.test.simple import DjangoTestSuiteRunner
+from django.utils.unittest import skipUnless
 
 from mezzanine.conf import settings
 from mezzanine.utils.importing import path_for_import
 from mezzanine.utils.models import get_user_model
+
+if "south" in settings.INSTALLED_APPS:
+    from south.signals import post_migrate
+else:
+    if VERSION >= (1, 7):
+        from django.db.models.signals import post_migrate
+    else:
+        from django.db.models.signals import post_syncdb as post_migrate
 
 
 User = get_user_model()
@@ -53,6 +65,24 @@ IGNORE_ERRORS = (
     "live_settings.py",
 
 )
+
+
+class TestRunner(DjangoTestSuiteRunner):
+    def setup_databases(self, **kwargs):
+        """
+        Creates and updates translation fields as part of preparing the
+        test database.
+        """
+        if settings.USE_MODELTRANSLATION:
+            def create_translation_fields(sender, **kwargs):
+                kwargs.setdefault("verbosity", 0)
+                kwargs.setdefault("interactive", False)
+                call_command("sync_translation_fields", **kwargs)
+                call_command("update_translation_fields", **kwargs)
+            # Note: the signal is purposefully not disconnected, to support
+            # migrations within test cases.
+            post_migrate.connect(create_translation_fields)
+        return super(TestRunner, self).setup_databases(**kwargs)
 
 
 class TestCase(BaseTestCase):
@@ -107,6 +137,59 @@ class TestCase(BaseTestCase):
                 for _ in per_level:
                     kwargs[parent_field] = level2
                     model.objects.create(**kwargs)
+
+
+@skipUnless(settings.USE_MODELTRANSLATION,
+            "modeltranslation must be enabled before Django setup")
+class ContentTranslationTestCase(TestCase):
+    """
+    Base case for content translation tests. Any case deriving from this
+    class will be skipped if content translation is disabled.
+
+    Provides some commonly needed variables:
+
+        languages
+            list of languages used by content translation;
+
+        fallbacks
+            dict mapping language code to codes of languages that will be
+            used if a translation is missing (in the order given);
+
+        fallback_pair
+            2-tuple with one language that will first fall back to the other
+            one (``None`` if fallbacks are disabled or none are defined);
+
+        no_fallback_pair
+            2-tuple with the first language that will certainly not
+            fall back to the second one.
+    """
+    @classmethod
+    def setUpClass(cls):
+        # At this point we know that USE_MODELTRANSLATION is true, so we may
+        # try to import its modules.
+        from modeltranslation import settings as mt_settings
+        cls.mt_settings = mt_settings
+        # Content translation languages (may not be the same as LANGUAGES).
+        # AVAILABLE_LANGUAGES is a generator, so we need to tuple it.
+        cls.languages = tuple(mt_settings.AVAILABLE_LANGUAGES)
+
+        # Some tests need falling or non-falling back languages, to prepare
+        # for various cases lets resolve fallbacks for all languages.
+        from modeltranslation.utils import resolution_order
+        cls.fallbacks = dict((l, resolution_order(l)) for l in cls.languages)
+        # First language in the pair will first fall back to the second one.
+        cls.fallback_pair = None
+        for language, language_fallbacks in cls.fallbacks.items():
+            if len(language_fallbacks) > 1:
+                cls.fallback_pair = (language, language_fallbacks[1])
+                break
+        # The first language will certainly not fall back to the second one.
+        cls.no_fallback_pair = None
+        for language, language_fallbacks in cls.fallbacks.items():
+            non_fallbacks = set(cls.languages) - set(language_fallbacks)
+            if non_fallbacks:
+                cls.no_fallback_pair = (language, next(iter(non_fallbacks)))
+                break
 
 
 def copy_test_to_media(module, name):

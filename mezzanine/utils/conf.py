@@ -197,6 +197,8 @@ def set_dynamic_settings(s):
     else:
         s["GRAPPELLI_INSTALLED"] = True
 
+    setup_internationalization(s)
+
     # Ensure admin is at the bottom of the app order so that admin
     # templates are loaded in the correct order, and that staticfiles
     # is also at the end so its runserver can be overridden.
@@ -210,7 +212,7 @@ def set_dynamic_settings(s):
             pass
 
     # Ensure we have a test runner (removed in Django 1.6)
-    s.setdefault("TEST_RUNNER", "django.test.simple.DjangoTestSuiteRunner")
+    s.setdefault("TEST_RUNNER", "mezzanine.utils.tests.TestRunner")
 
     # Add missing apps if existing apps depend on them.
     if "mezzanine.blog" in s["INSTALLED_APPS"]:
@@ -231,13 +233,6 @@ def set_dynamic_settings(s):
                                    (mw.endswith("UpdateCacheMiddleware") or
                                     mw.endswith("FetchFromCacheMiddleware"))]
 
-    # If only LANGUAGE_CODE has been defined, ensure the other required
-    # settings for translations are configured.
-    if (s.get("LANGUAGE_CODE") and len(s.get("LANGUAGES", [])) == 1 and
-            s["LANGUAGE_CODE"] != s["LANGUAGES"][0][0]):
-        s["USE_I18N"] = True
-        s["LANGUAGES"] = [(s["LANGUAGE_CODE"], "")]
-
     # Revert tuple settings back to tuples.
     for setting in tuple_list_settings:
         s[setting] = tuple(s[setting])
@@ -254,3 +249,30 @@ def set_dynamic_settings(s):
         elif shortname == "mysql":
             # Required MySQL collation for tests.
             s["DATABASES"][key]["TEST_COLLATION"] = "utf8_general_ci"
+
+
+def setup_internationalization(s):
+    """
+    Preprocess settings related to static and dynamic translation.
+    """
+    # If only LANGUAGE_CODE has been defined, ensure the other required
+    # settings for translations are configured.
+    if (s.get("LANGUAGE_CODE") and len(s.get("LANGUAGES", [])) == 1 and
+            s["LANGUAGE_CODE"] != s["LANGUAGES"][0][0]):
+        s["USE_I18N"] = True
+        s["LANGUAGES"] = [(s["LANGUAGE_CODE"], "")]
+
+    # Ensure that modeltranslation is in installed apps if and only if
+    # USE_MODELTRANSLATION is true.
+    use_modeltranslation = s.get("USE_MODELTRANSLATION", False)
+    modeltranslation_installed = ("modeltranslation" in s["INSTALLED_APPS"])
+    if not use_modeltranslation and modeltranslation_installed:
+        s["INSTALLED_APPS"].remove("modeltranslation")
+    elif use_modeltranslation and not modeltranslation_installed:
+        s["INSTALLED_APPS"].append("modeltranslation")
+
+    # By default, model registration auto-discovery is enabled only if
+    # USE_I18N is true, however we want to support content translation
+    # with static translations machinery disabled.
+    if use_modeltranslation:
+        s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True

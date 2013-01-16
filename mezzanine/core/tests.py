@@ -21,7 +21,7 @@ from django.forms.models import modelform_factory
 from django.templatetags.static import static
 from django.test.utils import override_settings
 from django.utils.html import strip_tags
-from django.utils.unittest import skipUnless
+from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
 from mezzanine.core.admin import BaseDynamicInlineAdmin
@@ -33,8 +33,9 @@ from mezzanine.forms.admin import FieldAdmin
 from mezzanine.forms.models import Form
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.importing import import_dotted_path
-from mezzanine.utils.tests import (TestCase, run_pyflakes_for_package,
-                                             run_pep8_for_package)
+from mezzanine.utils.tests import (ContentTranslationTestCase, TestCase,
+                                   run_pep8_for_package,
+                                   run_pyflakes_for_package)
 from mezzanine.utils.html import TagCloser
 
 
@@ -510,3 +511,71 @@ class SiteRelatedTestCase(TestCase):
 
         site1.delete()
         site2.delete()
+
+
+@skipIf(settings.USE_MODELTRANSLATION,
+        "modeltranslation must be disabled before Django setup")
+class NoContentTranslationTests(TestCase):
+    """
+    Disabled content translation should be equivalent to no content
+    translation.
+    """
+    def test_switch(self):
+        """
+        If ``USE_MODELTRANSLATION`` is false, modeltranslation should not be
+        loaded.
+        """
+        self.assertNotIn('modeltranslation', settings.INSTALLED_APPS)
+        try:
+            from modeltranslation.translator import translator
+        except ImportError:
+            pass
+        else:
+            self.assertEqual(len(translator.get_registered_models()), 0)
+
+
+class ContentTranslationTests(ContentTranslationTestCase):
+    """
+    Core aspects of content translation should function properly.
+
+    Some of these tests may need more than one language enabled to be
+    effective.
+    """
+
+    def test_switch(self):
+        """
+        If ``USE_MODELTRANSLATION`` is true, modeltranslation should be
+        loaded.
+        """
+        self.assertIn('modeltranslation', settings.INSTALLED_APPS)
+
+    def test_registration_switch(self):
+        """
+        Models should be registered even if ``USE_I18N`` is false (the test
+        is only interesting if it is).
+        """
+        self.assertTrue(self.mt_settings.ENABLE_REGISTRATIONS)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete Slugged subclass")
+    def test_auto_population(self):
+        """
+        Creating objects with with a non-default language active, should not
+        cause any trouble.
+
+        In particular, loading fixtures with the default language other than
+        English, should not create models with empty slugs/titles.
+        """
+        from mezzanine.pages.models import Page
+        if self.no_fallback_pair is None:
+            self.skipTest("needs a language that will not fall back")
+        from_language, to_language = self.no_fallback_pair
+
+        with override(to_language):
+            slugged = Page.objects.create(title="Title")
+            # Translation fields are (unnecessarily) nullable, so save works
+            # even with a missing value for a language.
+            slugged.save()
+        with override(from_language):
+            # Having an empty slug may cause issues with address resolution.
+            self.assertTrue(slugged.slug)
