@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from mezzanine.conf import settings
 from mezzanine.core.admin import DisplayableAdmin, DisplayableAdminForm
 from mezzanine.pages.models import Page, RichTextPage, Link
+from mezzanine.utils.translation import for_all_languages
 from mezzanine.utils.urls import admin_url
 
 
@@ -24,13 +25,15 @@ page_fieldsets[0][1]["fields"] += ("login_required",)
 
 class PageAdminForm(DisplayableAdminForm):
 
-    def clean_slug(self):
+    def clean(self):
         """
         Save the old slug to be used later in PageAdmin.save_model()
         to make the slug change propagate down the page tree.
         """
-        self.instance._old_slug = self.instance.slug
-        return self.cleaned_data['slug']
+        def save_old_slug():
+            self.instance._old_slug = self.instance.slug
+        for_all_languages(save_old_slug)
+        return self.cleaned_data
 
 
 class PageAdmin(DisplayableAdmin):
@@ -70,6 +73,15 @@ class PageAdmin(DisplayableAdmin):
                 exclude_fields.extend(self.form.Meta.exclude)
             except (AttributeError, TypeError):
                 pass
+            if settings.USE_MODELTRANSLATION:
+                # Avoid adding fields handled by translation admin.
+                from modeltranslation.translator import (NotRegistered,
+                                                         translator)
+                try:
+                    trans_opts = translator.get_options_for_model(self.model)
+                    exclude_fields.extend(trans_opts.fields.keys())
+                except NotRegistered:
+                    pass
             fields = self.model._meta.fields + self.model._meta.many_to_many
             for field in reversed(fields):
                 if field.name not in exclude_fields and field.editable:
@@ -145,11 +157,13 @@ class PageAdmin(DisplayableAdmin):
         Set the ID of the parent page if passed in via querystring, and
         make sure the new slug propagates to all descendant pages.
         """
-        if change and obj._old_slug != obj.slug:
-            # _old_slug was set in PageAdminForm.clean_slug().
-            new_slug = obj.slug or obj.generate_unique_slug()
-            obj.slug = obj._old_slug
-            obj.set_slug(new_slug)
+        def propagate_slug_change():
+            if change and obj._old_slug != obj.slug:
+                # _old_slug was set in PageAdminForm.clean_slug().
+                new_slug = obj.slug or obj.generate_unique_slug()
+                obj.slug = obj._old_slug
+                obj.set_slug(new_slug)
+        for_all_languages(propagate_slug_change)
 
         # Force parent to be saved to trigger handling of ordering and slugs.
         parent = request.GET.get("parent")

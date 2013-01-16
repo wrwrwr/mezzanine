@@ -5,13 +5,14 @@ from django import VERSION
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
+from django.forms.models import modelform_factory
 from django.template import Context, Template
 from django.test.utils import override_settings
 
 from mezzanine.conf import settings
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
 from mezzanine.core.request import current_request
-from mezzanine.pages.admin import PageAdmin
+from mezzanine.pages.admin import PageAdmin, PageAdminForm
 from mezzanine.pages.models import Page, RichTextPage
 from mezzanine.urls import PAGES_SLUG
 from mezzanine.utils.models import get_user_model
@@ -307,3 +308,37 @@ class ContentTranslationTests(ContentTranslationTestCase):
         page_admin = PageAdmin(RichTextPage, AdminSite())
         fields = page_admin.get_fieldsets(request)[0][1]['fields']
         self.assertEqual(len(set(fields)), len(fields))  # No duplicates.
+
+    def test_slug_change_propagation(self):
+        """
+        Slug changes should propagate to subpages (pages with slugs
+        prefixed by the changed slug), for all languages.
+        """
+        parent = Page.objects.create(title="Parent")
+        child = Page.objects.create(parent=parent, title="Child")
+
+        def assert_original_slugs():
+            self.assertEqual(parent.slug, "parent")
+            self.assertEqual(child.slug, "parent/child")
+        for_all_languages(assert_original_slugs)
+
+        page_admin = PageAdmin(Page, AdminSite())
+        request = self._request_factory.get('/admin/')
+        slug_fields = [f.name for f in Page._meta.fields if
+                       f.name.startswith('slug')]
+        SlugForm = modelform_factory(Page, form=PageAdminForm,
+                                     fields=slug_fields)
+        post_data = dict((f, "renamed_parent") for f in slug_fields)
+        slug_form = SlugForm(post_data, instance=parent)
+        slug_form.full_clean()
+        page_admin.save_model(request, parent, slug_form, True)
+
+        # Only database records have a chance of being updated.
+        # Django 1.8+: refresh_from_db(fields=slug_fields).
+        parent = Page.objects.get(pk=parent.pk)
+        child = Page.objects.get(pk=child.pk)
+
+        def assert_changed_slugs():
+            self.assertEqual(parent.slug, "renamed_parent")
+            self.assertEqual(child.slug, "renamed_parent/child")
+        for_all_languages(assert_changed_slugs)

@@ -309,3 +309,8 @@ td, th, th a, label, .help, p.help {
     top: 5px !important;
     position: relative;
 }
+
+/* Narrower editable fields on lists with modeltranslation. */
+.result-list .mt, .dynamic-inline .mt {
+    width: auto !important;
+}

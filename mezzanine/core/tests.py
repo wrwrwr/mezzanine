@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import inspect
 import re
 
 try:
@@ -10,7 +11,7 @@ except ImportError:
     from urllib import urlencode
 
 from django import VERSION
-from django.contrib.admin import AdminSite
+from django.contrib.admin import AdminSite, ModelAdmin, site as admin_site
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.sites.models import Site
 from django.core import mail
@@ -25,7 +26,9 @@ from django.utils.translation import get_language, override
 from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
-from mezzanine.core.admin import BaseDynamicInlineAdmin
+from mezzanine.core.admin import (BaseDynamicInlineAdmin,
+                                  TranslationModelAdmin,
+                                  TranslationInlineModelAdmin)
 from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager
 from mezzanine.core.models import (CONTENT_STATUS_DRAFT,
@@ -585,6 +588,34 @@ class NoContentTranslationTests(TestCase):
             page = Page(title="a")
             page.save()
 
+    def test_admins_bases(self):
+        """
+        Without content translation, deriving from ``TranslationModelAdmin``
+        should be as good as deriving from ``ModelAdmin``.
+        """
+        class Admin1(TranslationModelAdmin):
+            pass
+
+        class Admin2(ModelAdmin):
+            pass
+
+        self.assertEqual(inspect.getmro(Admin1)[1:],
+                         inspect.getmro(Admin2)[1:])
+
+    def test_inline_admins_bases(self):
+        """
+        Deriving from ``TranslationInlineModelAdmin`` should be equivalent to
+        deriving from ``InlineModelAdmin``.
+        """
+        class InlineAdmin1(TranslationInlineModelAdmin):
+            pass
+
+        class InlineAdmin2(InlineModelAdmin):
+            pass
+
+        self.assertEqual(inspect.getmro(InlineAdmin1)[1:],
+                         inspect.getmro(InlineAdmin2)[1:])
+
 
 class ContentTranslationTests(ContentTranslationTestCase):
     """
@@ -813,3 +844,15 @@ class ContentTranslationTests(ContentTranslationTestCase):
         with self.assertNumQueries(4):
             page = Page(title="a")
             page.save()
+
+    def test_admins_bases(self):
+        """
+        Admins of models with translatable fields should derive from one
+        of translation admins.
+        """
+        from modeltranslation.translator import translator
+        models = translator.get_registered_models()
+        for model in models:
+            model_admin = admin_site._registry.get(model)
+            if model_admin is not None:
+                self.assertIsInstance(model_admin, TranslationModelAdmin)
