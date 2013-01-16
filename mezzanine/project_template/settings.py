@@ -79,6 +79,21 @@ from __future__ import absolute_import, unicode_literals
 # INSTALLED_APPS setting.
 USE_SOUTH = True
 
+# If you'd like to translate your content, enable this and ensure that the
+# ``modeltranslation`` app is available. After creating a project or adding
+# new languages you need to create columns for translation fields in the
+# database by running the ``sync_translation_fields`` command. If you declare
+# fields for translation that you already have some data for, you may want to
+# fill their default translation with a copy of values from original fields
+# using ``update_translation_fields`` (e.g. new project with example content).
+USE_MODELTRANSLATION = False
+
+# On default all translation fields are hidden from South to avoid clashes
+# with migrations distributed with Mezzanine updates. If you let South handle
+# schema changes due to translation fields note that some original field
+# changes may need nontrivial migration merging.
+MODELTRANSLATION_SOUTH_IGNORE = True
+
 
 ########################
 # MAIN DJANGO SETTINGS #
@@ -108,15 +123,20 @@ TIME_ZONE = None
 # If you set this to True, Django will use timezone-aware datetimes.
 USE_TZ = True
 
-# Language code for this installation. All choices can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = "en"
+# If you set this to False, Django will make some optimizations so as not
+# to load the internationalization machinery. If you want to use more than
+# one static translation or select language based on request, alsod uncomment
+# the i18n context processor and make sure the locale middleware is enabled.
+USE_I18N = False
 
-# Supported languages
+# Languages for this installation, if you use content translation the first one
+# will be the default, fallback language. All language codes can be found here:
+# http://www.i18nguy.com/unicode/language-identifiers.html
 _ = lambda s: s
 LANGUAGES = (
-    ('en', _('English')),
+    ("en", _("English")),
 )
+LANGUAGE_CODE = LANGUAGES[0][0]
 
 # A boolean that turns on/off debug mode. When set to ``True``, stack traces
 # are displayed for error pages. Should always be set to ``False`` in
@@ -127,10 +147,6 @@ DEBUG = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 SITE_ID = 1
-
-# If you set this to False, Django will make some optimizations so as not
-# to load the internationalization machinery.
-USE_I18N = False
 
 # Tuple of IP addresses, as strings, that:
 #   * See debug comments, when DEBUG is true
