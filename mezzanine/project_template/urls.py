@@ -1,5 +1,8 @@
 
 from django.conf.urls.defaults import patterns, include, url
+# Replace patterns with i18n_patterns if you want to have language
+# prefixes in paths or translate static parts of URLs.
+# from django.conf.urls.i18n import i18_patterns
 from django.contrib import admin
 
 from mezzanine.core.views import direct_to_template

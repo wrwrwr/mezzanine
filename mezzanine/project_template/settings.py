@@ -78,6 +78,21 @@
 # INSTALLED_APPS setting.
 USE_SOUTH = True
 
+# If you'd like to translate your content, enable this and ensure that the
+# ``modeltranslation`` app is available. After creating a project or adding
+# new languages you need to create columns for translation fields in the
+# database by running the ``sync_translation_fields`` command. If you declare
+# fields for translation that you already have some data for, you may want to
+# fill their default translation with a copy of values from original fields
+# using ``update_translation_fields`` (e.g. new project with example content).
+USE_MODELTRANSLATION = False
+
+# On default all translation fields are hidden from South to avoid clashes
+# with migrations distributed with Mezzanine updates. If you let South handle
+# schema changes due to translation fields note that some original field
+# changes may need nontrivial migration merging.
+MODELTRANSLATION_SOUTH_IGNORE = True
+
 
 ########################
 # MAIN DJANGO SETTINGS #
@@ -103,9 +118,22 @@ TIME_ZONE = None
 # If you set this to True, Django will use timezone-aware datetimes.
 USE_TZ = True
 
-# Language code for this installation. All choices can be found here:
+# Languages for this installation, if you use content translation the first one
+# will be the default, fallback language. All language codes can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = "en"
+gettext = lambda s: s
+LANGUAGES = (
+    ("en", gettext("English")),
+#   ("de", gettext("German")),
+)
+LANGUAGE_CODE = LANGUAGES[0][0]
+
+# If you set this to False, Django will make some optimizations so as not
+# to load the internationalization machinery. If you want to use more than
+# one static translation or select language based on request, enable this
+# and uncomment the i18n context processor and the locale middleware below.
+# You may also wish to replace ``patterns`` with ``i18n_patterns`` in urls.py.
+USE_I18N = False
 
 # A boolean that turns on/off debug mode. When set to ``True``, stack traces
 # are displayed for error pages. Should always be set to ``False`` in
@@ -116,10 +144,6 @@ DEBUG = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 SITE_ID = 1
-
-# If you set this to False, Django will make some optimizations so as not
-# to load the internationalization machinery.
-USE_I18N = False
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = "%(SECRET_KEY)s"
@@ -252,7 +276,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.auth.context_processors.auth",
     "django.contrib.messages.context_processors.messages",
     "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
+    # Uncomment to have access to LANGUAGES and LANGUAGE_CODE settings:
+    # "django.core.context_processors.i18n",
     "django.core.context_processors.static",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
@@ -267,6 +292,8 @@ MIDDLEWARE_CLASSES = (
     "mezzanine.core.middleware.UpdateCacheMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Uncomment if you want to set language based on request:
+    # "django.middleware.locale.LocaleMiddleware",
     "django.contrib.redirects.middleware.RedirectFallbackMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
