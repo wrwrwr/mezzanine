@@ -27,6 +27,7 @@ from mezzanine.utils.html import TagCloser
 from mezzanine.utils.models import base_concrete_model, get_user_model_name
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.urls import admin_url, slugify, unique_slug
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 
 
 user_model_name = get_user_model_name()
@@ -80,8 +81,15 @@ class Slugged(SiteRelated):
         """
         If no slug is provided, generates one before saving.
         """
-        if not self.slug:
-            self.slug = self.generate_unique_slug()
+        def generate_translated_slug():
+            with disable_fallbacks():
+                # With fallbacks enabled, self.slug could seem non-empty due
+                # to getting a fall back value from another language. However
+                # we need all values to be generated for lookups to work.
+                no_slug = not self.slug
+            if no_slug:
+                self.slug = self.generate_unique_slug()
+        for_all_languages(generate_translated_slug)
         super(Slugged, self).save(*args, **kwargs)
 
     def generate_unique_slug(self):
@@ -132,7 +140,9 @@ class MetaData(models.Model):
         Set the description field on save.
         """
         if self.gen_description:
-            self.description = strip_tags(self.description_from_content())
+            def generate_translated_description():
+                self.description = strip_tags(self.description_from_content())
+            for_all_languages(generate_translated_description)
         super(MetaData, self).save(*args, **kwargs)
 
     def meta_title(self):
