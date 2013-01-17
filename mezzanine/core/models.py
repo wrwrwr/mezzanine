@@ -27,6 +27,7 @@ from mezzanine.utils.html import TagCloser
 from mezzanine.utils.models import base_concrete_model, get_user_model_name
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.urls import admin_url, slugify, unique_slug
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 
 
 user_model_name = get_user_model_name()
@@ -79,9 +80,19 @@ class Slugged(SiteRelated):
     def save(self, *args, **kwargs):
         """
         If no slug is provided, generates one before saving.
+
+        Slugs are based on titles, a translatable field, so slug generation
+        needs to be repeated for each available language.
         """
-        if not self.slug:
-            self.slug = self.generate_unique_slug()
+        def generate_slug_if_none():
+            with disable_fallbacks():
+                # With fallbacks enabled, self.slug could seem non-empty due
+                # to getting a fallback value from another language. However
+                # we need all values to be generated for lookups to work.
+                no_slug = not self.slug
+            if no_slug:
+                self.slug = self.generate_unique_slug()
+        for_all_languages(generate_slug_if_none)
         super(Slugged, self).save(*args, **kwargs)
 
     def generate_unique_slug(self):
@@ -132,7 +143,9 @@ class MetaData(models.Model):
         Set the description field on save.
         """
         if self.gen_description:
-            self.description = strip_tags(self.description_from_content())
+            def generate_description():
+                self.description = strip_tags(self.description_from_content())
+            for_all_languages(generate_description)
         super(MetaData, self).save(*args, **kwargs)
 
     def meta_title(self):
@@ -153,7 +166,7 @@ class MetaData(models.Model):
             if not description:
                 for field in self._meta.fields:
                     if (isinstance(field, field_type) and
-                            field.name != "description"):
+                            not field.name.startswith("description")):
                         description = getattr(self, field.name)
                         if description:
                             from mezzanine.core.templatetags.mezzanine_tags \
@@ -264,10 +277,19 @@ class Displayable(Slugged, MetaData, TimeStamped):
         Generates the ``short_url`` attribute if the model does not already
         have one.
 
+        A separate shortened URL is created for each translation of the model.
         Used by the ``set_short_url_for`` template tag and ``TweetableAdmin``.
         """
-        if not self.short_url:
-            self.short_url = self.generate_short_url()
+        nl = {'save': False}  # Python 3+: nonlocal
+
+        def generate_short_url_if_none():
+            with disable_fallbacks():
+                no_short_url = not self.short_url
+            if no_short_url:
+                self.short_url = self.generate_short_url()
+                nl['save'] = True
+        for_all_languages(generate_short_url_if_none)
+        if nl['save']:
             self.save()
 
     def generate_short_url(self):

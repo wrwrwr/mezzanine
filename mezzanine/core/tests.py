@@ -21,6 +21,7 @@ from django.forms.models import modelform_factory
 from django.templatetags.static import static
 from django.test.utils import override_settings
 from django.utils.html import strip_tags
+from django.utils.translation import get_language, override
 from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
@@ -28,14 +29,16 @@ from mezzanine.core.admin import BaseDynamicInlineAdmin
 from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager
 from mezzanine.core.models import (CONTENT_STATUS_DRAFT,
-                                   CONTENT_STATUS_PUBLISHED)
+                                   CONTENT_STATUS_PUBLISHED, Slugged)
 from mezzanine.forms.admin import FieldAdmin
 from mezzanine.forms.models import Form
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.importing import import_dotted_path
+from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.tests import (ContentTranslationTestCase, TestCase,
                                    run_pep8_for_package,
                                    run_pyflakes_for_package)
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 from mezzanine.utils.html import TagCloser
 
 
@@ -448,7 +451,6 @@ class SiteRelatedTestCase(TestCase):
 
     def test_update_site(self):
         from django.conf import settings
-        from mezzanine.utils.sites import current_site_id
 
         # setup
         try:
@@ -532,6 +534,56 @@ class NoContentTranslationTests(TestCase):
             pass
         else:
             self.assertEqual(len(translator.get_registered_models()), 0)
+
+    def test_for_all_languages(self):
+        """
+        The provided function should be executed exactly once.
+        """
+        nl = {'calls': 0}  # Python 3+: nonlocal
+
+        def function():
+            nl['calls'] += 1
+        for_all_languages(function)
+        self.assertEqual(nl['calls'], 1)
+
+    def test_for_all_languages_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        def function():
+            raise RuntimeError()
+
+        with self.assertRaises(RuntimeError):
+            for_all_languages(function)
+
+    def test_disable_fallbacks(self):
+        """
+        Without content translation, disabling fallbacks should have no
+        effect.
+        """
+        with disable_fallbacks():
+            pass
+
+    def test_disable_fallbacks_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        with self.assertRaises(RuntimeError):
+            with disable_fallbacks():
+                raise RuntimeError
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs the Page model to be migrated and registered")
+    def test_save_performance(self):
+        """
+        Reference for the test in ``ContentTranslationTests``, if you change
+        the count in this one, please also update it there.
+        """
+        from mezzanine.pages.models import Page
+        with self.assertNumQueries(6):
+            # Note: Should be 3 at most -- site query, page query and insert.
+            page = Page(title="a")
+            page.save()
 
 
 class ContentTranslationTests(ContentTranslationTestCase):
@@ -634,3 +686,130 @@ class ContentTranslationTests(ContentTranslationTestCase):
             self.assertTrue(textual_fields.issubset(registered_fields),
                 "some textual fields on {} are not registered for translation "
                 "{}".format(model_path, tuple(unregistered_textual_fields)))
+
+    def test_for_all_languages(self):
+        """
+        The provided function should be executed once for each language.
+        This is supposed to also work with disabled I18N.
+        """
+        languages = set(self.languages)
+
+        def function():
+            languages.remove(get_language())
+        for_all_languages(function)
+        self.assertFalse(languages)
+
+    def test_for_all_languages_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        def function():
+            raise RuntimeError()
+
+        with self.assertRaises(RuntimeError):
+            for_all_languages(function)
+
+    def test_disable_fallbacks(self):
+        """
+        The value for the current language should be visible, even if empty.
+        """
+        if self.fallback_pair is None:
+            self.skipTest("there have to be some fallbacks defined")
+        from_language, to_language = self.fallback_pair
+
+        with override(to_language):
+            # Set a value for a "default fallback" language, so we have
+            # something to fallback to.
+            model = Slugged(title="a")
+        with override(from_language):
+            model.title = ""
+            self.assertEqual(model.title, "a")
+            with disable_fallbacks():
+                self.assertEqual(model.title, "")
+
+    def test_disable_fallbacks_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        with self.assertRaises(RuntimeError):
+            with disable_fallbacks():
+                raise RuntimeError
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of Slugged")
+    def test_slugs_generation(self):
+        """
+        Slugs for all languages should be generated when a ``Slugged``
+        subclass is saved.
+        """
+        from mezzanine.pages.models import Page
+        slugged = Page(title="a")
+        slugged.save()
+
+        def assert_slug():
+            self.assertTrue(slugged.slug)
+        with disable_fallbacks():
+            for_all_languages(assert_slug)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of MetaData")
+    def test_descriptions_generation(self):
+        """
+        Descriptions should be generated for all languages when a ``MetaData``
+        subclass is saved.
+        """
+        from mezzanine.pages.models import Page
+        metadata = Page(title="a")
+        metadata.save()
+
+        def assert_description():
+            self.assertTrue(metadata.description)
+        with disable_fallbacks():
+            for_all_languages(assert_description)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of MetaData")
+    def test_descriptions_independence(self):
+        """
+        Description for one language should not be based on description for
+        another one.
+        """
+        if len(self.languages) < 2:
+            self.skipTest("needs at least two languages enabled")
+
+        from mezzanine.pages.models import Page
+        first_language, second_language = self.languages[:2]
+        with override(first_language):
+            metadata = Page(title="a")
+            metadata.save()
+        with override(second_language):
+            metadata.title = "b"
+            metadata.save()
+            self.assertEqual(metadata.description, "b")
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of Displayable")
+    def test_short_url_generation(self):
+        """
+        Separate ``short_url`` for each language should be generated.
+        """
+        from mezzanine.pages.models import Page
+        displayable = Page(site_id=current_site_id(), title="a")
+        displayable.set_short_url()
+
+        def assert_short_url():
+            self.assertTrue(displayable.short_url)
+        with disable_fallbacks():
+            for_all_languages(assert_short_url)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs the Page model to be migrated and registered")
+    def test_save_performance(self):
+        """
+        Saving models with content translation enabled should not require
+        more queries than without it.
+        """
+        from mezzanine.pages.models import Page
+        with self.assertNumQueries(4):
+            page = Page(title="a")
+            page.save()

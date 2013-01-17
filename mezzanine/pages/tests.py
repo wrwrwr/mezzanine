@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from future.builtins import str
 
 from django import VERSION
+from django.contrib.admin import AdminSite
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.template import Context, Template
@@ -10,10 +11,12 @@ from django.test.utils import override_settings
 from mezzanine.conf import settings
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
 from mezzanine.core.request import current_request
+from mezzanine.pages.admin import PageAdmin
 from mezzanine.pages.models import Page, RichTextPage
 from mezzanine.urls import PAGES_SLUG
-from mezzanine.utils.tests import TestCase
 from mezzanine.utils.models import get_user_model
+from mezzanine.utils.tests import ContentTranslationTestCase, TestCase
+from mezzanine.utils.translation import disable_fallbacks, for_all_languages
 
 
 User = get_user_model()
@@ -278,3 +281,29 @@ class PagesTests(TestCase):
 
         page, _ = RichTextPage.objects.get_or_create(title="test page")
         self.assertEqual(test_page_processor(current_request(), page), {})
+
+
+class ContentTranslationTests(ContentTranslationTestCase):
+    """
+    Content translation pieces in the pages app.
+    """
+    def test_generate_titles(self):
+        """
+        The ``titles`` field should be set for all languages on ``Page`` save.
+        """
+        page = Page(title="a")
+        page.save()
+
+        def assert_titles():
+            self.assertTrue(page.titles)
+        with disable_fallbacks():
+            for_all_languages(assert_titles)
+
+    def test_page_admin_fields(self):
+        """
+        One copy of each translation field is present in admin forms.
+        """
+        request = self._request_factory.get('/admin/')
+        page_admin = PageAdmin(RichTextPage, AdminSite())
+        fields = page_admin.get_fieldsets(request)[0][1]['fields']
+        self.assertEqual(len(set(fields)), len(fields))  # No duplicates.
