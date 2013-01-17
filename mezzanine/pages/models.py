@@ -15,6 +15,7 @@ from mezzanine.core.models import Displayable, Orderable, RichText
 from mezzanine.pages.fields import MenusField
 from mezzanine.pages.managers import PageManager
 from mezzanine.utils.urls import path_to_slug, slugify
+from mezzanine.utils.translation import for_all_languages
 
 
 class BasePage(Orderable, Displayable):
@@ -77,12 +78,15 @@ class Page(BasePage):
         """
         if self.id is None:
             self.content_model = self._meta.object_name.lower()
-        titles = [self.title]
-        parent = self.parent
-        while parent is not None:
-            titles.insert(0, parent.title)
-            parent = parent.parent
-        self.titles = " / ".join(titles)
+
+        def generate_translated_titles():
+            titles = [self.title]
+            parent = self.parent
+            while parent is not None:
+                titles.insert(0, parent.title)
+                parent = parent.parent
+            self.titles = " / ".join(titles)
+        for_all_languages(generate_translated_titles)
         super(Page, self).save(*args, **kwargs)
 
     def description_from_content(self):

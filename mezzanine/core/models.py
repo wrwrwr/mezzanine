@@ -27,6 +27,7 @@ from mezzanine.utils.html import TagCloser
 from mezzanine.utils.models import base_concrete_model, get_user_model_name
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.urls import admin_url, slugify, unique_slug
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 
 
 user_model_name = get_user_model_name()
@@ -78,10 +79,19 @@ class Slugged(SiteRelated):
 
     def save(self, *args, **kwargs):
         """
-        If no slug is provided, generates one before saving.
+        If no slug is provided, generates one before saving. Slugs are based
+        on titles, a translatable field, so the slug processing needs to be
+        repeated for each available language.
         """
-        if not self.slug:
-            self.slug = self.generate_unique_slug()
+        def generate_translated_slug():
+            with disable_fallbacks():
+                # With fallbacks enabled, self.slug could seem non-empty due
+                # to getting a fallback value from another language. However
+                # we need all values to be generated for lookups to work.
+                no_slug = not self.slug
+            if no_slug:
+                self.slug = self.generate_unique_slug()
+        for_all_languages(generate_translated_slug)
         super(Slugged, self).save(*args, **kwargs)
 
     def generate_unique_slug(self):
@@ -132,7 +142,9 @@ class MetaData(models.Model):
         Set the description field on save.
         """
         if self.gen_description:
-            self.description = strip_tags(self.description_from_content())
+            def generate_translated_description():
+                self.description = strip_tags(self.description_from_content())
+            for_all_languages(generate_translated_description)
         super(MetaData, self).save(*args, **kwargs)
 
     def meta_title(self):
@@ -153,7 +165,7 @@ class MetaData(models.Model):
             if not description:
                 for field in self._meta.fields:
                     if isinstance(field, field_type) and \
-                        field.name != "description":
+                            not field.name.startswith("description"):
                         description = getattr(self, field.name)
                         if description:
                             from mezzanine.core.templatetags.mezzanine_tags \
@@ -261,25 +273,41 @@ class Displayable(Slugged, MetaData, TimeStamped):
 
     def set_short_url(self):
         """
-        Sets the ``short_url`` attribute using the bit.ly credentials
-        if they have been specified, and saves it. Used by the
-        ``set_short_url_for`` template tag, and ``TweetableAdmin``.
+        Makes a new short URL for every translation of the object.
+
+        Used by the ``set_short_url_for`` template tag, and ``TweetableAdmin``.
         """
-        if not self.short_url:
-            from mezzanine.conf import settings
-            settings.use_editable()
-            parts = (self.site.domain, self.get_absolute_url())
-            self.short_url = "http://%s%s" % parts
-            if settings.BITLY_ACCESS_TOKEN:
-                url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
-                    "access_token": settings.BITLY_ACCESS_TOKEN,
-                    "uri": self.short_url,
-                })
-                response = loads(urlopen(url).read().decode("utf-8"))
-                if response["status_code"] == 200:
-                    self.short_url = response["data"]["url"]
+        class Nonlocal:
+            pass
+        n = Nonlocal()
+        n.save = False
+
+        def generate_translated_short_url():
+            with disable_fallbacks():
+                no_short_url = not self.short_url
+            if no_short_url:
+                self.short_url = self.generate_short_url()
+                n.save = True
+        for_all_languages(generate_translated_short_url)
+        if n.save:
             self.save()
-        return ""
+
+    def generate_short_url(self):
+        """
+        Generates a short URL using the bit.ly credentials if they have been
+        specified.
+        """
+        from mezzanine.conf import settings
+        settings.use_editable()
+        if settings.BITLY_ACCESS_TOKEN:
+            url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
+                "access_token": settings.BITLY_ACCESS_TOKEN,
+                "uri": self.short_url,
+            })
+            response = loads(urlopen(url).read().decode("utf-8"))
+            if response["status_code"] == 200:
+                return response["data"]["url"]
+        return "http://%s%s" % (self.site.domain, self.get_absolute_url())
 
     def _get_next_or_previous_by_publish_date(self, is_next, **kwargs):
         """
