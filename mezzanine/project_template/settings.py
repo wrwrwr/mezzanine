@@ -85,6 +85,9 @@ USE_SOUTH = True
 # fields for translation that you already have some data for, you may want to
 # fill their default translation with a copy of values from original fields
 # using ``update_translation_fields`` (e.g. new project with example content).
+# Finally, after adding new languages or loading fixtures without translations
+# you should run ``update_generated_fields`` to resave models with derived
+# fields, giving them a chance to generate translated values.
 USE_MODELTRANSLATION = False
 
 # On default all translation fields are hidden from South to avoid clashes
