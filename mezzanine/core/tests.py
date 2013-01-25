@@ -15,6 +15,7 @@ from django.contrib.admin import AdminSite, ModelAdmin, site as admin_site
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import Textarea
@@ -856,3 +857,40 @@ class ContentTranslationTests(ContentTranslationTestCase):
             model_admin = admin_site._registry.get(model)
             if model_admin is not None:
                 self.assertIsInstance(model_admin, TranslationModelAdmin)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a concrete subclasses of Slugged")
+    def test_resavemodels_slugs(self):
+        """
+        Slugs that are empty should be generated.
+        """
+        from mezzanine.pages.models import Page
+        slugged = Page(title="Title")
+        slugged.save()
+        # You end up with empty slugs after adding columns for new languages,
+        # but to simplify things we'll just manually reset the value.
+        Page.objects.all().update(slug="")
+        call_command('resavemodels')
+        # Django 1.8+: slugged.refresh_from_db(fields=['slug']).
+        slugged = Page.objects.get(pk=slugged.pk)
+        self.assertTrue(slugged.slug)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a concrete subclasses of MetaData")
+    def test_resavemodels_descriptions(self):
+        """
+        ``MetaData`` descriptions should be regenerated only when
+        ``gen_description`` is true.
+        """
+        from mezzanine.pages.models import Page
+        displayable_auto_desc = Page(title="Title", gen_description=True)
+        displayable_auto_desc.save()
+        displayable_man_desc = Page(title="Title", gen_description=False)
+        displayable_man_desc.save()
+        Page.objects.all().update(description="")
+        call_command('resavemodels')
+        # Django 1.8+: refresh_from_db(fields=['description']).
+        displayable_auto_desc = Page.objects.get(pk=displayable_auto_desc.pk)
+        self.assertTrue(displayable_auto_desc.description)
+        displayable_man_desc = Page.objects.get(pk=displayable_man_desc.pk)
+        self.assertFalse(displayable_man_desc.description)

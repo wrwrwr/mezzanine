@@ -13,6 +13,7 @@ from django.contrib.sites import models as sites_app
 from django.core.management import call_command
 from django.db.models.signals import post_syncdb
 
+from mezzanine.core import models as core_app
 from mezzanine.utils.models import get_user_model
 from mezzanine.utils.tests import copy_test_to_media
 
@@ -31,6 +32,17 @@ def check_created(created, *required):
     data. For Django 1.7 and greater, this can always retrun True.
     """
     return VERSION >= (1, 7) or set(required).issubset(set(created))
+
+
+def create_translation_columns(app, **kwargs):
+    if settings.USE_MODELTRANSLATION:
+        # TODO: This should really be in createdb only, but it also needs
+        #       to happen between "syncdb" and the rest of database setup.
+        from modeltranslation.settings import AVAILABLE_LANGUAGES
+        languages = ", ".join(AVAILABLE_LANGUAGES)
+        print("Creating translation columns for languages: %s." % languages)
+        print()
+        call_command("sync_translation_fields", interactive=False, verbosity=0)
 
 
 def create_user(app, created_models, verbosity, interactive, **kwargs):
@@ -76,6 +88,11 @@ def create_pages(app, created_models, verbosity, interactive, **kwargs):
             install_optional = True
         if install_optional:
             install_optional_data(verbosity)
+        if settings.USE_MODELTRANSLATION:
+            # Initial data fixtures have slugs only for one languague, not
+            # necessarily loaded for the default one.
+            call_command("update_translation_fields", verbosity=0)
+            call_command("resavemodels", verbosity=0)
 
 
 def create_site(app, created_models, verbosity, interactive, **kwargs):
@@ -120,6 +137,7 @@ def install_optional_data(verbosity):
 
 
 if not settings.TESTING:
+    post_syncdb.connect(create_translation_columns, sender=core_app)
     post_syncdb.connect(create_user, sender=auth_app)
     if "mezzanine.pages" in settings.INSTALLED_APPS:
         from mezzanine.pages import models as pages_app
