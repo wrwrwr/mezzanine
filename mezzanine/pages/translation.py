@@ -5,7 +5,7 @@ from modeltranslation.translator import TranslationOptions, translator
 
 
 class PageTranslationOptions(TranslationOptions):
-    fields = ("titles",)
+    fields = ("titles", "keywords_string")
 
 
 translator.register(Page, PageTranslationOptions)

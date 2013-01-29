@@ -7,6 +7,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_model, IntegerField, CharField, FloatField
 from django.db.models.signals import post_save, post_delete
 
+from mezzanine.utils.translation import for_all_languages
+
 
 class BaseGenericRelation(GenericRelation):
     """
@@ -212,10 +214,19 @@ class KeywordsField(BaseGenericRelation):
         Stores the keywords as a single string for searching.
         """
         assigned = related_manager.select_related("keyword")
-        keywords = " ".join([unicode(a.keyword) for a in assigned])
-        string_field_name = self.fields.keys()[0] % self.related_field_name
-        if getattr(instance, string_field_name) != keywords:
-            setattr(instance, string_field_name, keywords)
+        # Py3k: save = False
+        class NameSpace: pass
+        n = NameSpace()
+        n.save = False
+        def make_string():
+            keywords = " ".join([unicode(a.keyword) for a in assigned])
+            string_field_name = self.fields.keys()[0] % self.related_field_name
+            if getattr(instance, string_field_name) != keywords:
+                setattr(instance, string_field_name, keywords)
+                # Py3k: nonlocal save = True
+                n.save = True
+        for_all_languages(make_string)
+        if n.save:
             instance.save()
 
 
