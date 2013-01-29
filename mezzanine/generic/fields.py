@@ -10,6 +10,7 @@ from django.db.models import IntegerField, CharField, FloatField
 from django.db.models.signals import post_save, post_delete
 
 from mezzanine.utils.models import lazy_model_ops
+from mezzanine.utils.translation import for_all_languages
 
 
 class BaseGenericRelation(GenericRelation):
@@ -245,11 +246,18 @@ class KeywordsField(BaseGenericRelation):
         Stores the keywords as a single string for searching.
         """
         assigned = related_manager.select_related("keyword")
-        keywords = " ".join([str(a.keyword) for a in assigned])
-        string_field_name = list(self.fields.keys())[0] % \
-                            self.related_field_name
-        if getattr(instance, string_field_name) != keywords:
-            setattr(instance, string_field_name, keywords)
+        class Nonlocal: pass  # With Python 3 just: save = False
+        n = Nonlocal()
+        n.save = False
+        def generate_keywords_string():
+            keywords = " ".join([str(a.keyword) for a in assigned])
+            string_field_name = list(self.fields.keys())[0] % \
+                                self.related_field_name
+            if getattr(instance, string_field_name) != keywords:
+                setattr(instance, string_field_name, keywords)
+                n.save = True  # With Python 3: nonlocal save = True
+        for_all_languages(generate_keywords_string)
+        if n.save:
             instance.save()
 
 

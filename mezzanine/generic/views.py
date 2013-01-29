@@ -32,8 +32,11 @@ def admin_keywords_submit(request):
     for title in request.POST.get("text_keywords", "").split(","):
         title = "".join([c for c in title if c not in remove]).strip()
         if title:
-            kw, created = Keyword.objects.get_or_create_iexact(title=title)
-            keyword_id = str(kw.id)
+            manager = Keyword.objects
+            if settings.USE_MODELTRANSLATION:
+                manager = manager.fallbacks(True).populate_default(True)
+            keyword, created = manager.get_or_create_iexact(title=title)
+            keyword_id = str(keyword.id)
             if keyword_id not in keyword_ids:
                 keyword_ids.append(keyword_id)
                 titles.append(title)
