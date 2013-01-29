@@ -3,6 +3,8 @@ from future.utils import native_str
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.forms import ModelForm
+from django.utils.translation import get_language
 from django.utils.unittest import skipUnless
 
 from mezzanine.blog.models import BlogPost
@@ -13,7 +15,8 @@ from mezzanine.generic.forms import RatingForm
 from mezzanine.generic.models import (AssignedKeyword, Keyword,
                                       ThreadedComment, Rating)
 from mezzanine.pages.models import RichTextPage
-from mezzanine.utils.tests import TestCase
+from mezzanine.utils.tests import ContentTranslationTestCase, TestCase
+from mezzanine.utils.translation import for_all_languages
 
 
 class GenericTests(TestCase):
@@ -107,3 +110,69 @@ class GenericTests(TestCase):
         page = RichTextPage.objects.get(id=page.id)
         self.assertEqual(keywords, set(page.keywords_string.split()))
         page.delete()
+
+    def test_delete_unused(self):
+        """
+        Only ``Keyword`` instances without any assignments should be deleted.
+        """
+        assigned_keyword = Keyword.objects.create(title="assigned")
+        Keyword.objects.create(title="unassigned")
+        AssignedKeyword.objects.create(keyword_id=assigned_keyword.id,
+                                       content_object=RichTextPage(pk=1))
+        Keyword.objects.delete_unused(keyword_ids=[assigned_keyword.id])
+        self.assertEqual(Keyword.objects.count(), 2)
+        Keyword.objects.delete_unused()
+        self.assertEqual(Keyword.objects.count(), 1)
+        self.assertEqual(Keyword.objects.all()[0].id, assigned_keyword.id)
+
+
+class ContentTranslationTests(ContentTranslationTestCase):
+    """
+    Content translation issues within the generic app.
+
+    Unregistered dynamic <keywords-field-name>_string fields get picked
+    by the core registration test, so we don't need a special case here.
+    """
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "a concrete model with search_fields is required")
+    def test_keyword_strings(self):
+        """
+        Keyword strings for all languages should be set when assigning
+        new keywords.
+        """
+        keyword = Keyword()
+
+        def set_language_title():
+            keyword.title = get_language()
+        for_all_languages(set_language_title)
+        keyword.save()
+
+        page = RichTextPage.objects.create(title="Keywords")
+        page.keywords.add(AssignedKeyword(keyword=keyword))
+        # Django 1.8+: refresh_from_db()
+        page = RichTextPage.objects.get(pk=page.pk)
+
+        def assert_keywords_string():
+            self.assertEqual(get_language(), page.keywords_string)
+        for_all_languages(assert_keywords_string)
+
+    def test_save_unused_keyword_translations(self):
+        """
+        Unused keywords should not be automatically deleted (at least those
+        that have translations).
+        """
+        if len(self.languages) < 2:
+            self.skipTest("with a single language deleting is acceptable")
+
+        class KeywordsForm(ModelForm):
+            class Meta:
+                model = RichTextPage
+                fields = ["keywords"]
+        # Keyword with all translations.
+        keyword = Keyword.objects.populate("all").create(title="keyword")
+        # Assign the keyword.
+        page = KeywordsForm({"keywords_0": str(keyword.id)}).save()
+        self.assertTrue(page.keywords.count())
+        # Drop the assignment.
+        KeywordsForm({}, instance=page).save()
+        self.assertTrue(Keyword.objects.count())

@@ -10,6 +10,7 @@ from django.db.models import IntegerField, CharField, FloatField
 from django.db.models.signals import post_save, post_delete
 
 from mezzanine.utils.models import lazy_model_ops
+from mezzanine.utils.translation import for_all_languages
 
 
 class BaseGenericRelation(GenericRelation):
@@ -210,12 +211,11 @@ class KeywordsField(BaseGenericRelation):
         # Convert the data into AssignedKeyword instances.
         if data:
             data = [AssignedKeyword(keyword_id=i) for i in new_ids]
-        # Remove Keyword instances than no longer have a
-        # related AssignedKeyword instance.
-        existing = AssignedKeyword.objects.filter(keyword__id__in=removed_ids)
-        existing_ids = set([str(a.keyword_id) for a in existing])
-        unused_ids = removed_ids - existing_ids
-        Keyword.objects.filter(id__in=unused_ids).delete()
+        if not settings.USE_MODELTRANSLATION:
+            # Remove keywords that are no longer assigned to anything.
+            # With content translation, it's better to let the unused keywords
+            # stay, as the user may want to reuse their translations.
+            Keyword.objects.delete_unused(removed_ids)
         super(KeywordsField, self).save_form_data(instance, data)
 
     def contribute_to_class(self, cls, name):
@@ -245,11 +245,18 @@ class KeywordsField(BaseGenericRelation):
         Stores the keywords as a single string for searching.
         """
         assigned = related_manager.select_related("keyword")
-        keywords = " ".join([str(a.keyword) for a in assigned])
-        string_field_name = list(self.fields.keys())[0] % \
-                            self.related_field_name
-        if getattr(instance, string_field_name) != keywords:
-            setattr(instance, string_field_name, keywords)
+
+        nl = {'save': False}  # Python 3+: nonlocal
+
+        def generate_keywords_string():
+            keywords = " ".join([str(a.keyword) for a in assigned])
+            string_field_name = list(self.fields.keys())[0] % \
+                                self.related_field_name
+            if getattr(instance, string_field_name) != keywords:
+                setattr(instance, string_field_name, keywords)
+                nl['save'] = True
+        for_all_languages(generate_keywords_string)
+        if nl['save']:
             instance.save()
 
 

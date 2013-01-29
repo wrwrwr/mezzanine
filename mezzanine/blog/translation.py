@@ -1,6 +1,11 @@
 from mezzanine.blog.models import BlogPost, BlogCategory
 
-from modeltranslation.translator import translator
+from modeltranslation.translator import TranslationOptions, translator
 
 
-translator.register((BlogPost, BlogCategory))
+class BlogPostTranslationOptions(TranslationOptions):
+    fields = ("keywords_string",)
+
+
+translator.register(BlogPost, BlogPostTranslationOptions)
+translator.register(BlogCategory)

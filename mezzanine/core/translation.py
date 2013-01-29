@@ -7,6 +7,9 @@ class SluggedTranslationOptions(TranslationOptions):
     fields = ("title", "slug")
 
 
+# Keywords are stored as separate Keyword models, connected with content
+# through AssignedKeywords. Searchable keywords_string fields are created
+# on concrete subclasses, so we leave MetaData.keywords untranslated.
 class MetaDataTranslationOptions(TranslationOptions):
     fields = ("_meta_title", "description")
 
