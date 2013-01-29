@@ -5,7 +5,8 @@ from django.contrib.comments.admin import CommentsAdmin
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
-from mezzanine.generic.models import ThreadedComment
+from mezzanine.core.admin import TranslationAdmin
+from mezzanine.generic.models import ThreadedComment, Keyword
 
 
 class ThreadedCommentAdmin(CommentsAdmin):
@@ -34,6 +35,18 @@ class ThreadedCommentAdmin(CommentsAdmin):
         return False
 
 
+class KeywordAdmin(TranslationAdmin):
+    """
+    Admin for translating keywords.
+    """
+
+    list_display = (lambda obj: obj.title, "title",)
+    list_editable = ("title",)
+
+
 generic_comments = getattr(settings, "COMMENTS_APP", "") == "mezzanine.generic"
 if generic_comments and not settings.COMMENTS_DISQUS_SHORTNAME:
     admin.site.register(ThreadedComment, ThreadedCommentAdmin)
+
+if settings.USE_MODELTRANSLATION:
+    admin.site.register(Keyword, KeywordAdmin)
