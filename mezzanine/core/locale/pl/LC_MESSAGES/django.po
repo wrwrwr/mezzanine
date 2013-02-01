@@ -23,11 +23,11 @@ msgstr ""
 
 #: admin.py:23
 msgid "This field is required if status is set to published."
-msgstr "Wymagane, gdy treść ma być opublikowana."
+msgstr "Wymagane, jeśli treść ma być opublikowana."
 
 #: admin.py:44
 msgid "Meta data"
-msgstr "Meta dane"
+msgstr "Metadane"
 
 #: defaults.py:21
 msgid "Controls the ordering and grouping of the admin menu."
@@ -177,7 +177,7 @@ msgid ""
 msgstr ""
 "Modele dziedziczące po ``Ownable`` i używające ``OwnableAdmin`` mają listę "
 "zmian ograniczoną do rekordów będących własnością bieżącego użytkownika. To "
-"ustawienie zawiera listę modeli (w formacie  ``app_label.object_name``), dla "
+"ustawienie zawiera listę modeli (w formacie  ``aplikacja.obiekt``), dla "
 "których, nawet jeśli dziedziczą po ``Ownable``, będzie wyświetlana pełna "
 "lista zmian w administracji."
 
@@ -185,32 +185,32 @@ msgstr ""
 msgid ""
 "Dotted package path and class name of the widget to use for the "
 "``RichTextField``."
-msgstr "Ścieżka pakietu i nazwa klasy widget używanego dla ``RichTextField``."
+msgstr "Ścieżka pakietu i nazwa klasy widgetu używanego dla ``RichTextField``."
 
 #: defaults.py:204
 msgid ""
 "List of HTML tags that won't be stripped from ``RichTextField`` instances."
-msgstr "Lista tagów HTML, które nie będą usunięte z formatowanego tekstu."
+msgstr "Lista tagów HTML, które nie zostaną usunięte ze wzbogaconego tekstu."
 
 #: defaults.py:220
 msgid ""
 "List of HTML attributes that won't be stripped from ``RichTextField`` "
 "instances."
 msgstr ""
-"Lista atrybutów HTML, które nie zostaną usunięte z formatowanego tekstu.`"
+"Lista atrybutów HTML, które nie zostaną usunięte ze wzbogaconego tekstu.`"
 
 #: defaults.py:238
 msgid ""
 "List of inline CSS styles that won't be stripped from ``RichTextField`` "
 "instances."
-msgstr "Lista stylów CSS, które będą usuwane z formatowanego tekstu."
+msgstr "Lista stylów CSS, które nie zostaną usunięte ze wzbogaconego tekstu."
 
 #: defaults.py:246
 msgid ""
 "Dotted path to the function to call on a ``RichTextField`` value before it "
 "is rendered to the template."
 msgstr ""
-"Ścieżka (z kropkami) funkcji aplikowanej do wartości ``RichTextField`` zanim "
+"Funkcja (ścieżka z kropkami) aplikowana do wartości ``RichTextField`` zanim "
 "zostanie ona wyświetlona w szablonie."
 
 #: defaults.py:256
@@ -227,7 +227,7 @@ msgstr "Brak filtrowania"
 
 #: defaults.py:263
 msgid "Rich Text filter level"
-msgstr "Poziom filtrowania formatowanego tekstu"
+msgstr "Poziom filtrowania wzbogaconego tekstu"
 
 #: defaults.py:264
 msgid ""
@@ -322,6 +322,10 @@ msgid ""
 "ascii URLS. Change to ``django.template.defaultfilters.slugify`` to use "
 "Django's slugify function, or something of your own if required."
 msgstr ""
+"Funkcja Pythona (ścieżka z kropkami) konwertująca napisy na fragmenty URLi. "
+"Domyślnie ``mezzanine.utils.urls.slugify_unicode``, która dopuszcza znaki "
+"spoza zestawu ASCII. Możesz ją zmienić na ``django.template.defaultfilters."
+"slugify`` lub swoją własną funkcję."
 
 #: defaults.py:344
 msgid ""
@@ -332,6 +336,12 @@ msgid ""
 "which will use the http://akismet.com spam filtering service when the "
 "``AKISMET_API_KEY`` setting is configured."
 msgstr ""
+"Ciąg ścieżek funkcji używanych do sprawdzania czy publikowana zawartość "
+"(formularze, komentarze) jest spamem. Każda taka funkcja powinna akceptować "
+"trzy argumenty: obiekt żądania, obiekt formularza i URL, na który zostało "
+"wysłane żądanie. Domyślną funkcją jest ``mezzanine.utils.views."
+"is_spam_akismet``, która filtruje używając serwisu http://akismet.com (jeśli "
+"wpisany jest ``AKISMET_API_KEY``)."
 
 #: defaults.py:357
 msgid "Enable SSL"
@@ -347,7 +357,7 @@ msgstr ""
 
 #: defaults.py:367
 msgid "Force Host"
-msgstr "Wymuszanie nazwy hosta"
+msgstr "Wymuszanie domeny"
 
 #: defaults.py:368
 msgid ""
@@ -387,15 +397,15 @@ msgid ""
 "Directory name to store thumbnails in, that will be created relative to the "
 "original image's directory."
 msgstr ""
-"Nazwa katalogu w którym będą zapisywane miniatury, relatywnie do  katalogu w "
-"którym znajduje się podstawowy plik obrazu."
+"Nazwa katalogu w którym będą zapisywane miniatury, relatywnie do katalogu w "
+"którym znajduje się oryginalny plik obrazu."
 
 #: defaults.py:484
 msgid ""
 "URL for the JavaScript file (relative to ``STATIC_URL``) that handles "
 "configuring TinyMCE when the default ``RICHTEXT_WIDGET_CLASS`` is used."
 msgstr ""
-"URL dla pliku JavaScript (relatywnie do ``STATIC_URL``) zawierającego "
+"URL pliku JavaScript (relatywnie do ``STATIC_URL``) zawierającego "
 "konfigurację TinyMCE."
 
 #: defaults.py:493
@@ -404,6 +414,8 @@ msgid ""
 "field_name`` to the Python dotted path to function names that will be used "
 "for the file field's ``upload_to`` argument."
 msgstr ""
+"Słownik nazw pól pliku (w formacie ``applikacja.model.pole``) do funkcji "
+"Pythona (ścieżka z kropkami) używanych jako argument ``upload_to``."
 
 #: defaults.py:509
 msgid ""
@@ -444,8 +456,8 @@ msgid ""
 "Optional title to be used in the HTML title tag. If left blank, the main "
 "title field will be used."
 msgstr ""
-"Opcjonalny tytuł do użycia w tagu tytułu. Jeśli pozostawisz to pole puste, "
-"zostanie użyty główny tytuł."
+"Inny tytuł w tagu HTML. Jeśli pozostawisz to pole puste, zostanie użyty "
+"tytuł strony."
 
 #: models.py:113
 msgid "Description"
@@ -460,8 +472,8 @@ msgid ""
 "If checked, the description will be automatically generated from content. "
 "Uncheck if you want to manually set a custom description."
 msgstr ""
-"Czy opisy powinny być automatycznie generowane na podstawie treści? Odznacz "
-"jeśli chcesz je samodzielnie wpisywać."
+"Czy opis ma zostać automatycznie wygenerowany na podstawie treści? Odznacz "
+"jeśli chcesz go samodzielnie wpisać."
 
 #: models.py:118
 msgid "Keywords"
@@ -501,7 +513,7 @@ msgstr "Opublikowana treść zostanie ukryta po tym czasie"
 
 #: models.py:198
 msgid "Show in sitemap"
-msgstr ""
+msgstr "Dodaj do sitemap.xml"
 
 #: models.py:401
 msgid "Author"
@@ -513,7 +525,7 @@ msgstr "Dostęp zabroniony"
 
 #: views.py:116 templates/includes/search_form.html:11
 msgid "Everything"
-msgstr ""
+msgstr "Wszystko"
 
 #: templates/base.html:121
 msgid "Powered by"
@@ -546,11 +558,14 @@ msgid "Search Results"
 msgstr "Wyniki wyszukiwania"
 
 #: templates/search_results.html:20
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "\n"
 "No results were found in %(search_type)s matching your query: %(query)s\n"
-msgstr "Nie znaleziono wyników pasujących do Twojego zapytania: "
+msgstr ""
+"\n"
+"Nie znaleziono żadnych wyników z %(search_type)s pasujących do zapytania: "
+"%(query)s\n"
 
 #: templates/search_results.html:24
 #, python-format
@@ -559,6 +574,9 @@ msgid ""
 "Showing %(start)s to %(end)s of %(total)s results in %(search_type)s "
 "matching your query: %(query)s\n"
 msgstr ""
+"\n"
+"Wyświetlono %(start)s do %(end)s z %(total)s wyników z %(search_type)s "
+"pasujących do zapytania: %(query)s\n"
 
 #: templates/search_results.html:35
 msgid "read more"
@@ -574,7 +592,7 @@ msgstr "Pulpit"
 
 #: templates/admin/login.html:21
 msgid "You don't have permission to access the admin for this site."
-msgstr ""
+msgstr "Nie masz uprawnień, aby korzystać z administracji strony."
 
 #: templates/admin/login.html:28
 msgid "Username or email:"
@@ -668,8 +686,8 @@ msgstr "z"
 
 #: templates/includes/search_form.html:4
 msgid "Search"
-msgstr "Wyszukaj"
+msgstr "Szukaj"
 
 #: templates/includes/search_form.html:18
 msgid "Go"
-msgstr ""
+msgstr "Przejdź"

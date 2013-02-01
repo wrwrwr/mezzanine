@@ -29,7 +29,8 @@ msgid ""
 "Upload a zip file containing images, and they'll be imported into this "
 "gallery."
 msgstr ""
-"Wgraj plik zip zawierający obrazy, zostaną one zaimportowane do tej galerii."
+"Wgraj plik zip zawierający obrazy, a zostaną one zaimportowane do tej "
+"galerii."
 
 #: models.py:44
 msgid "Gallery"
