@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
 #   <mathias.ettinger@gmail.com>, 2012.
 # Michał Oleniec <moleniec@gmail.com>, 2011.
@@ -9,30 +9,32 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
-"POT-Creation-Date: 2012-11-17 16:51-0430\n"
+"POT-Creation-Date: 2013-02-01 17:14+0100\n"
 "PO-Revision-Date: 2012-10-26 12:36+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
-"Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/language/pl/)\n"
+"Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
+"language/pl/)\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: pl\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
 
 #: defaults.py:20
 msgid ""
-"A sequence of templates used by the ``page_menu`` template tag. Each item in"
-" the sequence is a three item sequence, containing a unique ID for the "
+"A sequence of templates used by the ``page_menu`` template tag. Each item in "
+"the sequence is a three item sequence, containing a unique ID for the "
 "template, a label for the template, and the template path. These templates "
 "are then available for selection when editing which menus a page should "
 "appear in. Note that if a menu template is used that doesn't appear in this "
 "setting, all pages will appear in it."
 msgstr ""
-"Lista wzorców używanych przez tag ``page_menu``. Każdy element listy"
-" zawiera trzy elementy: unikalny identyfikator, etykietę i ścieżkę do wzorca."
-" Wzorce są dostępne przy wyborze menu, w których strona powinna się znajdować."
-" Zwróć uwagę, że jeśli użyjesz wzorca menu, który tutaj nie występuje, pojawią"
-" się w nim wszystkie strony."
+"Lista wzorców używanych przez tag ``page_menu``. Każdy element listy zawiera "
+"trzy elementy: unikalny identyfikator, etykietę i ścieżkę do wzorca. Wzorce "
+"są dostępne przy wyborze menu, w których strona powinna się znajdować. Zwróć "
+"uwagę, że jeśli użyjesz wzorca menu, który tutaj nie występuje, pojawią się "
+"w nim wszystkie strony."
 
 #: defaults.py:29
 msgid "Top navigation bar"
@@ -49,35 +51,26 @@ msgstr "Stopka"
 #: defaults.py:37
 msgid ""
 "A sequence of IDs from the ``PAGE_MENU_TEMPLATES`` setting that defines the "
-"default menu templates selected when creating new pages. By default all menu"
-" templates are selected. Set this setting to an empty sequence to have no "
+"default menu templates selected when creating new pages. By default all menu "
+"templates are selected. Set this setting to an empty sequence to have no "
 "templates selected by default."
 msgstr ""
-"Lista identyfikatorów z ustawienia ``PAGE_MENU_TEMPLATES``, definiująca"
-" wzorce menu domyślnie wybrane przy tworzeniu nowych stron. Jeśli pole jest"
-" puste wszystkie wzorce menu są początkowo wybrane. Wpisz pusty ciąg, aby"
-" żaden wzorzec nie był domyślnie wybrany."
+"Lista identyfikatorów z ustawienia ``PAGE_MENU_TEMPLATES``, definiująca "
+"wzorce menu domyślnie wybrane przy tworzeniu nowych stron. Jeśli pole jest "
+"puste wszystkie wzorce menu są początkowo wybrane. Wpisz pusty ciąg, aby "
+"żaden wzorzec nie był domyślnie wybrany."
 
 #: defaults.py:48
-msgid ""
-"If ``True``, the left-hand tree template for the pages menu will show all "
-"levels of navigation, otherwise child pages are only shown when viewing the "
-"parent page."
-msgstr ""
-"Czy wzorzec menu drzewa ma pokazywać wszystkie poziomy nawigacji, czy też"
-" podstrony mają być widoczne tylko przy przeglądaniu strony nadrzędnej?"
-
-#: defaults.py:57
 msgid ""
 "If ``True``, pages with ``login_required`` checked will still be listed in "
 "menus and search results, for unauthenticated users. Regardless of this "
 "setting, when an unauthenticated user accesses a page with "
 "``login_required`` checked, they'll be redirected to the login page."
 msgstr ""
-"Czy strony oznaczone jako ``login_required`` mają być widoczne w menu i"
-" wynikach wyszukiwania dla niezalogowanych użytkowników? Bez względu na"
-" to ustawienie, gdy niezalogowany użytkownik wchodzi na stronę oznaczoną"
-" jako ``login_required``, jest on przekierowywany na stronę logowania."
+"Czy strony oznaczone jako ``login_required`` mają być widoczne w menu i "
+"wynikach wyszukiwania dla niezalogowanych użytkowników? Bez względu na to "
+"ustawienie, gdy niezalogowany użytkownik wchodzi na stronę oznaczoną jako "
+"``login_required``, jest on przekierowywany na stronę logowania."
 
 #: models.py:33
 msgid "Show in menus"
@@ -99,23 +92,23 @@ msgstr "Podstrona"
 msgid "Pages"
 msgstr "Podstrony"
 
-#: models.py:225
+#: models.py:256
 msgid "Rich text page"
 msgstr "Strona ze wzbogaconym tekstem"
 
-#: models.py:226
+#: models.py:257
 msgid "Rich text pages"
 msgstr "Strony ze wzbogaconym tekstem"
 
-#: models.py:236
+#: models.py:267
 msgid "Link"
 msgstr "Link"
 
-#: models.py:237
+#: models.py:268
 msgid "Links"
 msgstr "Linki"
 
-#: templates/admin/pages/page/change_list.html:24
+#: templates/admin/pages/page/change_list.html:25
 #: templates/pages/menus/admin.html:31
 msgid "Add"
 msgstr "Dodaj"
@@ -123,15 +116,15 @@ msgstr "Dodaj"
 #: templates/pages/menus/breadcrumb.html:4
 #: templates/pages/menus/breadcrumb.html:10
 #: templates/pages/menus/dropdown.html:10
-#: templates/pages/menus/footer_tree.html:10
-#: templates/pages/menus/mobile.html:9 templates/pages/menus/primary.html:9
-#: templates/pages/menus/tree.html:9
+#: templates/pages/menus/footer_tree.html:11
+#: templates/pages/menus/mobile.html:10 templates/pages/menus/primary.html:9
+#: templates/pages/menus/tree.html:10
 msgid "Home"
 msgstr "Strona główna"
 
-#: templatetags/pages_tags.py:181
+#: templatetags/pages_tags.py:190
 msgid ""
 "An error occured with the following class. Does it subclass Page directly?"
 msgstr ""
-"Wystąpił błąd w następującej klasie. Czy dziedziczy ona bezpośrednio po"
-" klasie Page?"
+"Wystąpił błąd w następującej klasie. Czy dziedziczy ona bezpośrednio po "
+"klasie Page?"
