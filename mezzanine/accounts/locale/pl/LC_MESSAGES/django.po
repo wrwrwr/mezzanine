@@ -194,7 +194,7 @@ msgid ""
 "\">reset your password</a> if you've forgotten it.</p>"
 msgstr ""
 "<p>Możesz również <a href=\"%(password_reset_url)s?next="
-"%(profile_update_url)s\">zmienić swoje hasło</a> jeśli go zapomniałeś.</p>"
+"%(profile_update_url)s\">zmienić swoje hasło</a> jeśli je zapomniałeś.</p>"
 
 #: templates/accounts/account_password_reset.html:6
 msgid ""
