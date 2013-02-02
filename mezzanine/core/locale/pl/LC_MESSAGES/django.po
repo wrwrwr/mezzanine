@@ -613,7 +613,7 @@ msgstr "Administracja"
 
 #: templates/admin/login.html:47
 msgid "Log in"
-msgstr "Zaloguj się"
+msgstr "Zaloguj"
 
 #: templates/admin/login.html:50
 msgid "Forgot password?"
