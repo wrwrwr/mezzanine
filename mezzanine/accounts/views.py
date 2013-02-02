@@ -7,7 +7,7 @@ from django.contrib.messages import info, error
 from django.core.urlresolvers import NoReverseMatch
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.datastructures import SortedDict
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, pgettext_lazy
 
 from mezzanine.accounts import get_profile_model, get_profile_user_fieldname
 from mezzanine.accounts import get_profile_form
@@ -28,7 +28,8 @@ def login(request, template="accounts/account_login.html"):
         info(request, _("Successfully logged in"))
         auth_login(request, authenticated_user)
         return login_redirect(request)
-    context = {"form": form, "title": _("Login")}
+    context = {"form": form, "title": pgettext_lazy("title", "Login"),
+                             "action": pgettext_lazy("action", "Login")}
     return render(request, template, context)
 
 
@@ -58,7 +59,8 @@ def signup(request, template="accounts/account_signup.html"):
             info(request, _("Successfully signed up"))
             auth_login(request, new_user)
             return login_redirect(request)
-    context = {"form": form, "title": _("Signup")}
+    context = {"form": form, "title": pgettext_lazy("title", "Signup"),
+                             "action": pgettext_lazy("action", "Signup")}
     return render(request, template, context)
 
 
@@ -140,7 +142,9 @@ def profile_update(request, template="accounts/account_profile_update.html"):
             return redirect("profile", username=user.username)
         except NoReverseMatch:
             return redirect("profile_update")
-    context = {"form": form, "title": _("Update Profile")}
+    context = {"form": form,
+               "title": pgettext_lazy("title", "Update Profile"),
+               "action": pgettext_lazy("action", "Update Profile")}
     return render(request, template, context)
 
 
@@ -151,7 +155,9 @@ def password_reset(request, template="accounts/account_password_reset.html"):
         send_verification_mail(request, user, "password_reset_verify")
         info(request, _("A verification email has been sent with "
                         "a link for resetting your password."))
-    context = {"form": form, "title": _("Password Reset")}
+    context = {"form": form,
+               "title": pgettext_lazy("title", "Password Reset"),
+               "action": pgettext_lazy("action", "Password Reset")}
     return render(request, template, context)
 
 

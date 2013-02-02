@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
-"POT-Creation-Date: 2013-02-01 17:14+0100\n"
+"POT-Creation-Date: 2013-02-02 17:33+0100\n"
 "PO-Revision-Date: 2012-11-17 22:00+0000\n"
 "Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -109,46 +109,70 @@ msgid "Successfully logged in"
 msgstr "Pomyślne logowanie"
 
 #: views.py:31
+msgctxt "title"
 msgid "Login"
-msgstr "Nazwa użytkownika"
+msgstr "Logowanie"
 
-#: views.py:40
+#: views.py:32
+msgctxt "action"
+msgid "Login"
+msgstr "Zaloguj się"
+
+#: views.py:41
 msgid "Successfully logged out"
 msgstr "Pomyślne wylogowanie"
 
-#: views.py:54
+#: views.py:55
 msgid ""
 "A verification email has been sent with a link for activating your account."
 msgstr "Został wysłany e-mail z linkiem do aktywacji konta."
 
-#: views.py:58 views.py:77
+#: views.py:59 views.py:79
 msgid "Successfully signed up"
 msgstr "Pomyślna rejestracja"
 
-#: views.py:61
+#: views.py:62
+msgctxt "title"
 msgid "Signup"
 msgstr "Rejestracja"
 
-#: views.py:80 views.py:164
+#: views.py:63
+msgctxt "action"
+msgid "Signup"
+msgstr "Zarejestruj się"
+
+#: views.py:82 views.py:170
 msgid "The link you clicked is no longer valid."
 msgstr "Wybrany link jest już nieważny."
 
-#: views.py:138
+#: views.py:140
 msgid "Profile updated"
 msgstr "Profil zaktualizowany"
 
-#: views.py:143
+#: views.py:146
+msgctxt "title"
 msgid "Update Profile"
-msgstr "Aktualizuj profil"
+msgstr "Aktualizacja profilu"
 
-#: views.py:152
+#: views.py:147
+msgctxt "action"
+msgid "Update Profile"
+msgstr "Aktualizuj"
+
+#: views.py:156
 msgid ""
 "A verification email has been sent with a link for resetting your password."
 msgstr "E-mail weryfikacyjny z linkiem do zmiany hasła został wysłany."
 
-#: views.py:154
+#: views.py:159
+msgctxt "title"
 msgid "Password Reset"
 msgstr "Zmiana hasła"
+
+#: views.py:160
+msgctxt "action"
+msgid "Password Reset"
+msgstr "Resetuj"
 
 #: templates/accounts/account_login.html:7
 msgid "You're already logged in."
