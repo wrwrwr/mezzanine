@@ -18,6 +18,7 @@ page_fieldsets[0][1]["fields"] += ("in_menus", "login_required",)
 
 
 class PageAdminForm(DisplayableAdminForm):
+
     def clean_slug(self):
         """
         If the slug has been changed, save the old one. We will use it later
@@ -53,31 +54,29 @@ class PageAdmin(DisplayableAdmin):
             # Make a copy so that we aren't modifying other Admin
             # classes' fieldsets.
             self.fieldsets = deepcopy(self.fieldsets)
-            # Don't add Page fields, translation fields handled by
-            # TranslationAdmin and respect excludes.
-            check_fields = set(f.name for f in Page._meta.fields)
-            check_fields.add("page_ptr")
+            # Insert each field between the publishing fields and nav
+            # fields. Do so in reverse order to retain the order of
+            # the model's fields.
+            exclude_fields = Page._meta.get_all_field_names() + ["page_ptr"]
+            try:
+                exclude_fields.extend(self.exclude)
+            except (AttributeError, TypeError):
+                pass
+            try:
+                exclude_fields.extend(self.form.Meta.exclude)
+            except (AttributeError, TypeError):
+                pass
             if settings.USE_MODELTRANSLATION:
                 from modeltranslation.translator import (NotRegistered,
                                                          translator)
                 try:
                     trans_opts = translator.get_options_for_model(self.model)
-                    check_fields.update(trans_opts.fields.keys())
+                    exclude_fields.extend(trans_opts.fields.keys())
                 except NotRegistered:
                     pass
-            try:
-                check_fields.update(self.exclude)
-            except (AttributeError, TypeError):
-                pass
-            try:
-                check_fields.update(self.form.Meta.exclude)
-            except (AttributeError, TypeError):
-                pass
-            # Insert each field between the publishing fields and nav
-            # fields. Do so in reverse order to retain the order of
-            # the model's fields.
-            for field in reversed(self.model._meta.fields):
-                if field.name not in check_fields and field.editable:
+            fields = self.model._meta.fields + self.model._meta.many_to_many
+            for field in reversed(fields):
+                if field.name not in exclude_fields and field.editable:
                     self.fieldsets[0][1]["fields"].insert(3, field.name)
 
     def in_menu(self):
