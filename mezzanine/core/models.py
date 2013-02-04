@@ -163,7 +163,7 @@ class MetaData(models.Model):
             if not description:
                 for field in self._meta.fields:
                     if isinstance(field, field_type) and \
-                        field.name != "description":
+                            not field.name.startswith("description"):
                         description = getattr(self, field.name)
                         if description:
                             from mezzanine.core.templatetags.mezzanine_tags \
