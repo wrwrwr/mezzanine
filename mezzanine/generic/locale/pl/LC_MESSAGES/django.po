@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
 "POT-Creation-Date: 2013-02-01 17:14+0100\n"
-"PO-Revision-Date: 2012-10-26 14:26+0000\n"
+"PO-Revision-Date: 2013-02-04 12:00+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
 "language/pl/)\n"
@@ -31,7 +31,7 @@ msgstr "Aby dodać komentarz trzeba mieć konto"
 
 #: defaults.py:25
 msgid "If ``True``, users must log in to comment."
-msgstr "Czy użytkownik musi się zalogować, aby zostawić komentarz?"
+msgstr "Czy użytkownik musi się zalogować, aby komentować?"
 
 #: defaults.py:32
 msgid "Disqus shortname"
@@ -83,7 +83,7 @@ msgid ""
 "notification each time a new comment is posted on the site."
 msgstr ""
 "Lista adresów e-mail oddzielonych przecinkami, na które są wysłane "
-"powiadomienia o każdym nowym komentarzu opublikowanym na stronie."
+"powiadomienia o każdym nowym komentarzu dodanym na stronie."
 
 #: defaults.py:84
 msgid "Admin comments"
@@ -102,7 +102,7 @@ msgid ""
 "If ``True``, comments that have ``is_public`` unchecked will still be "
 "displayed, but replaced with a ``waiting to be approved`` message."
 msgstr ""
-"Czy komentarze nieoznaczone jako ``opublikowane`` powinny być wyświetlane "
+"Czy komentarze nieoznaczone jako ``opublikowane`` mają być wyświetlane "
 "jako ``czeka na akceptację``?"
 
 #: defaults.py:103

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
 "POT-Creation-Date: 2013-02-02 17:33+0100\n"
-"PO-Revision-Date: 2012-11-17 22:00+0000\n"
+"PO-Revision-Date: 2013-02-04 12:00+0000\n"
 "Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
 "language/pl/)\n"
@@ -222,8 +222,8 @@ msgid ""
 "After signing up, you'll receive an email with a link you need to click, in "
 "order to activate your account."
 msgstr ""
-"Po rejestracji, otrzymasz e-mail z linkiem, który musisz kliknąć aby "
-"aktywować Twoje konto."
+"Po rejestracji, otrzymasz e-mail z linkiem, który pozwoli ci na aktywację "
+"konta."
 
 #: templates/accounts/includes/user_panel.html:4
 msgid "Logged in as: "
@@ -257,7 +257,7 @@ msgstr "Witaj, użyto formularza zmiany hasła dla Twojego konta."
 #: templates/email/password_reset_verify.html:4
 #: templates/email/password_reset_verify.txt:4
 msgid "Please use the link below to log in and update your password."
-msgstr "Użyj poniższego linku, aby się zalogować i zaktualizować swoje hasło."
+msgstr "Użyj poniższego linku, aby się zalogować i zmienić swoje hasło."
 
 #: templates/email/password_reset_verify.html:6
 #: templates/email/password_reset_verify.txt:6

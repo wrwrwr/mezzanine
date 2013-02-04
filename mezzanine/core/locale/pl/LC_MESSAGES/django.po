@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
 "POT-Creation-Date: 2013-02-01 17:14+0100\n"
-"PO-Revision-Date: 2012-11-17 21:51+0000\n"
+"PO-Revision-Date: 2013-02-04 12:00+0000\n"
 "Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
 "language/pl/)\n"
@@ -91,7 +91,9 @@ msgstr ""
 msgid ""
 "A three item sequence, each containing a sequence of template tags used to "
 "render the admin dashboard."
-msgstr "Trzy ciągi tagów używanych do generowania panelu administracyjnego."
+msgstr ""
+"Ciąg zawierający trzy ciągi tagów używanych do generowania panelu "
+"administracyjnego."
 
 #: defaults.py:93
 msgid "Device specific template sub-directory to use as the default device."
@@ -300,8 +302,8 @@ msgid ""
 "Title that will display at the top of the site, and be appended to the "
 "content of the HTML title tags on every page."
 msgstr ""
-"Tytuł wyświetlany w górnej części witryny i dołączany do tagu ``title`` na "
-"każdej stronie."
+"Tytuł wyświetlany w górnej części witryny i dołączany do tagu ``title`` HTML "
+"na każdej stronie."
 
 #: defaults.py:325
 msgid "Tagline"
@@ -406,7 +408,7 @@ msgid ""
 "configuring TinyMCE when the default ``RICHTEXT_WIDGET_CLASS`` is used."
 msgstr ""
 "URL pliku JavaScript (relatywnie do ``STATIC_URL``) zawierającego "
-"konfigurację TinyMCE."
+"konfigurację TinyMCE, gdy używany jest domyślny ``RICHTEXT_WIDGET_CLASS``."
 
 #: defaults.py:493
 msgid ""
@@ -421,7 +423,9 @@ msgstr ""
 msgid ""
 "If ``True``, the south application will be automatically added to the "
 "``INSTALLED_APPS`` setting."
-msgstr "Czy South powinien zostać automatycznie dodany do ``INSTALLED_APPS``?"
+msgstr ""
+"Jeśli ``True``, aplikacja south zostanie automatycznie dodana do ustawienia "
+"``INSTALLED_APPS``."
 
 #: fields.py:37
 #, python-format
@@ -456,8 +460,8 @@ msgid ""
 "Optional title to be used in the HTML title tag. If left blank, the main "
 "title field will be used."
 msgstr ""
-"Inny tytuł w tagu HTML. Jeśli pozostawisz to pole puste, zostanie użyty "
-"tytuł strony."
+"Inny tytuł do tagu HTML. Jeśli pozostawisz to pole puste, zostanie użyty "
+"tytuł z głównego pola."
 
 #: models.py:113
 msgid "Description"
@@ -513,7 +517,7 @@ msgstr "Opublikowana treść zostanie ukryta po tym czasie"
 
 #: models.py:198
 msgid "Show in sitemap"
-msgstr "Dodaj do sitemap.xml"
+msgstr "Dodaj do ``sitemap``"
 
 #: models.py:401
 msgid "Author"
