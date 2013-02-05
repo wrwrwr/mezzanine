@@ -34,7 +34,7 @@ def admin_keywords_submit(request):
         if title:
             manager = Keyword.objects
             if settings.USE_MODELTRANSLATION:
-                manager = manager.fallbacks(True).populate_default(True)
+                manager = manager.fallbacks(True)
             keyword, created = manager.get_or_create_iexact(title=title)
             keyword_id = str(keyword.id)
             if keyword_id not in keyword_ids:

@@ -76,6 +76,10 @@ def create_pages(app, created_models, verbosity, interactive, **kwargs):
                     return
                 confirm = input("Please enter either 'yes' or 'no': ")
             install_optional_data(verbosity)
+    if settings.USE_MODELTRANSLATION:
+        # Fixtures load slugs only for one langague, not necessarily
+        # the default one.
+        call_command("update_generated_fields", verbosity=0)
 
 
 def create_site(app, created_models, verbosity, interactive, **kwargs):
