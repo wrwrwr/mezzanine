@@ -80,16 +80,25 @@ from __future__ import absolute_import, unicode_literals
 USE_SOUTH = True
 
 # If you'd like to translate your content, enable this and ensure that the
-# ``modeltranslation`` app is available. After creating a project or adding
-# new languages you need to create columns for translation fields in the
-# database by running the ``sync_translation_fields`` command. If you declare
-# fields for translation that you already have some data for, you may want to
-# fill their default translation with a copy of values from original fields
-# using ``update_translation_fields`` (e.g. new project with example content).
+# ``modeltranslation`` app is available. After adding new languages or fields
+# for translation you need to create columns for translation fields in the
+# database by running the ``makemigrations`` / ``migrate`` commands. If you
+# declare fields for translation that you already have some data for, you may
+# want to fill their default translation with a copy of values from original
+# fields using ``update_translation_fields``.
 # Finally, after adding new languages or loading fixtures without translations
 # you should run ``update_generated_fields`` to resave models with derived
 # fields, giving them a chance to generate translated values.
 USE_MODELTRANSLATION = False
+
+# When translated models are loaded from an untranslated fixture using
+# ``loaddata`` (e.g. example content) and the default language is not English,
+# default translation of fields like ``Slugged.title`` may end up null (and in
+# this case at least some non-empty fallback is necessary for slug generation).
+# Auto population fixes that by reproducing the provided value for all / some
+# translation fields; ``required`` is the minimum level to avoid errors -- only
+# missing default translations of non-nullable fields are filled.
+MODELTRANSLATION_AUTO_POPULATE = 'required'
 
 # On default all translation fields are hidden from South to avoid clashes
 # with migrations distributed with Mezzanine updates. If you let South handle
