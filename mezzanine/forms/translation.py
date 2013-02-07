@@ -14,4 +14,3 @@ class FieldTranslationOptions(TranslationOptions):
 
 translator.register(Form, FormTranslationOptions)
 translator.register(Field, FieldTranslationOptions)
-

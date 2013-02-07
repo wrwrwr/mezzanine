@@ -5,4 +5,3 @@ from modeltranslation.translator import translator
 
 
 translator.register(Keyword)
-

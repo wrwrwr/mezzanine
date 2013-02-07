@@ -214,10 +214,13 @@ class KeywordsField(BaseGenericRelation):
         Stores the keywords as a single string for searching.
         """
         assigned = related_manager.select_related("keyword")
+
         # Py3k: save = False
-        class NameSpace: pass
+        class NameSpace:
+            pass
         n = NameSpace()
         n.save = False
+
         def make_string():
             keywords = " ".join([unicode(a.keyword) for a in assigned])
             string_field_name = self.fields.keys()[0] % self.related_field_name
