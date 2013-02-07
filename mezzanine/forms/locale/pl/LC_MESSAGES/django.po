@@ -186,13 +186,15 @@ msgstr "Odpowiedź"
 
 #: models.py:20
 msgid "Send email to user"
-msgstr "Wyslij e-mail do użytkownika"
+msgstr "Wysyłaj e-mail do użytkownika"
 
 #: models.py:21
 msgid ""
 "To send an email to the email address supplied in the form upon submission, "
 "check this box."
-msgstr "Czy po przesłaniu formularza chcesz otrzymać e-mail na podany adres?"
+msgstr ""
+"Czy po przesłaniu formularza system powinien wysłać list na adres podany"
+"w formularzu?"
 
 #: models.py:23
 msgid "From address"
