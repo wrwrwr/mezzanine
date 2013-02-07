@@ -10,4 +10,3 @@ class GalleryImageTranslationOptions(TranslationOptions):
 
 translator.register(Gallery)
 translator.register(GalleryImage, GalleryImageTranslationOptions)
-

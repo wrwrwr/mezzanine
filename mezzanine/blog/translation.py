@@ -10,4 +10,3 @@ class BlogPostTranslationOptions(TranslationOptions):
 
 translator.register(BlogPost, BlogPostTranslationOptions)
 translator.register(BlogCategory)
-

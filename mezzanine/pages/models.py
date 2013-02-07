@@ -78,6 +78,7 @@ class Page(BasePage):
         """
         if self.id is None:
             self.content_model = self._meta.object_name.lower()
+
         def generate_translated_titles():
             titles = [self.title]
             parent = self.parent
