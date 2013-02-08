@@ -418,7 +418,12 @@ class SitePermission(models.Model):
     access.
     """
     user = models.OneToOneField("auth.User")
-    sites = models.ManyToManyField("sites.Site", blank=True)
+    sites = models.ManyToManyField("sites.Site", blank=True,
+                                   verbose_name=_('sites'))
+
+    class Meta:
+        verbose_name = _('Site permission')
+        verbose_name_plural = _('Site permissions')
 
 
 def create_site_permission(sender, **kw):
