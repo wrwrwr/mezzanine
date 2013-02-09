@@ -35,7 +35,7 @@ msgstr "Kontroluje kolejność i grupowanie menu administracyjnego."
 
 #: defaults.py:24 models.py:274
 msgid "Content"
-msgstr "Treść"
+msgstr "Zawartość"
 
 #: defaults.py:25
 msgid "Media Library"
