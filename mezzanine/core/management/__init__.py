@@ -46,13 +46,14 @@ def create_pages(app, created_models, verbosity, interactive, **kwargs):
             confirm = raw_input("\nWould you like to install some initial "
                                 "demo pages?\nEg: About us, Contact form, "
                                 "Gallery. (yes/no): ")
-            while True:
-                if confirm == "yes":
-                    break
-                elif confirm == "no":
-                    return
+            while confirm not in ("yes", "no"):
                 confirm = raw_input("Please enter either 'yes' or 'no': ")
-            install_optional_data(verbosity)
+            if confirm == "yes":
+                install_optional_data(verbosity)
+    if settings.USE_MODELTRANSLATION:
+        # Fixtures have slugs only for one langague, not necessarily
+        # loaded for the default one.
+        call_command("update_generated_fields", verbosity=0)
 
 
 def create_site(app, created_models, verbosity, interactive, **kwargs):

@@ -16,6 +16,7 @@ from mezzanine.utils.models import base_concrete_model, get_user_model
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.timezone import now
 from mezzanine.utils.urls import admin_url, slugify
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 
 User = get_user_model()
 
@@ -67,25 +68,32 @@ class Slugged(SiteRelated):
         """
         Create a unique slug by appending an index.
         """
-        if not self.slug:
-            self.slug = self.get_slug()
-        # For custom content types, use the ``Page`` instance for
-        # slug lookup.
-        concrete_model = base_concrete_model(Slugged, self)
-        i = 0
-        while True:
-            if i > 0:
-                if i > 1:
-                    self.slug = self.slug.rsplit("-", 1)[0]
-                self.slug = "%s-%s" % (self.slug, i)
-            qs = concrete_model.objects.all()
-            if self.id is not None:
-                qs = qs.exclude(id=self.id)
-            try:
-                qs.get(slug=self.slug)
-            except ObjectDoesNotExist:
-                break
-            i += 1
+        def make_slug():
+            with disable_fallbacks():
+                # With fall backs enabled, self.slug could seem non-empty due
+                # to getting a fall back value from another language. However
+                # we need all values to be generated for lookups to work.
+                no_slug = not self.slug
+            if no_slug:
+                self.slug = self.get_slug()
+            # For custom content types, use the ``Page`` instance for
+            # slug lookup.
+            concrete_model = base_concrete_model(Slugged, self)
+            i = 0
+            while True:
+                if i > 0:
+                    if i > 1:
+                        self.slug = self.slug.rsplit("-", 1)[0]
+                    self.slug = "%s-%s" % (self.slug, i)
+                qs = concrete_model.objects.all()
+                if self.id is not None:
+                    qs = qs.exclude(id=self.id)
+                try:
+                    qs.get(slug=self.slug)
+                except ObjectDoesNotExist:
+                    break
+                i += 1
+        for_all_languages(make_slug)
         super(Slugged, self).save(*args, **kwargs)
 
     def get_slug(self):
@@ -125,7 +133,9 @@ class MetaData(models.Model):
         Set the description field on save.
         """
         if self.gen_description:
-            self.description = strip_tags(self.description_from_content())
+            def make_description():
+                self.description = strip_tags(self.description_from_content())
+            for_all_languages(make_description)
         super(MetaData, self).save(*args, **kwargs)
 
     def meta_title(self):
@@ -146,7 +156,7 @@ class MetaData(models.Model):
             if not description:
                 for field in self._meta.fields:
                     if isinstance(field, field_type) and \
-                        field.name != "description":
+                            not field.name.startswith("description"):
                         description = getattr(self, field.name)
                         if description:
                             from mezzanine.core.templatetags.mezzanine_tags \

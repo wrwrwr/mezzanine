@@ -22,7 +22,8 @@ register_setting(
     editable=False,
     default=(
         (_("Content"), ("pages.Page", "blog.BlogPost",
-           "generic.ThreadedComment", (_("Media Library"), "fb_browse"),)),
+                        "generic.ThreadedComment", "generic.Keyword",
+                        (_("Media Library"), "fb_browse"),)),
         (_("Site"), ("sites.Site", "redirects.Redirect", "conf.Setting")),
         (_("Users"), ("auth.User", "auth.Group",)),
     ),
@@ -467,7 +468,7 @@ register_setting(
         "COMMENTS_DISQUS_API_PUBLIC_KEY", "COMMENTS_DISQUS_API_SECRET_KEY",
         "DEV_SERVER", "FORMS_USE_HTML5", "GRAPPELLI_INSTALLED",
         "GOOGLE_ANALYTICS_ID", "JQUERY_FILENAME", "LOGIN_URL", "LOGOUT_URL",
-        "SITE_TITLE", "SITE_TAGLINE", "RATINGS_MAX",
+        "SITE_TITLE", "SITE_TAGLINE", "RATINGS_MAX", "USE_MODELTRANSLATION",
     ),
 )
 

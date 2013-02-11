@@ -29,7 +29,10 @@ def admin_keywords_submit(request):
         title = "".join([c for c in title if c.isalnum() or c in "- "])
         title = title.strip().lower()
         if title:
-            keyword, created = Keyword.objects.get_or_create(title=title)
+            manager = Keyword.objects
+            if settings.USE_MODELTRANSLATION:
+                manager = manager.fallbacks(True)
+            keyword, created = manager.get_or_create(title=title)
             id = str(keyword.id)
             if id not in ids:
                 ids.append(id)

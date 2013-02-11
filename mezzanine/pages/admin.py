@@ -7,6 +7,7 @@ from django.core.urlresolvers import NoReverseMatch
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 
+from mezzanine.conf import settings
 from mezzanine.pages.models import Page, RichTextPage, Link
 from mezzanine.core.admin import DisplayableAdmin, DisplayableAdminForm
 from mezzanine.utils.urls import admin_url
@@ -65,6 +66,14 @@ class PageAdmin(DisplayableAdmin):
                 exclude_fields.extend(self.form.Meta.exclude)
             except (AttributeError, TypeError):
                 pass
+            if settings.USE_MODELTRANSLATION:
+                from modeltranslation.translator import (NotRegistered,
+                                                         translator)
+                try:
+                    trans_opts = translator.get_options_for_model(self.model)
+                    exclude_fields.extend(trans_opts.fields.keys())
+                except NotRegistered:
+                    pass
             fields = self.model._meta.fields + self.model._meta.many_to_many
             for field in reversed(fields):
                 if field.name not in exclude_fields and field.editable:

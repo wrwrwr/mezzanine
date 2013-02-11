@@ -66,6 +66,9 @@ fieldset .field-box {margin-right:150px !important;}
 /* description / generate */
 .gen_description textarea {margin-bottom:10px;}
 
+/* Shorter editable fields on lists with Grappelli-safe. */
+.result-list .vTextField {width: auto;}
+
 /* Fix for IE7 layout issue */
 #content { margin-left: 0; margin-right: 0; padding: 0 15px; }
 

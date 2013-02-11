@@ -18,6 +18,9 @@ mostly get applied globally to different parts of the admin.
 
 {% block extrahead %}
 <link rel="stylesheet" href="{{ STATIC_URL }}mezzanine/css/admin/global.css">
+{% if settings.USE_MODELTRANSLATION %}
+<link rel="stylesheet" href="{{ STATIC_URL }}mezzanine/css/jquery-ui-1.9.1.css">
+{% endif %}
 <style>
 /*
 These are set in PageAdmin's view methods,
@@ -60,6 +63,10 @@ window.__grappelli_installed = {{ settings.GRAPPELLI_INSTALLED|lower }};
         {% endif %}
         <script src="{{ STATIC_URL }}mezzanine/js/admin/ajax_csrf.js"></script>
         <script src="{{ STATIC_URL }}mezzanine/js/admin/collapse_backport.js"></script>
+        {% if settings.USE_MODELTRANSLATION %}
+        <script src="{{ STATIC_URL }}mezzanine/js/jquery-ui-1.9.1.custom.min.js"></script>
+        <script src="{{ STATIC_URL }}modeltranslation/js/tabbed_translation_fields.js"></script>
+        {% endif %}
         {% admin_dropdown_menu %}
     {% endif %}
 {% endif %}
