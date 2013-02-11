@@ -8,8 +8,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
-"Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
-"POT-Creation-Date: 2013-02-01 17:14+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-02-11 23:44+0100\n"
 "PO-Revision-Date: 2013-02-04 12:00+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -102,8 +102,8 @@ msgid ""
 "If ``True``, comments that have ``is_public`` unchecked will still be "
 "displayed, but replaced with a ``waiting to be approved`` message."
 msgstr ""
-"Czy komentarze nieoznaczone jako ``opublikowane`` mają być wyświetlane "
-"jako ``czeka na akceptację``?"
+"Czy komentarze nieoznaczone jako ``opublikowane`` mają być wyświetlane jako "
+"``czeka na akceptację``?"
 
 #: defaults.py:103
 msgid "Show removed comments"
@@ -269,6 +269,10 @@ msgstr "Aktualna ocena"
 msgid "Currently unrated"
 msgstr "Brak ocen"
 
-#: templates/generic/includes/rating.html:18
+#: templates/generic/includes/rating.html:14
+msgid "Thank you for your rating!"
+msgstr "Dziękujemy za ocenę!"
+
+#: templates/generic/includes/rating.html:21
 msgid "Rate"
 msgstr "Oceń"
