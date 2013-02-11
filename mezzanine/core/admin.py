@@ -17,6 +17,16 @@ from mezzanine.utils.models import get_user_model
 User = get_user_model()
 
 
+admin_bases = [admin.ModelAdmin]
+if "reversion" in settings.INSTALLED_APPS:
+    from reversion import VersionAdmin
+    admin_bases.append(VersionAdmin)
+if settings.USE_MODELTRANSLATION:
+    from modeltranslation.admin import TranslationAdmin
+    admin_bases.append(TranslationAdmin)
+BaseModelAdmin = type('BaseModelAdmin', tuple(admin_bases), {})
+
+
 class DisplayableAdminForm(ModelForm):
     def clean_content(form):
         status = form.cleaned_data.get("status")
@@ -27,7 +37,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class BaseDisplayableAdmin(admin.ModelAdmin):
+class DisplayableAdmin(BaseModelAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
@@ -52,19 +62,6 @@ class BaseDisplayableAdmin(admin.ModelAdmin):
     )
 
     form = DisplayableAdminForm
-
-
-displayable_bases = [BaseDisplayableAdmin]
-if "reversion" in settings.INSTALLED_APPS:
-    from reversion import VersionAdmin
-    displayable_bases.append(VersionAdmin)
-if settings.USE_MODELTRANSLATION:
-    from modeltranslation.admin import TranslationAdmin
-    displayable_bases.append(TranslationAdmin)
-
-
-class DisplayableAdmin(*displayable_bases):
-    pass
 
 
 class BaseDynamicInlineAdmin(object):
