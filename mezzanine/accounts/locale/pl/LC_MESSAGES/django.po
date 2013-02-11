@@ -7,10 +7,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-11 19:58-0500\n"
-"PO-Revision-Date: 2012-10-26 17:12+0000\n"
-"Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
+"Report-Msgid-Bugs-To: https://github.com/stephenmcd/mezzanine/issues\n"
+"POT-Creation-Date: 2013-02-02 17:33+0100\n"
+"PO-Revision-Date: 2013-02-04 12:00+0000\n"
+"Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
 "language/pl/)\n"
 "Language: pl\n"
@@ -26,29 +26,28 @@ msgstr "Minimalna długość hasła"
 
 #: defaults.py:27
 msgid "List of fields to exclude from the profile form."
-msgstr "Lista pól do wykluczenia z formularza profilowego."
+msgstr "Lista pól do wykluczenia z formularza profilu."
 
 #: defaults.py:34
 msgid ""
 "Dotted package path and class name of profile form to use for users signing "
 "up and updating their profile, when ``mezzanine.accounts`` is installed."
 msgstr ""
-"Punktowa scieżka dostępu oraz nazwa klasy formularza profilowego do "
-"wykorzystania przez użytkowników rejestrujących się i akyualizujących swój "
-"profil, kiedy ``mezzanine.accounts`` jest zainstalowane."
+"Ścieżka pakietu i nazwa klasy (z kropkami) formularza dla rejestrujących się "
+"i aktualizujących swój profil użytkowników (gdy zainstalowane jest "
+"``mezzanine.accounts``)."
 
 #: defaults.py:43
 msgid "If ``True``, users will have their own public profile pages."
-msgstr "Jeśli ``Prawda`` użytkownicy będą posiadać publiczną stronę profilową."
+msgstr "Czy profile użytkowników powinny być publiczne?"
 
 #: defaults.py:51
 msgid ""
 "If ``True``, when users create an account, they will be sent an email with a "
 "verification link, which they must click to enable their account."
 msgstr ""
-"Jeśli ``Prawda``, kiedy użytkownicy będą tworzyć konto, zostanie wysłany e-"
-"mail z linkiem weryfikacyjnym, po którego kliknięciu zostanie aktywowane "
-"konto."
+"Czy po rejestracji wymagać od użytkowników aktywacji konta poprzez "
+"kliknięcie w link przesyłany w e-mailu?"
 
 #: forms.py:18 forms.py:187
 msgid "Username or email address"
@@ -60,7 +59,7 @@ msgstr "Hasło"
 
 #: forms.py:32
 msgid "Invalid username/email and password"
-msgstr "Błędna nazwa użytkownika i/lub hasło"
+msgstr "Nieprawidłowa nazwa użytkownika i/lub hasło"
 
 #: forms.py:34
 msgid "Your account is inactive"
@@ -68,11 +67,11 @@ msgstr "Twoje konto jest nieaktywne"
 
 #: forms.py:65
 msgid "Password (again)"
-msgstr "Hasło (potwierdzenie)"
+msgstr "Hasło (ponownie)"
 
 #: forms.py:78
 msgid "Only letters, numbers, dashes or underscores please"
-msgstr "Należy używać wyłącznie liter, cyfr, myśliników lub podkreślników"
+msgstr "Wyłącznie litery, cyfry, myśliniki lub podkreślniki"
 
 #: forms.py:92
 msgid "Leave blank unless you want to change your password"
@@ -107,49 +106,73 @@ msgstr "Nieprawidłowa nazwa użytkownika/e-mail"
 
 #: views.py:28
 msgid "Successfully logged in"
-msgstr "Zalogowany pomyślnie"
+msgstr "Pomyślne logowanie"
 
 #: views.py:31
+msgctxt "title"
 msgid "Login"
-msgstr "Nazwa użytkownika"
+msgstr "Logowanie"
 
-#: views.py:40
+#: views.py:32
+msgctxt "action"
+msgid "Login"
+msgstr "Zaloguj się"
+
+#: views.py:41
 msgid "Successfully logged out"
-msgstr "Wylogowany pomyślnie"
+msgstr "Pomyślne wylogowanie"
 
-#: views.py:54
+#: views.py:55
 msgid ""
 "A verification email has been sent with a link for activating your account."
 msgstr "Został wysłany e-mail z linkiem do aktywacji konta."
 
-#: views.py:58 views.py:77
+#: views.py:59 views.py:79
 msgid "Successfully signed up"
-msgstr "Zarejestrowany pomyślnie"
+msgstr "Pomyślna rejestracja"
 
-#: views.py:61
+#: views.py:62
+msgctxt "title"
 msgid "Signup"
 msgstr "Rejestracja"
 
-#: views.py:80 views.py:164
-msgid "The link you clicked is no longer valid."
-msgstr "Wybrany link jest już nieaktywny."
+#: views.py:63
+msgctxt "action"
+msgid "Signup"
+msgstr "Zarejestruj się"
 
-#: views.py:138
+#: views.py:82 views.py:170
+msgid "The link you clicked is no longer valid."
+msgstr "Wybrany link jest już nieważny."
+
+#: views.py:140
 msgid "Profile updated"
 msgstr "Profil zaktualizowany"
 
-#: views.py:143
+#: views.py:146
+msgctxt "title"
 msgid "Update Profile"
-msgstr "Zaktualizuj profil"
+msgstr "Aktualizacja profilu"
 
-#: views.py:152
+#: views.py:147
+msgctxt "action"
+msgid "Update Profile"
+msgstr "Aktualizuj"
+
+#: views.py:156
 msgid ""
 "A verification email has been sent with a link for resetting your password."
 msgstr "E-mail weryfikacyjny z linkiem do zmiany hasła został wysłany."
 
-#: views.py:154
+#: views.py:159
+msgctxt "title"
 msgid "Password Reset"
 msgstr "Zmiana hasła"
+
+#: views.py:160
+msgctxt "action"
+msgid "Password Reset"
+msgstr "Resetuj"
 
 #: templates/accounts/account_login.html:7
 msgid "You're already logged in."
@@ -161,7 +184,7 @@ msgid ""
 "If you don't have an account you can <a href=\"%(signup_url)s?next=%(next)s"
 "\">sign up</a> for one now."
 msgstr ""
-"Jeśli nie masz konta, możesz <a href=\\\"%(signup_url)s?next=%(next)s\\"
+"Jeśli nie masz konta, możesz <a href=\"%(signup_url)s?next=%(next)s"
 "\">zarejestrować się</a> teraz."
 
 #: templates/accounts/account_login.html:14
@@ -171,20 +194,20 @@ msgid ""
 "\">reset your password</a> if you've forgotten it.</p>"
 msgstr ""
 "<p>Możesz również <a href=\"%(password_reset_url)s?next="
-"%(profile_update_url)s\">zmienić swoje hasło </a> jeśli go zapomniałeś.</p>"
+"%(profile_update_url)s\">zmienić swoje hasło</a> jeśli je zapomniałeś.</p>"
 
 #: templates/accounts/account_password_reset.html:6
 msgid ""
 "Enter your username or email address and you'll receive an email with a link "
 "you need to click, in order to log in and change your password."
 msgstr ""
-"Wpisz swoją nazwę użytkownika, aby otrzymać e-mail z linkiem, który pozwoli "
-"ci się zalogować i zmienić hasło."
+"Wpisz swoją nazwę użytkownika lub adres e-mail, aby otrzymać e-mail z "
+"linkiem, który pozwoli ci się zalogować i zmienić hasło."
 
 #: templates/accounts/account_profile.html:17
 #: templates/accounts/includes/user_panel.html:9
 msgid "Update profile"
-msgstr "Zaktualizuj profil"
+msgstr "Aktualizuj profil"
 
 #: templates/accounts/account_signup.html:7
 msgid ""
@@ -199,7 +222,7 @@ msgid ""
 "After signing up, you'll receive an email with a link you need to click, in "
 "order to activate your account."
 msgstr ""
-"Po rejestracji, otrzymasz e-mail z linkiem, który pozwoli ci na aktywacje "
+"Po rejestracji, otrzymasz e-mail z linkiem, który pozwoli ci na aktywację "
 "konta."
 
 #: templates/accounts/includes/user_panel.html:4
@@ -229,13 +252,12 @@ msgstr "Informacje o profilu"
 #: templates/email/password_reset_verify.html:3
 #: templates/email/password_reset_verify.txt:3
 msgid "Hey there, the password reset form was used for your account."
-msgstr "Witaj, prośba o zmiane hasła do Twojego konta została zeralizowana."
+msgstr "Witaj, użyto formularza zmiany hasła dla Twojego konta."
 
 #: templates/email/password_reset_verify.html:4
 #: templates/email/password_reset_verify.txt:4
 msgid "Please use the link below to log in and update your password."
-msgstr ""
-"Proszę użyć poniższego linku, aby się zalogować i zaktualizować swoje hasło."
+msgstr "Użyj poniższego linku, aby się zalogować i zmienić swoje hasło."
 
 #: templates/email/password_reset_verify.html:6
 #: templates/email/password_reset_verify.txt:6

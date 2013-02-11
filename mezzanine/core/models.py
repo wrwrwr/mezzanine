@@ -427,7 +427,6 @@ class SitePermission(models.Model):
     used instead of ``User.is_staff``, for admin and inline-editing
     access.
     """
-
     user = models.ForeignKey(User, verbose_name=_("Author"),
         related_name="%(class)ss")
     sites = models.ManyToManyField("sites.Site", blank=True,
