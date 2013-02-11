@@ -161,6 +161,12 @@ class Page(BasePage):
                 page.save()
         self.slug = new_slug
 
+    def has_children(self):
+        """
+        Does the page have any children?
+        """
+        return len(Page.objects.filter(parent_id=self.id)) > 0
+
     def set_parent(self, new_parent):
         """
         Change the parent of this page, changing this page's slug to match
