@@ -17,13 +17,15 @@ from mezzanine.utils.models import get_user_model
 User = get_user_model()
 
 
-admin_bases = [admin.ModelAdmin]
+admin_bases = []
 if "reversion" in settings.INSTALLED_APPS:
     from reversion import VersionAdmin
     admin_bases.append(VersionAdmin)
 if settings.USE_MODELTRANSLATION:
     from modeltranslation.admin import TranslationAdmin
     admin_bases.append(TranslationAdmin)
+if not admin_bases:
+    admin_bases.append(admin.ModelAdmin)
 BaseModelAdmin = type('BaseModelAdmin', tuple(admin_bases), {})
 
 
