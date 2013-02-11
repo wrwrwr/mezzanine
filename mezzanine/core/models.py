@@ -1,5 +1,3 @@
-
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.generic import GenericForeignKey
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -14,11 +12,13 @@ from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager, CurrentSiteManager
 from mezzanine.generic.fields import KeywordsField
 from mezzanine.utils.html import TagCloser
-from mezzanine.utils.models import base_concrete_model
+from mezzanine.utils.models import base_concrete_model, get_user_model
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.timezone import now
 from mezzanine.utils.urls import admin_url, slugify
 from mezzanine.utils.translation import for_all_languages, disable_fallbacks
+
+User = get_user_model()
 
 
 class SiteRelated(models.Model):
@@ -408,7 +408,7 @@ class Ownable(models.Model):
     Abstract model that provides ownership of an object for a user.
     """
 
-    user = models.ForeignKey("auth.User", verbose_name=_("Author"),
+    user = models.ForeignKey(User, verbose_name=_("Author"),
         related_name="%(class)ss")
 
     class Meta:
@@ -427,7 +427,9 @@ class SitePermission(models.Model):
     used instead of ``User.is_staff``, for admin and inline-editing
     access.
     """
-    user = models.OneToOneField("auth.User")
+
+    user = models.ForeignKey(User, verbose_name=_("Author"),
+        related_name="%(class)ss")
     sites = models.ManyToManyField("sites.Site", blank=True)
 
 

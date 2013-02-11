@@ -1,24 +1,30 @@
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
 from django.db.models import AutoField
 from django.forms import ValidationError, ModelForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth.models import User as AuthUser
 
 from mezzanine.conf import settings
 from mezzanine.core.forms import DynamicInlineAdminForm
 from mezzanine.core.models import (Orderable, SitePermission,
                                    CONTENT_STATUS_PUBLISHED)
 from mezzanine.utils.urls import admin_url
+from mezzanine.utils.models import get_user_model
+
+User = get_user_model()
 
 
+admin_bases = [admin.ModelAdmin]
+if "reversion" in settings.INSTALLED_APPS:
+    from reversion import VersionAdmin
+    admin_bases.append(VersionAdmin)
 if settings.USE_MODELTRANSLATION:
     from modeltranslation.admin import TranslationAdmin
-else:
-    TranslationAdmin = admin.ModelAdmin
+    admin_bases.append(TranslationAdmin)
+BaseModelAdmin = type('BaseModelAdmin', tuple(admin_bases), {})
 
 
 class DisplayableAdminForm(ModelForm):
@@ -31,7 +37,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class DisplayableAdmin(TranslationAdmin):
+class DisplayableAdmin(BaseModelAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
@@ -217,5 +223,7 @@ class SitePermissionInline(admin.TabularInline):
 class SitePermissionUserAdmin(UserAdmin):
     inlines = [SitePermissionInline]
 
-admin.site.unregister(User)
-admin.site.register(User, SitePermissionUserAdmin)
+# only register if User hasn't been overridden
+if User == AuthUser:
+    admin.site.unregister(User)
+    admin.site.register(User, SitePermissionUserAdmin)
