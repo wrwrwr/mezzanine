@@ -1,11 +1,11 @@
 
 from django.contrib import admin
 from django.contrib.auth import logout
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import (HttpResponse, HttpResponseRedirect,
                          HttpResponsePermanentRedirect)
 from django.utils.cache import get_max_age
-from django.utils.translation import override
+from django.utils.translation import get_language_from_path, override
 from django.template import Template, RequestContext
 
 from mezzanine.conf import settings
@@ -215,6 +215,7 @@ class LocaleURLMiddleware(object):
     """
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        # Django 1.5: request.resolve_match.
         request.view_func = view_func
         request.view_args = view_args
         request.view_kwargs = view_kwargs
@@ -223,13 +224,20 @@ class LocaleURLMiddleware(object):
         languages_urls = []
         for (code, name) in settings.LANGUAGES:
             with override(code):
-                if 'page' in response.context_data:
-                    url = response.context_data['page'].get_absolute_url()
-                elif 'product' in response.context_data:
-                    url = response.context_data['product'].get_absolute_url()
+                if "page" in response.context_data:
+                    url = response.context_data["page"].get_absolute_url()
+                elif "product" in response.context_data:
+                    url = response.context_data["product"].get_absolute_url()
                 else:
-                    url = reverse(request.view_func, args=request.view_args,
-                                  kwargs=request.view_kwargs)
+                    try:
+                        url = reverse(request.view_func,
+                                      args=request.view_args,
+                                      kwargs=request.view_kwargs)
+                    except NoReverseMatch:
+                        url = request.path
+                        lang_code = get_language_from_path(url)
+                        if lang_code:
+                            url = url.replace(lang_code, "", 1)
                 languages_urls.append((code, name, url))
-        response.context_data['LANGUAGES_URLS'] = languages_urls
+        response.context_data["LANGUAGES_URLS"] = languages_urls
         return response
