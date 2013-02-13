@@ -235,9 +235,9 @@ class LocaleURLMiddleware(object):
                                       kwargs=request.view_kwargs)
                     except NoReverseMatch:
                         url = request.path
-                        lang_code = get_language_from_path(url)
-                        if lang_code:
-                            url = url.replace(lang_code, "", 1)
+                        path_code = get_language_from_path(url)
+                        if path_code:
+                            url = url.replace(path_code, code, 1)
                 languages_urls.append((code, name, url))
         response.context_data["LANGUAGES_URLS"] = languages_urls
         return response
