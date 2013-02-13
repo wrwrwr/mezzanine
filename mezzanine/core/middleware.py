@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.http import (HttpResponse, HttpResponseRedirect,
                          HttpResponsePermanentRedirect)
 from django.utils.cache import get_max_age
+from django.utils.translation import override
 from django.template import Template, RequestContext
 
 from mezzanine.conf import settings
@@ -203,3 +204,32 @@ class SSLRedirectMiddleware(object):
                     return HttpResponseRedirect("https://%s" % url)
             elif request.is_secure() and settings.SSL_FORCED_PREFIXES_ONLY:
                 return HttpResponseRedirect("http://%s" % url)
+
+
+class LocaleURLMiddleware(object):
+    """
+    Adds ``LANGUAGES_URLS`` list to the context with a ``(language_code,
+    language_name, localized_url)`` triple for every language;
+    ``localized_url`` starts with a language prefix and has page / product
+    slugs translated.
+    """
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        request.view_func = view_func
+        request.view_args = view_args
+        request.view_kwargs = view_kwargs
+
+    def process_template_response(self, request, response):
+        languages_urls = []
+        for (code, name) in settings.LANGUAGES:
+            with override(code):
+                if 'page' in response.context_data:
+                    url = response.context_data['page'].get_absolute_url()
+                elif 'product' in response.context_data:
+                    url = response.context_data['product'].get_absolute_url()
+                else:
+                    url = reverse(request.view_func, args=request.view_args,
+                                  kwargs=request.view_kwargs)
+                languages_urls.append((code, name, url))
+        response.context_data['LANGUAGES_URLS'] = languages_urls
+        return response
