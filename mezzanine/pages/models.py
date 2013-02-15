@@ -6,8 +6,8 @@ from mezzanine.conf import settings
 from mezzanine.core.models import Displayable, Orderable, RichText
 from mezzanine.pages.fields import MenusField
 from mezzanine.pages.managers import PageManager
-from mezzanine.utils.urls import path_to_slug, slugify
 from mezzanine.utils.translation import for_all_languages
+from mezzanine.utils.urls import slugify
 
 
 class BasePage(Orderable, Displayable):
@@ -169,6 +169,14 @@ class Page(BasePage):
         old_parent_slug = self.parent.slug if self.parent else ""
         new_parent_slug = new_parent.slug if new_parent else ""
 
+        # Make sure setting the new parent won't cause a cycle.
+        parent = new_parent
+        while parent is not None:
+            if parent.pk == self.pk:
+                raise AttributeError("You can't set a page or its child as"
+                                     " a parent.")
+            parent = parent.parent
+
         self.parent = new_parent
         self.save()
 
@@ -222,13 +230,7 @@ class Page(BasePage):
         # Is my parent the same as the current page's?
         self.is_current_sibling = self.parent_id == current_parent_id
         # Am I the current page?
-        try:
-            request = context["request"]
-        except KeyError:
-            # No request context, most likely when tests are run.
-            self.is_current = False
-        else:
-            self.is_current = self.slug == path_to_slug(request.path_info)
+        self.is_current = self == current_page
 
         # Is the current page me or any page up the parent chain?
         def is_c_or_a(page_id):
