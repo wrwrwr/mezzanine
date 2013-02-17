@@ -10,6 +10,7 @@ registered.
 """
 
 from collections import defaultdict
+from locale import LC_ALL, setlocale
 
 from django.conf import settings
 from django.contrib import admin
@@ -18,6 +19,14 @@ from django.db.models.signals import class_prepared
 
 from mezzanine.boot.lazy_admin import LazyAdminSite
 from mezzanine.utils.importing import import_dotted_path
+
+
+# Python does not apply locale settings from environment, so it expects only
+# ASCII filenames, even if environment has some UTF-8 locale active (as is
+# fairly common nowadays). When Django tries to open template files named
+# after slugs, which can potentially contain Unicode characters, encoding
+# exception is thrown. Activate what Python thinks is the default locale.
+setlocale(LC_ALL, "")
 
 
 # Convert ``EXTRA_MODEL_FIELDS`` into a more usable structure, a
