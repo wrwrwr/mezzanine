@@ -79,12 +79,14 @@ class Slugged(SiteRelated):
 
     def save(self, *args, **kwargs):
         """
-        If no slug is provided, generates one before saving.
+        If no slug is provided, generates one before saving. Slugs are based
+        on titles, a translatable field, so the slug processing needs to be
+        repeated for each available language.
         """
         def generate_translated_slug():
             with disable_fallbacks():
                 # With fallbacks enabled, self.slug could seem non-empty due
-                # to getting a fall back value from another language. However
+                # to getting a fallback value from another language. However
                 # we need all values to be generated for lookups to work.
                 no_slug = not self.slug
             if no_slug:
