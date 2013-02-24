@@ -203,8 +203,8 @@ def gravatar_url(email, size=32):
     """
     Return the full URL for a Gravatar given an email hash.
     """
-    email_hash = md5(email).hexdigest()
-    return "http://www.gravatar.com/avatar/%s?s=%s" % (email_hash, size)
+    bits = (md5(email.lower()).hexdigest(), size)
+    return "http://www.gravatar.com/avatar/%s?s=%s&d=identicon&r=PG" % bits
 
 
 @register.to_end_tag
@@ -527,9 +527,10 @@ def admin_dropdown_menu(context):
     context["dropdown_menu_app_list"] = admin_app_list(context["request"])
     user = context["request"].user
     if user.is_superuser:
-        context["dropdown_menu_sites"] = list(Site.objects.all())
+        sites = Site.objects.all()
     else:
-        context["dropdown_menu_sites"] = list(user.sitepermission.sites.all())
+        sites = user.sitepermissions.get().sites.all()
+    context["dropdown_menu_sites"] = list(sites)
     context["dropdown_menu_selected_site_id"] = current_site_id()
     return context
 
