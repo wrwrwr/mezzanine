@@ -70,8 +70,8 @@ class Slugged(SiteRelated):
         """
         def make_slug():
             with disable_fallbacks():
-                # With fall backs enabled, self.slug could seem non-empty due
-                # to getting a fall back value from another language. However
+                # With fallbacks enabled, self.slug could seem non-empty due
+                # to getting a fallback value from another language. However
                 # we need all values to be generated for lookups to work.
                 no_slug = not self.slug
             if no_slug:
