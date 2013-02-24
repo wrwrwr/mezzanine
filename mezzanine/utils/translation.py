@@ -52,15 +52,9 @@ def disable_fallbacks():
     for a particular language.
     """
     if settings.USE_MODELTRANSLATION:
-        # Override the modeltranslation setting and restore it after
-        # executing the wrapped block.
-        from modeltranslation import settings as mt_settings
-        current_enable_fallbacks = mt_settings.ENABLE_FALLBACKS
-        mt_settings.ENABLE_FALLBACKS = False
-        try:
+        from modeltranslation.utils import fallbacks
+        with fallbacks(False):
             yield
-        finally:
-            mt_settings.ENABLE_FALLBACKS = current_enable_fallbacks
     else:
         # Just execute the code if content translation is not used.
         yield
