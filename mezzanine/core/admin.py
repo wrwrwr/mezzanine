@@ -71,7 +71,7 @@ else:
         pass
 
 
-class DynamicInlineAdmin(TranslationInlineModelAdmin):
+class DynamicInlineAdmin(admin.options.InlineModelAdmin):
     """
     Admin inline that uses JS to inject an "Add another" link which
     when clicked, dynamically reveals another fieldset. Also handles
