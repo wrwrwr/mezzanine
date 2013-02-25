@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import AutoField
 from django.forms import ValidationError, ModelForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -70,7 +69,7 @@ else:
         pass
 
 
-class BaseDynamicInlineAdmin(object):
+class DynamicInlineAdmin(admin.options.InlineModelAdmin):
     """
     Admin inline that uses JS to inject an "Add another" link which
     when clicked, dynamically reveals another fieldset. Also handles
@@ -81,26 +80,21 @@ class BaseDynamicInlineAdmin(object):
     form = DynamicInlineAdminForm
     extra = 20
 
-    def __init__(self, *args, **kwargs):
-        super(BaseDynamicInlineAdmin, self).__init__(*args, **kwargs)
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(DynamicInlineAdmin, self).get_fieldsets(request, obj)
         if issubclass(self.model, Orderable):
-            fields = self.fields
-            if not fields:
-                fields = self.model._meta.fields
-                exclude = self.exclude or []
-                fields = [f.name for f in fields if f.editable and
-                    f.name not in exclude and not isinstance(f, AutoField)]
+            fields = fieldsets[0][1]["fields"]
             if "_order" in fields:
-                del fields[fields.index("_order")]
+                fields.remove("_order")
                 fields.append("_order")
-            self.fields = fields
+        return fieldsets
 
 
-class TabularDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.TabularInline):
+class TabularDynamicInlineAdmin(DynamicInlineAdmin):
     template = "admin/includes/dynamic_inline_tabular.html"
 
 
-class StackedDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.StackedInline):
+class StackedDynamicInlineAdmin(DynamicInlineAdmin):
     template = "admin/includes/dynamic_inline_stacked.html"
 
     def __init__(self, *args, **kwargs):
