@@ -86,9 +86,8 @@ class DynamicInlineAdmin(TranslationInlineModelAdmin):
         fieldsets = super(DynamicInlineAdmin, self).get_fieldsets(request, obj)
         if issubclass(self.model, Orderable):
             fields = fieldsets[0][1]["fields"]
-            if "_order" in fields:
-                fields.remove("_order")
-                fields.append("_order")
+            fields.remove("_order")
+            fields.append("_order")
         return fieldsets
 
 
