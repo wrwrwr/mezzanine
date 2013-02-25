@@ -20,9 +20,11 @@ User = get_user_model()
 
 
 if settings.USE_MODELTRANSLATION:
-    from modeltranslation.admin import TranslationAdmin
+    from modeltranslation.admin import (TranslationAdmin,
+                                        TranslationInlineModelAdmin)
 else:
     TranslationAdmin = admin.ModelAdmin
+    TranslationInlineModelAdmin = admin.options.InlineModelAdmin
 
 
 class DisplayableAdminForm(ModelForm):
@@ -70,7 +72,7 @@ class DisplayableAdmin(TranslationAdmin):
             pass
 
 
-class DynamicInlineAdmin(admin.options.InlineModelAdmin):
+class DynamicInlineAdmin(TranslationInlineModelAdmin):
     """
     Admin inline that uses JS to inject an "Add another" link which
     when clicked, dynamically reveals another fieldset. Also handles
