@@ -31,8 +31,8 @@ def login(request, template="accounts/account_login.html"):
         info(request, _("Successfully logged in"))
         auth_login(request, authenticated_user)
         return login_redirect(request)
-    context = {"form": form, "title": pgettext_lazy("title", "Login"),
-                             "action": pgettext_lazy("action", "Login")}
+    context = {"form": form, "title": pgettext_lazy("title", u"Login"),
+                             "action": pgettext_lazy("action", u"Login")}
     return render(request, template, context)
 
 
@@ -62,8 +62,8 @@ def signup(request, template="accounts/account_signup.html"):
             info(request, _("Successfully signed up"))
             auth_login(request, new_user)
             return login_redirect(request)
-    context = {"form": form, "title": pgettext_lazy("title", "Signup"),
-                             "action": pgettext_lazy("action", "Signup")}
+    context = {"form": form, "title": pgettext_lazy("title", u"Signup"),
+                             "action": pgettext_lazy("action", u"Signup")}
     return render(request, template, context)
 
 
@@ -146,8 +146,8 @@ def profile_update(request, template="accounts/account_profile_update.html"):
         except NoReverseMatch:
             return redirect("profile_update")
     context = {"form": form,
-               "title": pgettext_lazy("title", "Update Profile"),
-               "action": pgettext_lazy("action", "Update Profile")}
+               "title": pgettext_lazy("title", u"Update Profile"),
+               "action": pgettext_lazy("action", u"Update Profile")}
     return render(request, template, context)
 
 
@@ -159,8 +159,8 @@ def password_reset(request, template="accounts/account_password_reset.html"):
         info(request, _("A verification email has been sent with "
                         "a link for resetting your password."))
     context = {"form": form,
-               "title": pgettext_lazy("title", "Password Reset"),
-               "action": pgettext_lazy("action", "Password Reset")}
+               "title": pgettext_lazy("title", u"Password Reset"),
+               "action": pgettext_lazy("action", u"Password Reset")}
     return render(request, template, context)
 
 
