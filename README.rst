@@ -97,7 +97,7 @@ The easiest method is to install directly from pypi using `pip`_ by
 running the command below, which will also install the required
 dependencies mentioned above::
 
-    $ pip install -U mezzanine
+    $ pip install mezzanine
 
 If you prefer, you can download Mezzanine and install it directly from
 source::
@@ -337,7 +337,7 @@ Sites Using Mezzanine
   * `Sunfluence <http://sunfluence.com>`_
   * `ggzpreventie.nl <http://ggzpreventie.nl>`_
   * `dakuaiba.com <http://www.dakuaiba.com>`_
-  * `Leprosys <http://www.leprosys.info>`_
+  * `Wdiaz <http://www.wdiaz.org>`_
   * `Hunted Hive <http://huntedhive.com/>`_
   * `mjollnir.org <http://mjollnir.org>`_
   * `The Beancat Network <http://www.beancatnet.org>`_
@@ -381,6 +381,7 @@ Sites Using Mezzanine
   * `Raindrop Marketing <http://www.raindropads.com>`_
   * `Web4py <http://www.web4py.com>`_
   * `The Peculiar Store <http://thepeculiarstore.com>`_
+  * `GrinDin <http://www.grindin.ru>`_
 
 Quotes
 ======

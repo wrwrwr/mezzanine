@@ -12,13 +12,14 @@ from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager, CurrentSiteManager
 from mezzanine.generic.fields import KeywordsField
 from mezzanine.utils.html import TagCloser
-from mezzanine.utils.models import base_concrete_model, get_user_model
+from mezzanine.utils.models import base_concrete_model, get_user_model_name
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.timezone import now
 from mezzanine.utils.urls import admin_url, slugify
 from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 
-User = get_user_model()
+
+user_model_name = get_user_model_name()
 
 
 class SiteRelated(models.Model):
@@ -408,7 +409,7 @@ class Ownable(models.Model):
     Abstract model that provides ownership of an object for a user.
     """
 
-    user = models.ForeignKey(User, verbose_name=_("Author"),
+    user = models.ForeignKey(user_model_name, verbose_name=_("Author"),
         related_name="%(class)ss")
 
     class Meta:
@@ -427,7 +428,8 @@ class SitePermission(models.Model):
     used instead of ``User.is_staff``, for admin and inline-editing
     access.
     """
-    user = models.ForeignKey(User, verbose_name=_("Author"),
+
+    user = models.ForeignKey(user_model_name, verbose_name=_("Author"),
         related_name="%(class)ss")
     sites = models.ManyToManyField("sites.Site", blank=True,
                                    verbose_name=_("Sites"))
@@ -438,9 +440,16 @@ class SitePermission(models.Model):
 
 
 def create_site_permission(sender, **kw):
+    sender_name = "%s.%s" % (sender._meta.app_label, sender._meta.object_name)
+    if sender_name.lower() != user_model_name.lower():
+        return
     user = kw["instance"]
     if user.is_staff and not user.is_superuser:
         perm, created = SitePermission.objects.get_or_create(user=user)
         if created or perm.sites.count() < 1:
             perm.sites.add(current_site_id())
-post_save.connect(create_site_permission, sender=User)
+
+# We don't specify the user model here, because with 1.5's custom
+# user models, everything explodes. So we check the name of it in
+# the signal.
+post_save.connect(create_site_permission)
