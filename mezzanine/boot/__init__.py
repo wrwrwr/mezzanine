@@ -39,19 +39,7 @@ for entry in getattr(settings, "EXTRA_MODEL_FIELDS", []):
     field_path, field_args, field_kwargs = entry[1:]
     if "." not in field_path:
         field_path = "django.db.models.%s" % field_path
-    try:
-        field_class = import_dotted_path(field_path)
-    except ImportError:
-        raise ImproperlyConfigured("The EXTRA_MODEL_FIELDS setting contains "
-                                   "the field '%s' which could not be "
-                                   "imported." % entry[1])
-    try:
-        field = field_class(*field_args, **field_kwargs)
-    except TypeError, e:
-        raise ImproperlyConfigured("The EXTRA_MODEL_FIELDS setting contains "
-                                   "arguments for the field '%s' which could "
-                                   "not be applied: %s" % (entry[1], e))
-    fields[model_path][field_name] = field
+    fields[model_path][field_name] = (field_path, field_args, field_kwargs)
 
 
 def add_extra_model_fields(sender, **kwargs):
@@ -60,7 +48,20 @@ def add_extra_model_fields(sender, **kwargs):
     by the ``EXTRA_MODEL_FIELDS`` setting.
     """
     model_path = "%s.%s" % (sender.__module__, sender.__name__)
-    for field_name, field in fields.get(model_path, {}).items():
+    model_fields = fields.get(model_path, {}).iteritems()
+    for field_name, (field_path, field_args, field_kwargs) in model_fields:
+        try:
+            field_class = import_dotted_path(field_path)
+        except ImportError:
+            raise ImproperlyConfigured(
+                "The EXTRA_MODEL_FIELDS setting contains the field '%s' which "
+                "could not be imported." % field_path)
+        try:
+            field = field_class(*field_args, **field_kwargs)
+        except TypeError, e:
+            raise ImproperlyConfigured(
+                "The EXTRA_MODEL_FIELDS setting contains arguments for the "
+                "field '%s' which could not be applied: %s" % (field_path, e))
         field.contribute_to_class(sender, field_name)
 
 
