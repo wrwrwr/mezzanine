@@ -24,13 +24,14 @@ from mezzanine.utils.importing import import_dotted_path
 # dictionary mapping module.model paths to dicts of field names mapped
 # to field instances to inject, with some sanity checking to ensure
 # the field is importable and the arguments given for it are valid.
-fields = defaultdict(dict)
+fields = defaultdict(list)
 for entry in getattr(settings, "EXTRA_MODEL_FIELDS", []):
     model_path, field_name = entry[0].rsplit(".", 1)
     field_path, field_args, field_kwargs = entry[1:]
     if "." not in field_path:
         field_path = "django.db.models.%s" % field_path
-    fields[model_path][field_name] = (field_path, field_args, field_kwargs)
+    fields[model_path].append(
+        (field_name, field_path, field_args, field_kwargs))
 
 
 def add_extra_model_fields(sender, **kwargs):
@@ -39,8 +40,8 @@ def add_extra_model_fields(sender, **kwargs):
     by the ``EXTRA_MODEL_FIELDS`` setting.
     """
     model_path = "%s.%s" % (sender.__module__, sender.__name__)
-    model_fields = fields.get(model_path, {}).iteritems()
-    for field_name, (field_path, field_args, field_kwargs) in model_fields:
+    model_fields = fields.get(model_path, {})
+    for field_name, field_path, field_args, field_kwargs in model_fields:
         try:
             field_class = import_dotted_path(field_path)
         except ImportError:
