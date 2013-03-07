@@ -1,7 +1,7 @@
 <nav class="language-chooser">
     <ul>
         {% for code, name, url in LANGUAGES_URLS %}
-		<li{% ifequal code LANGUAGE_CODE %} class="selected"{% endifequal %}>
+		<li{% ifequal code LANGUAGE_CODE %} class="active"{% endifequal %}>
 			<a href="{{ url }}">
 				<img src="{{ STATIC_URL }}img/language_chooser/{{ code }}.png" alt="{{ name }}" />
 			</a>
