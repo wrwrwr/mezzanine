@@ -73,8 +73,8 @@ Dependencies
 Mezzanine makes use of as few libraries as possible (apart from a
 standard Django environment), with the following dependencies:
 
-  * `Python`_ 2.5 ... 2.7
-  * `Django`_ 1.3 ... 1.4
+  * `Python`_ 2.6 / 2.7
+  * `Django`_ 1.4 / 1.5
   * `Python Imaging Library`_ - for image resizing
   * `grappelli-safe`_ - admin skin (`Grappelli`_ fork)
   * `filebrowser-safe`_ - for managing file uploads (`FileBrowser`_ fork)
@@ -387,6 +387,8 @@ Sites Using Mezzanine
   * `Skydivo <http://skydivo.com>`_
   * `Noshly <http://noshly.com>`_
   * `Kabu Creative <http://kabucreative.com.au/>`_
+  * `Amblitec <http://www.amblitec.com>`_
+
 
 Quotes
 ======
