@@ -64,6 +64,10 @@ class BaseGenericRelation(GenericRelation):
                 if not field.verbose_name:
                     field.verbose_name = self.verbose_name
                 cls.add_to_class(name_string, copy(field))
+            # Add a getter function to the model we can use to retrieve
+            # the field/manager by name.
+            getter_name = "get_%s_name" % self.__class__.__name__.lower()
+            cls.add_to_class(getter_name, lambda self: name)
             # For some unknown reason the signal won't be triggered
             # if given a sender arg, particularly when running
             # Cartridge with the field RichTextPage.keywords - so
@@ -201,10 +205,13 @@ class KeywordsField(BaseGenericRelation):
         if hasattr(cls, "search_fields") and name in cls.search_fields:
             try:
                 weight = cls.search_fields[name]
-            except AttributeError:
+            except TypeError:
                 # search_fields is a sequence.
                 index = cls.search_fields.index(name)
+                search_fields_type = type(cls.search_fields)
+                cls.search_fields = list(cls.search_fields)
                 cls.search_fields[index] = string_field_name
+                cls.search_fields = search_fields_type(cls.search_fields)
             else:
                 del cls.search_fields[name]
                 cls.search_fields[string_field_name] = weight

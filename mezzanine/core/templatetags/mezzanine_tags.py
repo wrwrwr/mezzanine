@@ -1,5 +1,4 @@
 
-from __future__ import with_statement
 from hashlib import md5
 import os
 from urllib import urlopen, urlencode, quote, unquote
@@ -184,13 +183,11 @@ def set_short_url_for(context, token):
     request = context["request"]
     if getattr(obj, "short_url") is None:
         obj.short_url = request.build_absolute_uri(request.path)
-        args = {
-            "login": context["settings"].BLOG_BITLY_USER,
-            "apiKey": context["settings"].BLOG_BITLY_KEY,
-            "longUrl": obj.short_url,
-        }
-        if args["login"] and args["apiKey"]:
-            url = "http://api.bit.ly/v3/shorten?%s" % urlencode(args)
+        if context["settings"].BITLY_ACCESS_TOKEN:
+            url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
+                "access_token": context["settings"].BITLY_ACCESS_TOKEN,
+                "uri": obj.short_url,
+            })
             response = loads(urlopen(url).read())
             if response["status_code"] == 200:
                 obj.short_url = response["data"]["url"]
@@ -217,16 +214,20 @@ def metablock(parsed):
 
 
 @register.inclusion_tag("includes/pagination.html", takes_context=True)
-def pagination_for(context, current_page):
+def pagination_for(context, current_page, page_var="page"):
     """
     Include the pagination template and data for persisting querystring in
     pagination links.
     """
     querystring = context["request"].GET.copy()
-    if "page" in querystring:
-        del querystring["page"]
+    if page_var in querystring:
+        del querystring[page_var]
     querystring = querystring.urlencode()
-    return {"current_page": current_page, "querystring": querystring}
+    return {
+        "current_page": current_page,
+        "querystring": querystring,
+        "page_var": page_var,
+    }
 
 
 @register.inclusion_tag("includes/search_form.html", takes_context=True)

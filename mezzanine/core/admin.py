@@ -43,7 +43,6 @@ class BaseDisplayableAdmin(TranslationAdmin):
     list_display_links = ("title",)
     list_editable = ("status",)
     list_filter = ("status",)
-    search_fields = ("title", "content",)
     date_hierarchy = "publish_date"
     radio_fields = {"status": admin.HORIZONTAL}
     fieldsets = (
@@ -59,6 +58,13 @@ class BaseDisplayableAdmin(TranslationAdmin):
     )
 
     form = DisplayableAdminForm
+
+    def __init__(self, *args, **kwargs):
+        super(BaseDisplayableAdmin, self).__init__(*args, **kwargs)
+        try:
+            self.search_fields = self.model.objects.get_search_fields().keys()
+        except AttributeError:
+            pass
 
 
 if "reversion" in settings.INSTALLED_APPS and settings.USE_REVERSION:
