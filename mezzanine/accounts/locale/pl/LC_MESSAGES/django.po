@@ -94,7 +94,7 @@ msgstr "Hasła nie są identyczne"
 #: forms.py:134
 #, python-format
 msgid "Password must be at least %s characters"
-msgstr "Hasło musi posiadać co najmniej %s znaków"
+msgstr "Hasło musi mieć co najmniej %s znaków"
 
 #: forms.py:149
 msgid "This email is already registered"
