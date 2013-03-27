@@ -75,7 +75,7 @@ msgstr "Wyłącznie litery, cyfry, myśliniki lub podkreślniki"
 
 #: forms.py:92
 msgid "Leave blank unless you want to change your password"
-msgstr "Pozostaw puste miejsce, jeśli nie chcesz zmieniać hasła"
+msgstr "Pozostaw puste, jeśli nie chcesz zmieniać hasła"
 
 #: forms.py:111
 msgid "Username can only contain letters, numbers, dashes or underscores."
