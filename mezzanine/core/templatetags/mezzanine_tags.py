@@ -99,10 +99,12 @@ else:
 
 
 @register.inclusion_tag("includes/form_fields.html", takes_context=True)
-def fields_for(context, form):
+def fields_for(context, form, controls_first=False):
     """
-    Renders fields for a form.
+    Renders fields for a form. If the second argument is true, displays
+    controls before label (e.g. aligned checkboxes with long texts).
     """
+    context["controls_first"] = controls_first
     context["form_for_fields"] = form
     return context
 
