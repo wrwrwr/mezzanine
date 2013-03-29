@@ -19,7 +19,7 @@
 {% else %}
 <div class="control-group input_{{ field.id_for_label }} {{ field.field.type }}
     {% if field.errors %} error{% endif %}">
-    {% if not controls_first %}
+    {% if label == 'left' %}
     {{ field.label_tag }}
     {% endif %}
     <div class="controls">
@@ -34,7 +34,7 @@
         <span class="help-inline">{{ field.help_text }}</span>
         {% endif %}
     </div>
-    {% if controls_first %}
+    {% if label == 'right' %}
     {{ field.label_tag }}
     {% endif %}
 </div>
