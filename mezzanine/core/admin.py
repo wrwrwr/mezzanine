@@ -13,6 +13,7 @@ from mezzanine.core.models import (Orderable, SitePermission,
 from mezzanine.utils.urls import admin_url
 from mezzanine.utils.models import get_user_model
 
+
 User = get_user_model()
 
 
@@ -25,6 +26,7 @@ else:
 
 
 class DisplayableAdminForm(ModelForm):
+
     def clean_content(form):
         status = form.cleaned_data.get("status")
         content = form.cleaned_data.get("content")
@@ -34,7 +36,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class BaseDisplayableAdmin(TranslationAdmin):
+class DisplayableAdmin(admin.ModelAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
@@ -42,7 +44,7 @@ class BaseDisplayableAdmin(TranslationAdmin):
     list_display = ("title", "status", "admin_link")
     list_display_links = ("title",)
     list_editable = ("status",)
-    list_filter = ("status",)
+    list_filter = ("status", "keywords__keyword")
     date_hierarchy = "publish_date"
     radio_fields = {"status": admin.HORIZONTAL}
     fieldsets = (
@@ -60,24 +62,14 @@ class BaseDisplayableAdmin(TranslationAdmin):
     form = DisplayableAdminForm
 
     def __init__(self, *args, **kwargs):
-        super(BaseDisplayableAdmin, self).__init__(*args, **kwargs)
+        super(DisplayableAdmin, self).__init__(*args, **kwargs)
         try:
             self.search_fields = self.model.objects.get_search_fields().keys()
         except AttributeError:
             pass
 
 
-if "reversion" in settings.INSTALLED_APPS and settings.USE_REVERSION:
-    from reversion import VersionAdmin
-
-    class DisplayableAdmin(BaseDisplayableAdmin, VersionAdmin):
-        pass
-else:
-    class DisplayableAdmin(BaseDisplayableAdmin):
-        pass
-
-
-class DynamicInlineAdmin(admin.options.InlineModelAdmin):
+class BaseDynamicInlineAdmin(object):
     """
     Admin inline that uses JS to inject an "Add another" link which
     when clicked, dynamically reveals another fieldset. Also handles
