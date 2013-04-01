@@ -36,7 +36,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class DisplayableAdmin(admin.ModelAdmin):
+class DisplayableAdmin(TranslationAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
@@ -69,7 +69,7 @@ class DisplayableAdmin(admin.ModelAdmin):
             pass
 
 
-class BaseDynamicInlineAdmin(object):
+class DynamicInlineAdmin(admin.options.InlineModelAdmin):
     """
     Admin inline that uses JS to inject an "Add another" link which
     when clicked, dynamically reveals another fieldset. Also handles
