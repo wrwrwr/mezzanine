@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-01 21:30+0200\n"
+"POT-Creation-Date: 2013-04-01 22:13+0200\n"
 "PO-Revision-Date: 2013-03-30 11:59+0000\n"
 "Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -194,8 +194,7 @@ msgstr "Biblioteka mediów dla każdej strony"
 msgid ""
 "If ``True``, each site will use its own directory within the filebrowser "
 "media library."
-msgstr ""
-"Czy każda strona ma mieć swój własny katalog dla mediów z biblioteki?"
+msgstr "Czy każda strona ma mieć swój własny katalog dla biblioteki mediów?"
 
 #: defaults.py:210
 msgid ""
@@ -547,19 +546,19 @@ msgstr "Opublikowana treść zostanie ukryta po tym czasie"
 msgid "Show in sitemap"
 msgstr "Dodaj do ``sitemap``"
 
-#: models.py:402 models.py:422 models.py:425
+#: models.py:402 models.py:422
 msgid "Author"
 msgstr "Autor"
 
-#: models.py:429
+#: models.py:425
 msgid "Sites"
 msgstr "Strony"
 
-#: models.py:432
+#: models.py:428
 msgid "Site permission"
 msgstr "Dostęp do strony"
 
-#: models.py:433
+#: models.py:429
 msgid "Site permissions"
 msgstr "Dostęp do stron"
 
@@ -754,7 +753,7 @@ msgstr "z"
 msgid "Search"
 msgstr "Szukaj"
 
-#: templates/includes/search_form.html:19
+#: templates/includes/search_form.html:22
 msgctxt "Search"
 msgid "Go"
 msgstr "Przejdź"
