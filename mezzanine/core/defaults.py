@@ -53,6 +53,14 @@ register_setting(
 )
 
 register_setting(
+    name="BITLY_ACCESS_TOKEN",
+    label=_("bit.ly access token"),
+    description=_("Access token for http://bit.ly URL shortening service."),
+    editable=True,
+    default="",
+)
+
+register_setting(
     name="CACHE_SET_DELAY_SECONDS",
     description=_("Mezzanine's caching uses a technique know as mint "
         "caching. This is where the requested expiry for a cache entry "
@@ -172,11 +180,29 @@ register_setting(
 )
 
 register_setting(
+    name="JQUERY_UI_FILENAME",
+    label=_("Name of the jQuery UI file."),
+    description=_("Name of the jQuery UI file found in "
+                  "mezzanine/core/static/mezzanine/js/"),
+    editable=False,
+    default="jquery-ui-1.9.1.custom.min.js",
+)
+
+register_setting(
     name="MAX_PAGING_LINKS",
     label=_("Max paging links"),
     description=_("Max number of paging links to display when paginating."),
     editable=True,
     default=10,
+)
+
+register_setting(
+    name="MEDIA_LIBRARY_PER_SITE",
+    label=_("Media library per site"),
+    description=_("If ``True``, each site will use its own directory within "
+        "the filebrowser media library."),
+    editable=False,
+    default=False,
 )
 
 register_setting(
@@ -461,13 +487,13 @@ register_setting(
     description=_("Sequence of setting names available within templates."),
     editable=False,
     default=(
-        "ACCOUNTS_VERIFICATION_REQUIRED", "ADMIN_MEDIA_PREFIX",
-        "BLOG_BITLY_USER", "BLOG_BITLY_KEY", "BLOG_USE_FEATURED_IMAGE",
-        "COMMENTS_DISQUS_SHORTNAME", "COMMENTS_NUM_LATEST",
-        "COMMENTS_DISQUS_API_PUBLIC_KEY", "COMMENTS_DISQUS_API_SECRET_KEY",
+        "ACCOUNTS_VERIFICATION_REQUIRED", "BITLY_ACCESS_TOKEN",
+        "BLOG_USE_FEATURED_IMAGE", "COMMENTS_DISQUS_SHORTNAME",
+        "COMMENTS_NUM_LATEST", "COMMENTS_DISQUS_API_PUBLIC_KEY",
+        "COMMENTS_DISQUS_API_SECRET_KEY", "COMMENTS_USE_RATINGS",
         "DEV_SERVER", "FORMS_USE_HTML5", "GRAPPELLI_INSTALLED",
         "GOOGLE_ANALYTICS_ID", "JQUERY_FILENAME", "LOGIN_URL", "LOGOUT_URL",
-        "SITE_TITLE", "SITE_TAGLINE", "RATINGS_MAX",
+        "SITE_TITLE", "SITE_TAGLINE",
     ),
 )
 

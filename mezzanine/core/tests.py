@@ -1,3 +1,4 @@
+
 import os
 from shutil import rmtree
 from urlparse import urlparse
@@ -29,7 +30,6 @@ from mezzanine.forms.models import Form
 from mezzanine.galleries.models import Gallery, GALLERIES_UPLOAD_DIR
 from mezzanine.generic.forms import RatingForm
 from mezzanine.generic.models import ThreadedComment, AssignedKeyword, Keyword
-from mezzanine.generic.models import RATING_RANGE
 from mezzanine.pages.models import Page, RichTextPage
 from mezzanine.urls import PAGES_SLUG
 from mezzanine.utils.importing import import_dotted_path
@@ -228,6 +228,22 @@ class Tests(TestCase):
         self.assertTrue(child.parent is None)
         self.assertTrue(child.slug == "kid")
 
+        child = RichTextPage(title="child2")
+        child.set_parent(new_parent)
+        self.assertEqual(child.slug, "new-parent/child2")
+
+        # Assert that cycles are detected.
+        p1, _ = RichTextPage.objects.get_or_create(title="p1")
+        p2, _ = RichTextPage.objects.get_or_create(title="p2")
+        p2.set_parent(p1)
+        with self.assertRaises(AttributeError):
+            p1.set_parent(p1)
+        with self.assertRaises(AttributeError):
+            p1.set_parent(p2)
+        p2c = RichTextPage.objects.get(title="p2")
+        with self.assertRaises(AttributeError):
+            p1.set_parent(p2c)
+
     def test_set_slug(self):
         parent, _ = RichTextPage.objects.get_or_create(title="Parent",
                                                        slug="parent")
@@ -303,15 +319,17 @@ class Tests(TestCase):
         """
         blog_post = BlogPost.objects.create(title="Ratings", user=self._user,
                                             status=CONTENT_STATUS_PUBLISHED)
-        data = RatingForm(blog_post).initial
-        for value in RATING_RANGE:
+        data = RatingForm(None, blog_post).initial
+        for value in settings.RATINGS_RANGE:
             data["value"] = value
             response = self.client.post(reverse("rating"), data=data)
             response.delete_cookie("mezzanine-rating")
         blog_post = BlogPost.objects.get(id=blog_post.id)
-        count = len(RATING_RANGE)
-        average = sum(RATING_RANGE) / float(count)
+        count = len(settings.RATINGS_RANGE)
+        _sum = sum(settings.RATINGS_RANGE)
+        average = _sum / float(count)
         self.assertEqual(blog_post.rating_count, count)
+        self.assertEqual(blog_post.rating_sum, _sum)
         self.assertEqual(blog_post.rating_average, average)
 
     def queries_used_for_template(self, template, **context):
@@ -392,6 +410,41 @@ class Tests(TestCase):
         rendered = Template(template).render(Context({}))
         for page in pages:
             self.assertEquals(rendered.count(page.title), len(page.in_menus))
+
+    def test_page_menu_default(self):
+        """
+        Test that the default value for the ``in_menus`` field is used
+        and that it doesn't get forced to unicode.
+        """
+        old_menu_temp = settings.PAGE_MENU_TEMPLATES
+        old_menu_temp_def = settings.PAGE_MENU_TEMPLATES_DEFAULT
+        try:
+            # MenusField initializes choices and default during model
+            # loading, so we can't just override settings.
+            from mezzanine.pages.models import BasePage
+            from mezzanine.pages.fields import MenusField
+            settings.PAGE_MENU_TEMPLATES = ((8, 'a', 'a'), (9, 'b', 'b'))
+
+            settings.PAGE_MENU_TEMPLATES_DEFAULT = None
+
+            class P1(BasePage):
+                in_menus = MenusField(blank=True, null=True)
+            self.assertEqual(P1().in_menus[0], 8)
+
+            settings.PAGE_MENU_TEMPLATES_DEFAULT = tuple()
+
+            class P2(BasePage):
+                in_menus = MenusField(blank=True, null=True)
+            self.assertEqual(P2().in_menus, None)
+
+            settings.PAGE_MENU_TEMPLATES_DEFAULT = [9]
+
+            class P3(BasePage):
+                in_menus = MenusField(blank=True, null=True)
+            self.assertEqual(P3().in_menus[0], 9)
+        finally:
+            settings.PAGE_MENU_TEMPLATES = old_menu_temp
+            settings.PAGE_MENU_TEMPLATES_DEFAULT = old_menu_temp_def
 
     def test_keywords(self):
         """

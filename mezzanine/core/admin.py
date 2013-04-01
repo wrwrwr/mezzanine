@@ -14,10 +14,12 @@ from mezzanine.core.models import (Orderable, SitePermission,
 from mezzanine.utils.urls import admin_url
 from mezzanine.utils.models import get_user_model
 
+
 User = get_user_model()
 
 
 class DisplayableAdminForm(ModelForm):
+
     def clean_content(form):
         status = form.cleaned_data.get("status")
         content = form.cleaned_data.get("content")
@@ -27,7 +29,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class BaseDisplayableAdmin(admin.ModelAdmin):
+class DisplayableAdmin(admin.ModelAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
@@ -35,8 +37,7 @@ class BaseDisplayableAdmin(admin.ModelAdmin):
     list_display = ("title", "status", "admin_link")
     list_display_links = ("title",)
     list_editable = ("status",)
-    list_filter = ("status",)
-    search_fields = ("title", "content",)
+    list_filter = ("status", "keywords__keyword")
     date_hierarchy = "publish_date"
     radio_fields = {"status": admin.HORIZONTAL}
     fieldsets = (
@@ -53,14 +54,12 @@ class BaseDisplayableAdmin(admin.ModelAdmin):
 
     form = DisplayableAdminForm
 
-if "reversion" in settings.INSTALLED_APPS:
-    from reversion import VersionAdmin
-
-    class DisplayableAdmin(BaseDisplayableAdmin, VersionAdmin):
-        pass
-else:
-    class DisplayableAdmin(BaseDisplayableAdmin):
-        pass
+    def __init__(self, *args, **kwargs):
+        super(DisplayableAdmin, self).__init__(*args, **kwargs)
+        try:
+            self.search_fields = self.model.objects.get_search_fields().keys()
+        except AttributeError:
+            pass
 
 
 class BaseDynamicInlineAdmin(object):

@@ -35,6 +35,13 @@ If ``True``, when users create an account, they will be sent an email with a ver
 
 Default: ``False``
 
+``ADD_PAGE_ORDER``
+------------------
+
+A sequence of ``Page`` subclasses in the format ``app_label.model_name``, that controls the ordering of items in the select drop-down for adding new pages within the admin page tree interface.
+
+Default: ``('pages.RichTextPage',)``
+
 ``ADMIN_MENU_ORDER``
 --------------------
 
@@ -63,17 +70,10 @@ Key for `http://akismet.com <http://akismet.com>`_ spam filtering service. Used 
 
 Default: ``''``
 
-``BLOG_BITLY_KEY``
-------------------
+``BITLY_ACCESS_TOKEN``
+----------------------
 
-Key for `http://bit.ly <http://bit.ly>`_ URL shortening service.
-
-Default: ``''``
-
-``BLOG_BITLY_USER``
--------------------
-
-Username for `http://bit.ly <http://bit.ly>`_ URL shortening service.
+Access token for `http://bit.ly <http://bit.ly>`_ URL shortening service.
 
 Default: ``''``
 
@@ -83,6 +83,13 @@ Default: ``''``
 Number of blog posts shown on a blog listing page.
 
 Default: ``5``
+
+``BLOG_RSS_LIMIT``
+------------------
+
+Number of most recent blog posts shown in the RSS feed. Set to ``None`` to display all blog posts in the RSS feed.
+
+Default: ``20``
 
 ``BLOG_SLUG``
 -------------
@@ -172,6 +179,13 @@ Default: ``True``
 -------------------------------
 
 If ``True``, comments that have ``is_public`` unchecked will still be displayed, but replaced with a ``waiting to be approved`` message.
+
+Default: ``True``
+
+``COMMENTS_USE_RATINGS``
+------------------------
+
+If ``True``, comments can be rated.
 
 Default: ``True``
 
@@ -280,6 +294,13 @@ Name of the jQuery file found in mezzanine/core/static/mezzanine/js/
 
 Default: ``'jquery-1.7.1.min.js'``
 
+``JQUERY_UI_FILENAME``
+----------------------
+
+Name of the jQuery UI file found in mezzanine/core/static/mezzanine/js/
+
+Default: ``'jquery-ui-1.9.1.custom.min.js'``
+
 ``MAX_PAGING_LINKS``
 --------------------
 
@@ -287,19 +308,19 @@ Max number of paging links to display when paginating.
 
 Default: ``10``
 
+``MEDIA_LIBRARY_PER_SITE``
+--------------------------
+
+If ``True``, each site will use its own directory within the filebrowser media library.
+
+Default: ``False``
+
 ``OWNABLE_MODELS_ALL_EDITABLE``
 -------------------------------
 
 Models that subclass ``Ownable`` and use the ``OwnableAdmin`` have their admin change-list records filtered down to records owned by the current user. This setting contains a sequence of models in the format ``app_label.object_name``, that when subclassing ``Ownable``, will still show all records in the admin change-list interface, regardless of the current user.
 
 Default: ``()``
-
-``PAGES_MENU_SHOW_ALL``
------------------------
-
-If ``True``, the left-hand tree template for the pages menu will show all levels of navigation, otherwise child pages are only shown when viewing the parent page.
-
-Default: ``True``
 
 ``PAGES_PUBLISHED_INCLUDE_LOGIN_REQUIRED``
 ------------------------------------------
@@ -322,19 +343,19 @@ A sequence of IDs from the ``PAGE_MENU_TEMPLATES`` setting that defines the defa
 
 Default: ``None``
 
-``RATINGS_MAX``
----------------
+``RATINGS_ACCOUNT_REQUIRED``
+----------------------------
 
-Max value for a rating.
+If ``True``, users must log in to rate content such as blog posts and comments.
 
-Default: ``5``
+Default: ``False``
 
-``RATINGS_MIN``
----------------
+``RATINGS_RANGE``
+-----------------
 
-Min value for a rating.
+A sequence of integers that are valid ratings.
 
-Default: ``1``
+Default: ``[1, 2, 3, 4, 5]``
 
 ``RICHTEXT_ALLOWED_ATTRIBUTES``
 -------------------------------
@@ -483,7 +504,7 @@ Default: ``4``
 
 Sequence of setting names available within templates.
 
-Default: ``('ACCOUNTS_VERIFICATION_REQUIRED', 'ADMIN_MEDIA_PREFIX', 'BLOG_BITLY_USER', 'BLOG_BITLY_KEY', 'COMMENTS_DISQUS_SHORTNAME', 'COMMENTS_NUM_LATEST', 'COMMENTS_DISQUS_API_PUBLIC_KEY', 'COMMENTS_DISQUS_API_SECRET_KEY', 'DEV_SERVER', 'FORMS_USE_HTML5', 'GRAPPELLI_INSTALLED', 'GOOGLE_ANALYTICS_ID', 'JQUERY_FILENAME', 'LOGIN_URL', 'LOGOUT_URL', 'PAGES_MENU_SHOW_ALL', 'SITE_TITLE', 'SITE_TAGLINE', 'RATINGS_MAX')``
+Default: ``('ACCOUNTS_VERIFICATION_REQUIRED', 'BITLY_ACCESS_TOKEN', 'BLOG_USE_FEATURED_IMAGE', 'COMMENTS_DISQUS_SHORTNAME', 'COMMENTS_NUM_LATEST', 'COMMENTS_DISQUS_API_PUBLIC_KEY', 'COMMENTS_DISQUS_API_SECRET_KEY', 'COMMENTS_USE_RATINGS', 'DEV_SERVER', 'FORMS_USE_HTML5', 'GRAPPELLI_INSTALLED', 'GOOGLE_ANALYTICS_ID', 'JQUERY_FILENAME', 'LOGIN_URL', 'LOGOUT_URL', 'SITE_TITLE', 'SITE_TAGLINE')``
 
 ``THUMBNAILS_DIR_NAME``
 -----------------------
@@ -511,7 +532,7 @@ Default: ``3``
 
 Twitter query to use for the default query type.
 
-Default: ``'#django'``
+Default: ``'django mezzanine'``
 
 ``TWITTER_DEFAULT_QUERY_TYPE``
 ------------------------------
