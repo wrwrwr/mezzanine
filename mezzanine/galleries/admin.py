@@ -1,12 +1,14 @@
 
 from django.contrib import admin
 
-from mezzanine.core.admin import TabularDynamicInlineAdmin
+from mezzanine.core.admin import (TabularDynamicInlineAdmin,
+                                  TranslationInlineModelAdmin)
 from mezzanine.pages.admin import PageAdmin
 from mezzanine.galleries.models import Gallery, GalleryImage
 
 
-class GalleryImageInline(TabularDynamicInlineAdmin):
+class GalleryImageInline(TabularDynamicInlineAdmin,
+                         TranslationInlineModelAdmin):
     model = GalleryImage
 
 
