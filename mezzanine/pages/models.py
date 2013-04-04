@@ -53,9 +53,9 @@ class Page(BasePage):
         """
         slug = self.slug
         if self.content_model == "link":
-            # Ensure the URL is absolute.
+            # Ensure the URL path is absolute.
             if not slug.lower().startswith("http"):
-                slug = "/" + self.slug.lstrip("/")
+                slug = reverse("home") + self.slug.lstrip("/")
             return slug
         if slug == "/":
             return reverse("home")
