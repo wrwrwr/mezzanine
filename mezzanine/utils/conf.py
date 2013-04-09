@@ -68,7 +68,7 @@ def set_dynamic_settings(s):
 
     if s["DEV_SERVER"]:
         s["STATICFILES_DIRS"] = list(s.get("STATICFILES_DIRS", []))
-        s["STATICFILES_DIRS"].append(s.pop("STATIC_ROOT"))
+        s["STATICFILES_DIRS"].append(s.get("STATIC_ROOT"))
 
     # Set up cookie messaging if none defined.
     storage = "django.contrib.messages.storage.cookie.CookieStorage"
