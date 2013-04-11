@@ -102,13 +102,15 @@ def page_menu(context, token):
     # current menu template being rendered.
     context["page_branch"] = context["menu_pages"].get(parent_page_id, [])
     context["page_branch_in_menu"] = False
+    menu_models = context.get("page_models", None)
     for page in context["page_branch"]:
-        page.in_menu = page.in_menu_template(template_name)
+        page.in_menu = page.in_menu_template_and_models(template_name,
+                                                        menu_models)
         page.num_children_in_menu = 0
         if page.in_menu:
             context["page_branch_in_menu"] = True
         for child in context["menu_pages"].get(page.id, []):
-            if child.in_menu_template(template_name):
+            if child.in_menu_template_and_models(template_name, menu_models):
                 page.num_children_in_menu += 1
         page.has_children_in_menu = page.num_children_in_menu > 0
         page.branch_level = context["branch_level"]

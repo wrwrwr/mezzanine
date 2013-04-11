@@ -2,6 +2,7 @@
 
 <ol>
     {% for page in page_branch %}
+    {% if page.in_menu %}
     <li id="ordering_{{ page.id }}">
         <div class="{% cycle 'row1' 'row2' %}">
             <a href="#" class="tree-toggle" id="page-{{ page.id }}"
@@ -43,5 +44,6 @@
         <br style="clear:both;">
         {% if page.has_children %}{% page_menu page %}{% endif %}
     </li>
+    {% endif %}
     {% endfor %}
 </ol>
