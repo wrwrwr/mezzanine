@@ -249,11 +249,32 @@ class Page(BasePage):
         self.branch_level = 0
 
     def in_menu_template(self, template_name):
+        """
+        Checks if page is in the named menu. Pages which have null
+        ``in_menus`` appear in all menus.
+        """
         if self.in_menus is not None:
             for i, l, t in settings.PAGE_MENU_TEMPLATES:
                 if not unicode(i) in self.in_menus and t == template_name:
                     return False
         return True
+
+    def in_menu_models(self, models):
+        """
+        Checks if the page's content model matches one of provided model
+        classes.
+        """
+        return self.get_content_model().__class__ in models
+
+    def in_menu_template_and_models(self, template_name, models):
+        """
+        Checks if page should be displayed in the given template, and if its
+        content type matches one of models, if they're provided.
+        """
+        in_menu = self.in_menu_template(template_name)
+        if models is not None:
+            in_menu &= self.in_menu_models(models)
+        return in_menu
 
 
 class RichTextPage(Page, RichText):
