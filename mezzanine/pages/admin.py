@@ -127,10 +127,16 @@ class PageAdmin(DisplayableAdmin):
     def delete_view(self, request, object_id, **kwargs):
         """
         Enforce custom delete permissions for the page instance.
+        Redirect to the delete view for concrete page model.
         """
         page = get_object_or_404(Page, pk=object_id)
         content_model = page.get_content_model()
         self._check_permission(request, content_model, "delete")
+        if self.model is Page:
+            if content_model is not None:
+                delete_url = admin_url(content_model.__class__, "delete",
+                                       content_model.id)
+                return HttpResponseRedirect(delete_url)
         return super(PageAdmin, self).delete_view(request, object_id, **kwargs)
 
     def changelist_view(self, request, **kwargs):
