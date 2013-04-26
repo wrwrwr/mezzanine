@@ -1,12 +1,13 @@
 
 from django.shortcuts import redirect
+from django.template import RequestContext
 
 from mezzanine.conf import settings
 from mezzanine.forms.forms import FormForForm
 from mezzanine.forms.models import Form
 from mezzanine.forms.signals import form_invalid, form_valid
 from mezzanine.pages.page_processors import processor_for
-from mezzanine.utils.email import send_mail_template
+from mezzanine.utils.email import split_addresses, send_mail_template
 from mezzanine.utils.views import is_spam
 
 
@@ -25,7 +26,8 @@ def form_processor(request, page):
     """
     Display a built form and handle submission.
     """
-    form = FormForForm(page.form, request.POST or None, request.FILES or None)
+    form = FormForForm(page.form, RequestContext(request),
+                       request.POST or None, request.FILES or None)
     if form.is_valid():
         url = page.get_absolute_url() + "?sent=1"
         if is_spam(request, form, url):
@@ -50,8 +52,7 @@ def form_processor(request, page):
             # Send from the email entered,
             # unless FORMS_DISABLE_SEND_FROM_EMAIL_FIELD is True.
             email_from = email_to or email_from
-        email_copies = page.form.email_copies.split(",")
-        email_copies = [e.strip() for e in email_copies if e.strip()]
+        email_copies = split_addresses(page.form.email_copies)
         if email_copies:
             attachments = []
             for f in form.files.values():

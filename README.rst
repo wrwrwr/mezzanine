@@ -73,8 +73,8 @@ Dependencies
 Mezzanine makes use of as few libraries as possible (apart from a
 standard Django environment), with the following dependencies:
 
-  * `Python`_ 2.5 ... 2.7
-  * `Django`_ 1.3 ... 1.4
+  * `Python`_ 2.6 / 2.7
+  * `Django`_ 1.4 / 1.5
   * `Python Imaging Library`_ - for image resizing
   * `grappelli-safe`_ - admin skin (`Grappelli`_ fork)
   * `filebrowser-safe`_ - for managing file uploads (`FileBrowser`_ fork)
@@ -97,7 +97,7 @@ The easiest method is to install directly from pypi using `pip`_ by
 running the command below, which will also install the required
 dependencies mentioned above::
 
-    $ pip install -U mezzanine
+    $ pip install mezzanine
 
 If you prefer, you can download Mezzanine and install it directly from
 source::
@@ -231,6 +231,8 @@ You can also add modules to the `Mezzanine Grid on djangopackages.com`_.
   * `mezzanine-linkcollection`_ - Collect links. Feature them. Share
     them over RSS.
   * `cash-generator`_ - Generate `GnuCash`_ invoices with Mezzanine.
+  * `mezzanine-foundation`_ - `Zurb Foundation`_ theme for Mezzanine.
+  * `mezzanine-file-collections`_ - Simple file collection page type for Mezzanine.
 
 Donating
 ========
@@ -250,6 +252,9 @@ For general questions or comments, please join the `mezzanine-users`_
 mailing list. To report a bug or other type of issue, please use the
 `GitHub issue tracker`_. And feel free to drop by the `#mezzanine
 IRC channel`_ on `Freenode`_, for a chat.
+
+Communications in all Mezzanine spaces are expected to conform
+to the `Django Code of Conduct`_.
 
 Sites Using Mezzanine
 =====================
@@ -337,7 +342,7 @@ Sites Using Mezzanine
   * `Sunfluence <http://sunfluence.com>`_
   * `ggzpreventie.nl <http://ggzpreventie.nl>`_
   * `dakuaiba.com <http://www.dakuaiba.com>`_
-  * `Leprosys <http://www.leprosys.info>`_
+  * `Wdiaz <http://www.wdiaz.org>`_
   * `Hunted Hive <http://huntedhive.com/>`_
   * `mjollnir.org <http://mjollnir.org>`_
   * `The Beancat Network <http://www.beancatnet.org>`_
@@ -379,7 +384,22 @@ Sites Using Mezzanine
   * `Crown Preschool <http://crownpreschool.com>`_
   * `Coronado Pathways Charter School <http://coronadopathways.com>`_
   * `Raindrop Marketing <http://www.raindropads.com>`_
-
+  * `Web4py <http://www.web4py.com>`_
+  * `The Peculiar Store <http://thepeculiarstore.com>`_
+  * `GrinDin <http://www.grindin.ru>`_
+  * `4Gume <http://www.4gume.com>`_
+  * `Skydivo <http://skydivo.com>`_
+  * `Noshly <http://noshly.com>`_
+  * `Kabu Creative <http://kabucreative.com.au/>`_
+  * `KisanHub <http://www.kisanhub.com/>`_
+  * `Your Song Your Story <http://yoursongyourstory.org/>`_
+  * `Kegbot <http://kegbot.org>`_
+  * `Fiz <http://fiz.com/>`_
+  * `Willborn <http://willbornco.com>`_
+  * `Copilot Co <http://copilotco.com>`_
+  * `Amblitec <http://www.amblitec.com>`_
+  * `Gold's Gym Utah <http://www.bestgymever.com/>`_
+  * `Appsin - Blog to Native app <http://apps.in/>`_
 
 Quotes
 ======
@@ -411,6 +431,7 @@ Quotes
 .. GENERAL LINKS
 
 .. _`Django`: http://djangoproject.com/
+.. _`Django Code of Conduct`: https://www.djangoproject.com/conduct/
 .. _`BSD licensed`: http://www.linfo.org/bsdlicense.html
 .. _`Wordpress`: http://wordpress.org/
 .. _`great sites people have built using Mezzanine`: http://mezzanine.jupo.org/sites/
@@ -506,6 +527,9 @@ Quotes
 .. _`mezzanine-linkcollection`: https://github.com/mjtorn/mezzanine-linkcollection
 .. _`cash-generator`: https://github.com/ambientsound/cash-generator
 .. _`GnuCash`: http://www.gnucash.org/
+.. _`mezzanine-foundation`: https://github.com/zgohr/mezzanine-foundation
+.. _`Zurb Foundation`: http://foundation.zurb.com/
+.. _`mezzanine-file-collections`: https://github.com/thibault/mezzanine-file-collections
 
 
 .. PEOPLE WITH QUOTES
