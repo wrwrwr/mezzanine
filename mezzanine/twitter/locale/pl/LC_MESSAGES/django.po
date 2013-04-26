@@ -34,21 +34,23 @@ msgstr "Zapytanie"
 
 #: defaults.py:21
 msgid "Default Twitter Query Type"
-msgstr ""
+msgstr "Domyślny rodzaj zapytania Twittera"
 
 #: defaults.py:22
 msgid ""
 "Type of query that will be used to retrieve tweets for the default Twitter "
 "feed."
 msgstr ""
+"Rodzaj zapytania używanego przy pobieraniu wpisów z domyślnego kanału "
+"Twittera."
 
 #: defaults.py:31
 msgid "Default Twitter Query"
-msgstr ""
+msgstr "Domyśne zapytanie Twittera"
 
 #: defaults.py:32
 msgid "Twitter query to use for the default query type."
-msgstr ""
+msgstr "Zapytanie Twittera używane domyślnie."
 
 #: defaults.py:39
 msgid "Default Number of Tweets"
@@ -56,11 +58,11 @@ msgstr "Domyślna liczba Tweetów"
 
 #: defaults.py:40
 msgid "Number of tweets to display in the default Twitter feed."
-msgstr "Liczba Tweetów do wyświetlenia w domyślnym feedzie Twittera."
+msgstr "Liczba Tweetów do wyświetlenia w domyślnym kanale Twittera."
 
 #: models.py:27
 msgid "Type"
-msgstr "Typ"
+msgstr "Rodzaj"
 
 #: models.py:29
 msgid "Value"
@@ -68,15 +70,15 @@ msgstr "Wartość"
 
 #: models.py:33
 msgid "Twitter query"
-msgstr "Zapytanie Tweeterowe"
+msgstr "Zapytanie Twittera"
 
 #: models.py:34
 msgid "Twitter queries"
-msgstr "Zapytania Twitterowe"
+msgstr "Zapytania Twittera"
 
 #: models.py:102
 msgid "Twitter ID"
-msgstr "Identyfikator Twitter"
+msgstr "Identyfikator Twittera"
 
 #: models.py:103
 msgid "Date/time"

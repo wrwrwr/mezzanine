@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-07 10:41-0430\n"
+"POT-Creation-Date: 2013-04-26 15:18+0200\n"
 "PO-Revision-Date: 2012-10-26 11:04+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -42,25 +42,25 @@ msgid ""
 "If ``True``, emails sent to extra recipients for form submissions won't be "
 "sent from an address taken from one of the form's email fields."
 msgstr ""
-"Jeśli ``Prawda``, e-maile wysłane do  dodatkowych odbiorców z formularza nie "
-"zostaną wysłane z adresu wziętego z jednego z pól formularza e-maili."
+"Czy listy wysyłane do dodatkowych odbiorców nie powinny być wysyłane przy "
+"użyciu adresu podanego w formularzu (a używając adresu systemowego)?"
 
 #: defaults.py:29
 msgid "Max length allowed for field values in the forms app."
-msgstr "Maksymalna ilość znaków dla pól w aplikacji formularzy."
+msgstr "Maksymalna ilość znaków dla pól z aplikacji formularzy."
 
 #: defaults.py:36
 msgid "Max length allowed for field labels in the forms app."
-msgstr "Maksymalna ilość znaków dla etykiet pół w aplikacji formularzy."
+msgstr "Maksymalna długość etykiet pól z aplikacji formularzy."
 
 #: defaults.py:43
 msgid "Char to use as a field delimiter when exporting form responses as CSV."
-msgstr "Znak separacji pól dla plików CSV przy eksporcie danych formularzy."
+msgstr "Znak używany jako separator przy eksporcie formularzy w formacie CSV."
 
 #: defaults.py:51
 msgid "Absolute path for storing file uploads for the forms app."
 msgstr ""
-"Ścieżka absolutna do katalogu w którym będą przechowywane pliki wysłane za "
+"Ścieżka bezwzględna katalogu, w którym będą przechowywane pliki przesłane za "
 "pomocą formularzy."
 
 #: defaults.py:58
@@ -71,6 +71,10 @@ msgid ""
 "constant for the field, but cannot be a value already used, so choose a high "
 "number such as 100 or greater to avoid conflicts."
 msgstr ""
+"Dodatkowe rodzaje pól formularzy. Lista składająca się z trójelementowych "
+"ciągów, każdy zawierający: ID, ścieżkę klasy pola i nazwę pola. "
+"Identyfikator to po prostu stała liczbowa, ale jeszcze nie używana -- "
+"wybierz wysoki numer, na przykład 100, aby uniknąć konfliktów."
 
 #: fields.py:31
 msgid "Single line text"
@@ -128,43 +132,67 @@ msgstr "Data urodzenia"
 msgid "Hidden"
 msgstr "Ukryte"
 
-#: forms.py:28 forms.py:36 forms.py:42
+#: forms.py:50 forms.py:59 forms.py:66 forms.py:75
 msgid "Nothing"
 msgstr "Puste"
 
-#: forms.py:29
+#: forms.py:51
 msgid "Contains"
 msgstr "Zawiera"
 
-#: forms.py:30
+#: forms.py:52
 msgid "Doesn't contain"
 msgstr "Nie zawiera"
 
-#: forms.py:31 forms.py:37
+#: forms.py:53
 msgid "Equals"
 msgstr "Równa się"
 
-#: forms.py:32 forms.py:38
+#: forms.py:54
 msgid "Doesn't equal"
 msgstr "Nie równa się"
 
-#: forms.py:43
+#: forms.py:60
+msgid "Equals any"
+msgstr "Równa się któremukolwiek"
+
+#: forms.py:61
+msgid "Doesn't equal any"
+msgstr "Nie równa się któremukolwiek"
+
+#: forms.py:67
+msgid "Contains any"
+msgstr "Zawiera którykolwiek"
+
+#: forms.py:68
+msgid "Contains all"
+msgstr "Zawiera wszystkie"
+
+#: forms.py:69
+msgid "Doesn't contain any"
+msgstr "Nie zawiera któregokolwiek"
+
+#: forms.py:70
+msgid "Doesn't contain all"
+msgstr "Nie zawiera żadnego"
+
+#: forms.py:76
 msgid "Is between"
 msgstr "Pomiędzy"
 
-#: forms.py:100
+#: forms.py:148
 msgid "required"
 msgstr "wymagane"
 
-#: forms.py:216
+#: forms.py:267
 msgid "Checked"
 msgstr "Zaznaczone"
 
-#: forms.py:216
+#: forms.py:267
 msgid "Not checked"
 msgstr "Niezaznaczone"
 
-#: forms.py:230 forms.py:245
+#: forms.py:290 forms.py:305
 msgid "and"
 msgstr "i"
 
@@ -178,18 +206,19 @@ msgstr "Wyślij"
 
 #: models.py:19
 msgid "Response"
-msgstr "Informacja po wysłaniu formularza"
+msgstr "Odpowiedź"
 
 #: models.py:20
 msgid "Send email to user"
-msgstr "Wyslij e-mail do użytkownika"
+msgstr "Wysyłaj e-mail do użytkownika"
 
 #: models.py:21
 msgid ""
 "To send an email to the email address supplied in the form upon submission, "
 "check this box."
 msgstr ""
-"Aby wysłać e-mail na adres z formularza po zatwierdzeniu, zaznacz to pole."
+"Czy po przesłaniu formularza system powinien wysłać list na adres podanyw "
+"formularzu?"
 
 #: models.py:23
 msgid "From address"
@@ -197,7 +226,7 @@ msgstr "Adres 'Od'"
 
 #: models.py:24
 msgid "The address the email will be sent from"
-msgstr "Adres z którego zostanie wysłany email"
+msgstr "Adres, z którego zostanie wysłany e-mail"
 
 #: models.py:25
 msgid "Send email to others"
@@ -208,9 +237,9 @@ msgid ""
 "Provide a comma separated list of email addresses to be notified upon form "
 "submission. Leave blank to disable notifications."
 msgstr ""
-"Wskaż liste e-maili oddzielonych przecinkami, na które zostanie wysłana "
-"lista po zatwierdzeniu formularza. Pozostaw puste pole, aby dezaktywować "
-"powiadomienia."
+"Lista adresów (oddzielonych przecinkami), na które będą wysyłane "
+"powiadomienia o przesłaniu formularza. Pozosotawienie tego pola pustego "
+"wyłącza powiadomienia."
 
 #: models.py:30
 msgid "Subject"
@@ -226,9 +255,8 @@ msgid ""
 "entered. You can also enter a message here that will be included in the "
 "email."
 msgstr ""
-"E-maile wysłane według powyższych opcji, będą zawierać każde wypełnione w "
-"formularzu pole. Możesz tu również dodać wiadomość, która zostanie zawarta w "
-"e-mailu."
+"Listy wysłane po przesłaniu formularza zawierają każde z wypełnionych pól. "
+"Możesz również dodać wiadomość, która zostanie zawarta w e-mailu."
 
 #: models.py:37
 msgid "Form"
@@ -263,8 +291,8 @@ msgid ""
 "Comma separated options where applicable. If an option itself contains "
 "commas, surround the option with `backticks`."
 msgstr ""
-"Opcje oddzielone przecinkami. Jeżeli opcja sama w sobie zawiera przecinek "
-"należy ją otoczyć `lewym apostrofem`"
+"Opcje oddzielone przecinkami. Jeżeli opcja sama w sobie zawiera przecinki "
+"należy ją otoczyć `lewymi apostrofami`."
 
 #: models.py:63
 msgid "Default value"
@@ -272,7 +300,7 @@ msgstr "Domyślna wartość"
 
 #: models.py:65
 msgid "Placeholder Text"
-msgstr "Tekst obszaru"
+msgstr "Tekst zastępczy"
 
 #: models.py:67
 msgid "Help text"
@@ -337,7 +365,7 @@ msgstr "Powrót do formularza"
 
 #: templates/admin/forms/entries.html:58
 msgid "Export CSV"
-msgstr "Eksport do CSV"
+msgstr "Eksport CSV"
 
 #: templates/admin/forms/entries.html:60
 msgid "Entries"

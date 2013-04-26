@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-07 10:41-0430\n"
+"POT-Creation-Date: 2013-04-26 15:18+0200\n"
 "PO-Revision-Date: 2013-03-30 12:03+0000\n"
 "Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -27,6 +27,9 @@ msgid ""
 "that controls the ordering of items in the select drop-down for adding new "
 "pages within the admin page tree interface."
 msgstr ""
+"Ciąg klas dziedziczących po ``Page`` (w formacie aplikacja.model), który "
+"określa kolejność wpisów przy dodawaniu nowych stron w drzewie stron w "
+"administracji."
 
 #: defaults.py:30
 msgid ""
@@ -37,6 +40,11 @@ msgid ""
 "appear in. Note that if a menu template is used that doesn't appear in this "
 "setting, all pages will appear in it."
 msgstr ""
+"Lista wzorców używanych przez tag ``page_menu``. Każdy element listy zawiera "
+"trzy elementy: unikalny identyfikator, etykietę i ścieżkę do wzorca. Wzorce "
+"są dostępne przy wyborze menu, w których strona powinna się znajdować. Zwróć "
+"uwagę, że jeśli użyjesz wzorca menu, który tutaj nie występuje, pojawią się "
+"w nim wszystkie strony."
 
 #: defaults.py:39
 msgid "Top navigation bar"
@@ -44,7 +52,7 @@ msgstr "Górny pasek nawigacji"
 
 #: defaults.py:40
 msgid "Left-hand tree"
-msgstr "Menu lewostronne"
+msgstr "Drzewo po lewej stronie"
 
 #: defaults.py:41
 msgid "Footer"
@@ -57,6 +65,10 @@ msgid ""
 "templates are selected. Set this setting to an empty sequence to have no "
 "templates selected by default."
 msgstr ""
+"Lista identyfikatorów z ustawienia ``PAGE_MENU_TEMPLATES``, definiująca "
+"wzorce menu domyślnie wybrane przy tworzeniu nowych stron. Jeśli pole jest "
+"puste wszystkie wzorce menu są początkowo wybrane. Wpisz pusty ciąg, aby "
+"żaden wzorzec nie był domyślnie wybrany."
 
 #: defaults.py:58
 msgid ""
@@ -65,11 +77,10 @@ msgid ""
 "setting, when an unauthenticated user accesses a page with "
 "``login_required`` checked, they'll be redirected to the login page."
 msgstr ""
-"Jeśli ``Prawda``, strony z zatwierdzonym  ``login_required`` będą nadal "
-"wymienione w menu i wynikach wyszukiwania, dla niezidentyfikowanych "
-"użytkowników. Bez względu na to ustawienie, kiedy niezidentyfikowany "
-"użytkownik wejdzie na stronę z ``login_required``, zostanie przekierowany do "
-"strony logowania."
+"Czy strony oznaczone jako wymagające logowania mają być widoczne w menu i "
+"wynikach wyszukiwania dla niezalogowanych użytkowników? Bez względu na to "
+"ustawienie, gdy niezalogowany użytkownik wchodzi na taką stronę jest on "
+"przekierowywany na stronę logowania."
 
 #: models.py:33
 msgid "Show in menus"
@@ -77,7 +88,7 @@ msgstr "Pokaż w menu"
 
 #: models.py:36
 msgid "Login required"
-msgstr "Wymagane zalogowanie"
+msgstr "Wymaga zalogowania"
 
 #: models.py:37
 msgid "If checked, only logged in users can view this page"
@@ -93,11 +104,11 @@ msgstr "Podstrony"
 
 #: models.py:266
 msgid "Rich text page"
-msgstr "Strona z edycją tekstu"
+msgstr "Strona ze wzbogaconym tekstem"
 
 #: models.py:267
 msgid "Rich text pages"
-msgstr "Strony z edycją tekstu"
+msgstr "Strony ze wzbogaconym tekstem"
 
 #: models.py:277
 msgid "Link"
@@ -125,3 +136,5 @@ msgstr "Strona główna"
 msgid ""
 "An error occured with the following class. Does it subclass Page directly?"
 msgstr ""
+"Wystąpił błąd w następującej klasie. Czy dziedziczy ona bezpośrednio po "
+"klasie Page?"
