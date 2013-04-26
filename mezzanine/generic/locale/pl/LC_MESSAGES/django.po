@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-07 10:40-0430\n"
+"POT-Creation-Date: 2013-04-26 15:18+0200\n"
 "PO-Revision-Date: 2013-03-30 12:04+0000\n"
 "Last-Translator: Sebastián Ramírez Magrí <sebasmagri@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -161,11 +161,11 @@ msgstr "Strona WWW"
 msgid "optional"
 msgstr "opcjonalne"
 
-#: forms.py:138
+#: forms.py:137
 msgid "New comment for: "
 msgstr "Nowy komentarz do: "
 
-#: forms.py:174
+#: forms.py:173
 msgid "Already rated."
 msgstr "Już oceniony."
 
@@ -213,7 +213,7 @@ msgstr "Oceniający"
 msgid "Ratings"
 msgstr "Oceny"
 
-#: views.py:62
+#: views.py:64
 msgid "You must logged in. Please log in or sign up to complete this action."
 msgstr ""
 "Musisz być zalogowany. Zaloguj się lub zarejestruj, aby dokończyć to "

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-07 10:41-0430\n"
+"POT-Creation-Date: 2013-04-26 15:18+0200\n"
 "PO-Revision-Date: 2012-10-26 11:04+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -132,43 +132,67 @@ msgstr "Data urodzenia"
 msgid "Hidden"
 msgstr "Ukryte"
 
-#: forms.py:28 forms.py:36 forms.py:42
+#: forms.py:50 forms.py:59 forms.py:66 forms.py:75
 msgid "Nothing"
 msgstr "Puste"
 
-#: forms.py:29
+#: forms.py:51
 msgid "Contains"
 msgstr "Zawiera"
 
-#: forms.py:30
+#: forms.py:52
 msgid "Doesn't contain"
 msgstr "Nie zawiera"
 
-#: forms.py:31 forms.py:37
+#: forms.py:53
 msgid "Equals"
 msgstr "Równa się"
 
-#: forms.py:32 forms.py:38
+#: forms.py:54
 msgid "Doesn't equal"
 msgstr "Nie równa się"
 
-#: forms.py:43
+#: forms.py:60
+msgid "Equals any"
+msgstr "Równa się któremukolwiek"
+
+#: forms.py:61
+msgid "Doesn't equal any"
+msgstr "Nie równa się któremukolwiek"
+
+#: forms.py:67
+msgid "Contains any"
+msgstr "Zawiera którykolwiek"
+
+#: forms.py:68
+msgid "Contains all"
+msgstr "Zawiera wszystkie"
+
+#: forms.py:69
+msgid "Doesn't contain any"
+msgstr "Nie zawiera któregokolwiek"
+
+#: forms.py:70
+msgid "Doesn't contain all"
+msgstr "Nie zawiera żadnego"
+
+#: forms.py:76
 msgid "Is between"
 msgstr "Pomiędzy"
 
-#: forms.py:100
+#: forms.py:148
 msgid "required"
 msgstr "wymagane"
 
-#: forms.py:216
+#: forms.py:267
 msgid "Checked"
 msgstr "Zaznaczone"
 
-#: forms.py:216
+#: forms.py:267
 msgid "Not checked"
 msgstr "Niezaznaczone"
 
-#: forms.py:230 forms.py:245
+#: forms.py:290 forms.py:305
 msgid "and"
 msgstr "i"
 
