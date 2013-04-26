@@ -145,9 +145,8 @@ class ProfileForm(Html5Mixin, forms.ModelForm):
         Ensure the email address is not already registered.
         """
         email = self.cleaned_data.get("email")
-        try:
-            User.objects.exclude(id=self.instance.id).get(email=email)
-        except User.DoesNotExist:
+        qs = User.objects.exclude(id=self.instance.id).filter(email=email)
+        if len(qs) == 0:
             return email
         raise forms.ValidationError(_("This email is already registered"))
 
@@ -169,7 +168,8 @@ class ProfileForm(Html5Mixin, forms.ModelForm):
 
         if self._signup:
             settings.use_editable()
-            if settings.ACCOUNTS_VERIFICATION_REQUIRED:
+            if (settings.ACCOUNTS_VERIFICATION_REQUIRED or
+                settings.ACCOUNTS_APPROVAL_REQUIRED):
                 user.is_active = False
                 user.save()
             else:

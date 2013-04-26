@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-01 22:13+0200\n"
+"POT-Creation-Date: 2013-04-26 15:17+0200\n"
 "PO-Revision-Date: 2012-10-26 17:12+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -48,6 +48,27 @@ msgid ""
 msgstr ""
 "Czy po rejestracji wymagać od użytkowników aktywacji konta poprzez "
 "kliknięcie w link przesyłany w e-mailu?"
+
+#: defaults.py:60
+msgid ""
+"If ``True``, when users create an account, they will not be enabled by "
+"default and a staff member will need to activate their account in the admin "
+"interface."
+msgstr ""
+"Nowe konta użytkowników nie będą aktywne, aż do aktywacji przez członka "
+"zespołu (poprzez administrację)."
+
+#: defaults.py:69
+msgid "Account approval email addresses"
+msgstr "Adres e-mail używany przy aktywacji kont"
+
+#: defaults.py:70
+msgid ""
+"A comma separated list of email addresses that will receive an email "
+"notification each time a new account is created that requires approval."
+msgstr ""
+"Lista adresów, które będę powiadamiane, za każdym razem gdy tworzone "
+"jest konto wymagające aktywacji."
 
 #: forms.py:21 forms.py:190
 msgid "Username or email address"
@@ -96,7 +117,7 @@ msgstr "Hasła nie są identyczne"
 msgid "Password must be at least %s characters"
 msgstr "Hasło musi mieć co najmniej %s znaków"
 
-#: forms.py:152
+#: forms.py:151
 msgid "This email is already registered"
 msgstr "Ten e-mail jest już zarejestrowany"
 
@@ -104,72 +125,80 @@ msgstr "Ten e-mail jest już zarejestrowany"
 msgid "Invalid username/email"
 msgstr "Nieprawidłowa nazwa użytkownika/e-mail"
 
-#: views.py:31
+#: views.py:30
 msgid "Successfully logged in"
 msgstr "Pomyślne logowanie"
 
-#: views.py:34
+#: views.py:33
 msgctxt "title"
-msgid "Login"
+msgid "Log in"
 msgstr "Logowanie"
 
-#: views.py:35
+#: views.py:34
 msgctxt "action"
-msgid "Login"
-msgstr "Zaloguj się"
+msgid "Log in"
+msgstr "Zaloguj"
 
-#: views.py:44
+#: views.py:43
 msgid "Successfully logged out"
 msgstr "Pomyślne wylogowanie"
 
 #: views.py:58
 msgid ""
+"Thanks for signing up! You'll receive an email when your account is "
+"activated."
+msgstr ""
+"Dziękujemy za rejestrację! Gdy Twoje konto zostanie aktywowane powiadomimy "
+"cię o tym e-mailem."
+
+#: views.py:62
+msgid ""
 "A verification email has been sent with a link for activating your account."
 msgstr "Został wysłany e-mail z linkiem do aktywacji konta."
 
-#: views.py:62 views.py:82
+#: views.py:66 views.py:88
 msgid "Successfully signed up"
 msgstr "Pomyślna rejestracja"
 
-#: views.py:65
+#: views.py:69
 msgctxt "title"
-msgid "Signup"
+msgid "Sign up"
 msgstr "Rejestracja"
 
-#: views.py:66
+#: views.py:70
 msgctxt "action"
-msgid "Signup"
-msgstr "Zarejestruj się"
+msgid "Sign up"
+msgstr "Zarejestruj"
 
-#: views.py:85 views.py:173
+#: views.py:91 views.py:162
 msgid "The link you clicked is no longer valid."
 msgstr "Wybrany link jest już nieważny."
 
-#: views.py:143
+#: views.py:132
 msgid "Profile updated"
 msgstr "Profil zaktualizowany"
 
-#: views.py:149
+#: views.py:138
 msgctxt "title"
 msgid "Update Profile"
 msgstr "Aktualizacja profilu"
 
-#: views.py:150
+#: views.py:139
 msgctxt "action"
 msgid "Update Profile"
 msgstr "Aktualizuj"
 
-#: views.py:159
+#: views.py:148
 msgid ""
 "A verification email has been sent with a link for resetting your password."
 msgstr "E-mail weryfikacyjny z linkiem do zmiany hasła został wysłany."
 
-#: views.py:162
+#: views.py:151
 msgctxt "title"
 msgid "Password Reset"
 msgstr "Zmiana hasła"
 
-#: views.py:163
+#: views.py:152
 msgctxt "action"
 msgid "Password Reset"
 msgstr "Resetuj"
@@ -252,6 +281,45 @@ msgstr "Zarejestruj"
 msgid "Profile information"
 msgstr "Informacje o profilu"
 
+#: templates/email/account_approve.html:3
+#: templates/email/account_approve.txt:3
+msgid "Hey there, a new account has been created and requires activation."
+msgstr "Zostało utworzone nowe konto wymagające rejestracji."
+
+#: templates/email/account_approve.html:5
+#: templates/email/account_approve.txt:5
+msgid "Name"
+msgstr "Użytkownik"
+
+#: templates/email/account_approve.html:6
+#: templates/email/account_approve.txt:6
+msgid "Email"
+msgstr "E-mail"
+
+#: templates/email/account_approve.html:11
+#: templates/email/account_approve.txt:9 templates/email/signup_verify.html:4
+#: templates/email/signup_verify.txt:4
+msgid "Please use the link below to activate it."
+msgstr "Aby je aktywować kliknij na poniższy link."
+
+#: templates/email/account_approve_subject.txt:2
+msgid "An account requires activation"
+msgstr "Twoje konto wymaga aktywacji"
+
+#: templates/email/account_approved.html:3
+#: templates/email/account_approved.txt:3
+msgid "Hey there, your account has been activated."
+msgstr "Twoje konto zostało aktywowane."
+
+#: templates/email/account_approved.html:4
+#: templates/email/account_approved.txt:4
+msgid "Please use the link below to log in."
+msgstr "Użyj linku poniżej aby się zalogować."
+
+#: templates/email/account_approved_subject.txt:2
+msgid "Your account has been activated"
+msgstr "Twoje konto zostało aktywowane"
+
 #: templates/email/password_reset_verify.html:3
 #: templates/email/password_reset_verify.txt:3
 msgid "Hey there, the password reset form was used for your account."
@@ -276,10 +344,6 @@ msgstr "Zmień hasło"
 #: templates/email/signup_verify.html:3 templates/email/signup_verify.txt:3
 msgid "Hey there, thanks for creating your account."
 msgstr "Witaj, dziękujemy za założenie konta."
-
-#: templates/email/signup_verify.html:4 templates/email/signup_verify.txt:4
-msgid "Please use the link below to activate it."
-msgstr "Aby je aktywować kliknij na poniższy link."
 
 #: templates/email/signup_verify_subject.txt:2
 msgid "Activate your account"

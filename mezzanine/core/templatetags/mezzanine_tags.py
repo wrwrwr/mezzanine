@@ -321,7 +321,7 @@ def thumbnail(image_url, width, height, quality=95):
         width = image.size[0] * height / image.size[1]
     elif height == 0:
         height = image.size[1] * width / image.size[0]
-    if image.mode not in ("L", "RGBA"):
+    if image.mode not in ("P", "L", "RGBA"):
         image = image.convert("RGBA")
     # Required for progressive jpgs.
     ImageFile.MAXBLOCK = image.size[0] * image.size[1]
@@ -352,7 +352,7 @@ def editable_loader(context):
     """
     user = context["request"].user
     context["has_site_permission"] = has_site_permission(user)
-    if context["has_site_permission"]:
+    if settings.INLINE_EDITING_ENABLED and context["has_site_permission"]:
         t = get_template("includes/editable_toolbar.html")
         context["REDIRECT_FIELD_NAME"] = REDIRECT_FIELD_NAME
         context["toolbar"] = t.render(Context(context))
@@ -397,7 +397,8 @@ def editable(parsed, context, token):
             parsed = "".join([unicode(getattr(*field)) for field in fields])
         except AttributeError:
             pass
-    if fields and "request" in context:
+
+    if settings.INLINE_EDITING_ENABLED and fields and "request" in context:
         obj = fields[0][0]
         if isinstance(obj, Model) and is_editable(obj, context["request"]):
             field_names = ",".join([f[1] for f in fields])
