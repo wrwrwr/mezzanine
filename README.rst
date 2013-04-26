@@ -232,6 +232,7 @@ You can also add modules to the `Mezzanine Grid on djangopackages.com`_.
     them over RSS.
   * `cash-generator`_ - Generate `GnuCash`_ invoices with Mezzanine.
   * `mezzanine-foundation`_ - `Zurb Foundation`_ theme for Mezzanine.
+  * `mezzanine-file-collections`_ - Simple file collection page type for Mezzanine.
 
 Donating
 ========
@@ -251,6 +252,9 @@ For general questions or comments, please join the `mezzanine-users`_
 mailing list. To report a bug or other type of issue, please use the
 `GitHub issue tracker`_. And feel free to drop by the `#mezzanine
 IRC channel`_ on `Freenode`_, for a chat.
+
+Communications in all Mezzanine spaces are expected to conform
+to the `Django Code of Conduct`_.
 
 Sites Using Mezzanine
 =====================
@@ -391,7 +395,11 @@ Sites Using Mezzanine
   * `Your Song Your Story <http://yoursongyourstory.org/>`_
   * `Kegbot <http://kegbot.org>`_
   * `Fiz <http://fiz.com/>`_
-
+  * `Willborn <http://willbornco.com>`_
+  * `Copilot Co <http://copilotco.com>`_
+  * `Amblitec <http://www.amblitec.com>`_
+  * `Gold's Gym Utah <http://www.bestgymever.com/>`_
+  * `Appsin - Blog to Native app <http://apps.in/>`_
 
 Quotes
 ======
@@ -423,6 +431,7 @@ Quotes
 .. GENERAL LINKS
 
 .. _`Django`: http://djangoproject.com/
+.. _`Django Code of Conduct`: https://www.djangoproject.com/conduct/
 .. _`BSD licensed`: http://www.linfo.org/bsdlicense.html
 .. _`Wordpress`: http://wordpress.org/
 .. _`great sites people have built using Mezzanine`: http://mezzanine.jupo.org/sites/
@@ -520,6 +529,7 @@ Quotes
 .. _`GnuCash`: http://www.gnucash.org/
 .. _`mezzanine-foundation`: https://github.com/zgohr/mezzanine-foundation
 .. _`Zurb Foundation`: http://foundation.zurb.com/
+.. _`mezzanine-file-collections`: https://github.com/thibault/mezzanine-file-collections
 
 
 .. PEOPLE WITH QUOTES
