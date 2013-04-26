@@ -2,7 +2,7 @@
 import os
 import sys
 
-from django.conf.global_settings import STATICFILES_FINDERS
+from django.conf import global_settings as defaults
 from django.template.loader import add_to_builtins
 
 
@@ -53,13 +53,14 @@ def set_dynamic_settings(s):
     # Define some settings based on management command being run.
     management_command = sys.argv[1] if len(sys.argv) > 1 else ""
     # Some kind of testing is running via test or testserver.
-    s["TESTING"] = management_command.startswith("test")
+    s["TESTING"] = management_command in ("test", "testserver")
     # Some kind of development server is running via runserver,
     # runserver_plus or harvest (lettuce)
     s["DEV_SERVER"] = management_command.startswith(("runserver", "harvest"))
 
     # Change tuple settings to lists for easier manipulation.
-    s.setdefault("STATICFILES_FINDERS", STATICFILES_FINDERS)
+    s.setdefault("AUTHENTICATION_BACKENDS", defaults.AUTHENTICATION_BACKENDS)
+    s.setdefault("STATICFILES_FINDERS", defaults.STATICFILES_FINDERS)
     tuple_list_settings = ("AUTHENTICATION_BACKENDS", "INSTALLED_APPS",
                            "MIDDLEWARE_CLASSES", "STATICFILES_FINDERS")
     for setting in tuple_list_settings:
