@@ -114,7 +114,7 @@ msgstr "Kategorie bloga"
 
 #: templates/admin/includes/quick_blog.html:18
 msgid "Quick Blog"
-msgstr "Szybki Blog"
+msgstr "Szybki blog"
 
 #: templates/admin/includes/quick_blog.html:27
 msgid "Save Draft"
