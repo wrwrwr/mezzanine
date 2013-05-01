@@ -1,6 +1,7 @@
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.http import HttpResponse, Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, resolve_url
+from django.utils.encoding import force_str
 from django.utils.http import urlquote
 
 from mezzanine.conf import settings
@@ -46,7 +47,8 @@ class PageMiddleware(object):
         # Handle ``page.login_required``.
         if page.login_required and not request.user.is_authenticated():
             path = urlquote(request.get_full_path())
-            bits = (settings.LOGIN_URL, REDIRECT_FIELD_NAME, path)
+            login_url = force_str(resolve_url(settings.LOGIN_URL))
+            bits = (login_url, REDIRECT_FIELD_NAME, path)
             return redirect("%s?%s=%s" % bits)
 
         if page.slug == slug and view_func == page_view:
