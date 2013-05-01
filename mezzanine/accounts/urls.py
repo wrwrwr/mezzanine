@@ -1,5 +1,8 @@
 
 from django.conf.urls import patterns, url
+from django.utils.encoding import force_text
+from django.utils.functional import lazy
+from django.utils import six
 
 from mezzanine.conf import settings
 
@@ -23,30 +26,33 @@ PASSWORD_RESET_VERIFY_URL = getattr(settings, "PASSWORD_RESET_VERIFY_URL",
 _verify_pattern = "/(?P<uidb36>[-\w]+)/(?P<token>[-\w]+)"
 _slash = "/" if settings.APPEND_SLASH else ""
 
+
+def _path_format(path, additional=""):
+    path = force_text(path).strip("/")
+    return "^%s%s%s$" % (path, additional, _slash)
+_path_format_lazy = lazy(_path_format, six.text_type)
+
+
 urlpatterns = patterns("mezzanine.accounts.views",
-    url("^%s%s$" % (LOGIN_URL.strip("/"), _slash),
-        "login", name="login"),
-    url("^%s%s$" % (LOGOUT_URL.strip("/"), _slash),
-        "logout", name="logout"),
-    url("^%s%s$" % (SIGNUP_URL.strip("/"), _slash),
-        "signup", name="signup"),
-    url("^%s%s%s$" % (SIGNUP_VERIFY_URL.strip("/"), _verify_pattern, _slash),
+    url(_path_format_lazy(LOGIN_URL), "login", name="login"),
+    url(_path_format_lazy(LOGOUT_URL), "logout", name="logout"),
+    url(_path_format_lazy(SIGNUP_URL), "signup", name="signup"),
+    url(_path_format_lazy(SIGNUP_VERIFY_URL, _verify_pattern),
         "signup_verify", name="signup_verify"),
-    url("^%s%s$" % (PROFILE_UPDATE_URL.strip("/"), _slash),
+    url(_path_format_lazy(PROFILE_UPDATE_URL),
         "profile_update", name="profile_update"),
-    url("^%s%s$" % (PASSWORD_RESET_URL.strip("/"), _slash),
+    url(_path_format_lazy(PASSWORD_RESET_URL),
         "password_reset", name="mezzanine_password_reset"),
-    url("^%s%s%s$" %
-        (PASSWORD_RESET_VERIFY_URL.strip("/"), _verify_pattern, _slash),
+    url(_path_format_lazy(PASSWORD_RESET_VERIFY_URL, _verify_pattern),
         "password_reset_verify", name="password_reset_verify"),
-    url("^%s%s$" % (ACCOUNT_URL.strip("/"), _slash),
+    url(_path_format_lazy(ACCOUNT_URL),
         "account_redirect", name="account_redirect"),
 )
 
 if settings.ACCOUNTS_PROFILE_VIEWS_ENABLED:
     urlpatterns += patterns("mezzanine.accounts.views",
-        url("^%s%s$" % (PROFILE_URL.strip("/"), _slash),
+        url(_path_format_lazy(PROFILE_URL),
             "profile_redirect", name="profile_redirect"),
-        url("^%s/(?P<username>.*)%s$" % (PROFILE_URL.strip("/"), _slash),
+        url(_path_format_lazy(PROFILE_URL, "/(?P<username>.*)"),
             "profile", name="profile"),
     )
