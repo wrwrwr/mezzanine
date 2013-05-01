@@ -254,15 +254,38 @@ class LocaleURLMiddleware(object):
     language_name, localized_url)`` triple for every language;
     ``localized_url`` starts with a language prefix and has page / product
     slugs translated.
+
+    This should be one of the last middlewares listed, past session and locale
+    middlewares or anything that can change the view that will be used.
     """
 
+    def process_request(self, request):
+        """
+        Stores language in session, to prevent language switches on redirects.
+        ``LocaleMiddleware`` will make the stored language active on its own.
+        """
+        if hasattr(request, 'session'):
+            request.session['django_language'] = request.LANGUAGE_CODE
+
     def process_view(self, request, view_func, view_args, view_kwargs):
+        """
+        Stores the view to be executed, so translated URLs to the current page
+        may be displayed in a language chooser.
+        """
         # Django 1.5: request.resolve_match.
         request.view_func = view_func
         request.view_args = view_args
         request.view_kwargs = view_kwargs
 
     def process_template_response(self, request, response):
+        """
+        Attempts to determine URLs for the current page for each language and
+        puts them into response's context.
+
+        If a page or product is being displayed, simply get its path with each
+        language active. Otherwise try to reverse the current view for all
+        languages. If all fails, just replace language prefix in request.path.
+        """
         languages_urls = []
         for (code, name) in settings.LANGUAGES:
             with override(code):
