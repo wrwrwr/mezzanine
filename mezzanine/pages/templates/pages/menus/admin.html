@@ -34,7 +34,7 @@
                     {% set_model_permissions model %}
                     {% if model.perms.add %}
                     <option value="{{ model.add_url }}?parent={{ page.id }}"
-                        >{{ model.name }}</option>
+                        >{{ model.name|capfirst }}</option>
                     {% endif %}
                 {% endfor %}
             </select>

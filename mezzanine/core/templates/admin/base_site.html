@@ -12,7 +12,7 @@ mostly get applied globally to different parts of the admin.
 
 {% endcomment %}
 
-{% block title %}{{ title }} | Mezzanine{% endblock %}
+{% block title %}{{ title|capfirst }} | Mezzanine{% endblock %}
 {% block branding %}<h1 id="site-name">Mezzanine</h1>{% endblock %}
 {% block nav-global %}{% endblock %}
 
