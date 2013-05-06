@@ -1,5 +1,5 @@
 
-from mezzanine.core.models import Slugged, MetaData, RichText
+from mezzanine.core.models import Slugged, MetaData, Displayable, RichText
 
 from modeltranslation.translator import TranslationOptions, translator
 
@@ -21,4 +21,5 @@ class RichTextTranslationOptions(TranslationOptions):
 
 translator.register(Slugged, SluggedTranslationOptions)
 translator.register(MetaData, MetaDataTranslationOptions)
+translator.register(Displayable)
 translator.register(RichText, RichTextTranslationOptions)
