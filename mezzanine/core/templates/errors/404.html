@@ -2,6 +2,10 @@
 
 {% load i18n %}
 
+{% block meta_title %}{{ block.super }}
+{% trans "Page not found" %}
+{% endblock %}
+
 {% block title %}
 {% trans "Page not found" %}
 {% endblock %}
