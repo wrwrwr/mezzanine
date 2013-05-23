@@ -292,7 +292,7 @@ class LocaleURLMiddleware(object):
                     url = response.context_data["page"].get_absolute_url()
                 elif "product" in response.context_data:
                     url = response.context_data["product"].get_absolute_url()
-                else:
+                elif hasattr(request, "view_func"):
                     try:
                         url = reverse(request.view_func,
                                       args=request.view_args,
@@ -302,6 +302,8 @@ class LocaleURLMiddleware(object):
                         path_code = get_language_from_path(url)
                         if path_code:
                             url = url.replace(path_code, code, 1)
+                else:
+                    url = "/"
                 languages_urls.append((code, name, url))
         response.context_data["LANGUAGES_URLS"] = languages_urls
         return response
