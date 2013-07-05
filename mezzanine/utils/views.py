@@ -161,8 +161,6 @@ def set_cookie(response, name, value, expiry_seconds=None, secure=False):
     """
     if expiry_seconds is None:
         expiry_seconds = 90 * 24 * 60 * 60  # Default to 90 days.
-    expires = datetime.strftime(datetime.utcnow() +
-                                timedelta(seconds=expiry_seconds),
-                                "%a, %d-%b-%Y %H:%M:%S GMT")
+    expires = datetime.utcnow() + timedelta(seconds=expiry_seconds)
     value = value.encode("utf-8")
     response.set_cookie(name, value, expires=expires, secure=secure)
