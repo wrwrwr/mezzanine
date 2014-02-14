@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mezzanine\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-05-01 16:41+0200\n"
+"POT-Creation-Date: 2014-02-14 13:47+0100\n"
 "PO-Revision-Date: 2012-10-26 11:04+0000\n"
 "Last-Translator: Kniyl <mathias.ettinger@gmail.com>\n"
 "Language-Team: Polish (http://www.transifex.com/projects/p/mezzanine/"
@@ -21,11 +21,11 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
-#: admin.py:32 fields.py:33
+#: admin.py:33 fields.py:79
 msgid "Email"
 msgstr "E-mail"
 
-#: admin.py:115
+#: admin.py:116
 #, python-format
 msgid "1 entry deleted"
 msgid_plural "%(count)s entries deleted"
@@ -33,7 +33,7 @@ msgstr[0] "%(count)s wpis usunięty"
 msgstr[1] "%(count)s wpisy usunięte"
 msgstr[2] "%(count)s wpisów usuniętych"
 
-#: admin.py:119
+#: admin.py:120
 msgid "View Entries"
 msgstr "Zobacz wpisy"
 
@@ -65,6 +65,29 @@ msgstr ""
 
 #: defaults.py:58
 msgid ""
+"Maximum size of a file accepted as a form upload. Set to `None` to disable "
+"the check; please also see Django's `FILE_UPLOAD_MAX_MEMORY_SIZE` and "
+"https://docs.djangoproject.com/en/dev/topics/security/#user-uploaded-content-"
+"security."
+msgstr ""
+"Maksymalny rozmiar pliku akceptowany przy wgrywaniu za pomocą formularza. "
+"'None' oznacza brak limitu; rozważ również globalne ustawienie Django "
+"`FILE_UPLOAD_MAX_MEMORY_SIZE` i zapoznaj się z https://docs.djangoproject.com"
+"/en/dev/topics/security/#user-uploaded-content-security."
+
+#: defaults.py:68
+msgid ""
+"A sequence of mimetypes accepted for form uploads. Set to `None` to disable "
+"the check. Please note that the content type check only looks at a user-"
+"provided header, thus cannot be trusted as a security feature."
+msgstr ""
+"Ciąg typów zawartości (MIME) akceptowanych przy wgrywaniu plików przy użyciu "
+"formularza. 'None' to brak ograniczenia. Zauważ, że sprawdzany jest tylko "
+"nagłówek typu zawartości przesłany przez klienta, więc takiego sprawdzenia "
+"nie można traktować jako zabezpieczenia przeciw celowemu działaniu."
+
+#: defaults.py:78
+msgid ""
 "Extra field types for the forms app. Should contain a sequence of three-item "
 "sequences, each containing the ID, dotted import path for the field class, "
 "and field name, for each custom field type. The ID is simply a numeric "
@@ -76,59 +99,69 @@ msgstr ""
 "Identyfikator to po prostu stała liczbowa, ale jeszcze nie używana -- "
 "wybierz wysoki numer, na przykład 100, aby uniknąć konfliktów."
 
-#: fields.py:31
+#: fields.py:26
+#, python-format
+msgid "Please ensure the file size is at most %(max)s (currently %(size)s)."
+msgstr ""
+"Proszę wgrać plik o rozmiarze co najwyżej %(max)s (obecnie %(size)s)."
+
+#: fields.py:28
+msgid "Please upload a file of an accepted type."
+msgstr "Proszę wgrać plik w jednym z akceptowanych formatów."
+
+#: fields.py:77
 msgid "Single line text"
 msgstr "Pole jednowierszowe"
 
-#: fields.py:32
+#: fields.py:78
 msgid "Multi line text"
 msgstr "Pole wielowierszowe"
 
-#: fields.py:34
+#: fields.py:80
 msgid "Number"
 msgstr "Liczba"
 
-#: fields.py:35
+#: fields.py:81
 msgid "URL"
 msgstr "URL"
 
-#: fields.py:36
+#: fields.py:82
 msgid "Check box"
 msgstr "Pole wyboru"
 
-#: fields.py:37
+#: fields.py:83
 msgid "Check boxes"
 msgstr "Pola wyboru"
 
-#: fields.py:38
+#: fields.py:84
 msgid "Drop down"
 msgstr "Lista rozwijalna"
 
-#: fields.py:39
+#: fields.py:85
 msgid "Multi select"
 msgstr "Pole wielokrotnego wyboru"
 
-#: fields.py:40
+#: fields.py:86
 msgid "Radio buttons"
 msgstr "Pole opcji (radio)"
 
-#: fields.py:41
+#: fields.py:87
 msgid "File upload"
 msgstr "Wgranie pliku"
 
-#: fields.py:42
+#: fields.py:88
 msgid "Date"
 msgstr "Data"
 
-#: fields.py:43 models.py:116
+#: fields.py:89 models.py:116
 msgid "Date/time"
 msgstr "Data/czas"
 
-#: fields.py:44
+#: fields.py:90
 msgid "Date of birth"
 msgstr "Data urodzenia"
 
-#: fields.py:45
+#: fields.py:91
 msgid "Hidden"
 msgstr "Ukryte"
 
