@@ -54,6 +54,26 @@ register_setting(
 )
 
 register_setting(
+    name="FORMS_UPLOAD_MAX_SIZE",
+    description=_("Maximum size of a file accepted as a form upload. "
+        "Set to `None` to disable the check; please also see Django's "
+        "`FILE_UPLOAD_MAX_MEMORY_SIZE` and https://docs.djangoproject.com/en/"
+        "dev/topics/security/#user-uploaded-content-security."),
+    editable=False,
+    default=5242880,
+)
+
+register_setting(
+    name="FORMS_UPLOAD_CONTENT_TYPES",
+    description=_("A sequence of mimetypes accepted for form uploads. "
+        "Set to `None` to disable the check. Please note that the content "
+        "type check only looks at a user-provided header, thus cannot be "
+        "trusted as a security feature."),
+    editable=False,
+    default=None,
+)
+
+register_setting(
     name="FORMS_EXTRA_FIELDS",
     description=_("Extra field types for the forms app. Should contain a "
         "sequence of three-item sequences, each containing the ID, dotted "

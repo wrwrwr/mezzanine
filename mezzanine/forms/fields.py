@@ -1,12 +1,58 @@
 
 from django.core.exceptions import ImproperlyConfigured
 from django import forms
+from django.forms import ValidationError
 from django.forms.extras import SelectDateWidget
+from django.forms.fields import FileField
+from django.template.defaultfilters import filesizeformat
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
 from mezzanine.core.forms import SplitSelectDateTimeWidget
 from mezzanine.utils.importing import import_dotted_path
+
+
+class LimitedFileField(FileField):
+    """
+    Lets you limit maximum size and content type of uploaded files in a
+    "user-friendly" way.
+
+    Meant as an UI improvement rather than a security feature:
+    * file size is properly limited using `FILE_UPLOAD_MAX_MEMORY_SIZE`
+      or even better through server's configuration;
+    * content type header cannot be trusted.
+    """
+    default_error_messages = {
+        "max_size": _("Please ensure the file size is at most %(max)s "
+                      "(currently %(size)s)."),
+        "content_type": _("Please upload a file of an accepted type.")
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.max_size = kwargs.pop("max_size", settings.FORMS_UPLOAD_MAX_SIZE)
+        self.content_types = kwargs.pop("content_types",
+            settings.FORMS_UPLOAD_CONTENT_TYPES)
+        super(LimitedFileField, self).__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        data = super(LimitedFileField, self).clean(data, initial)
+        if data is None:
+            return None
+        elif not data and initial:
+            return initial
+
+        if self.max_size is not None:
+            if data.size > self.max_size:
+                error_values =  {"max": filesizeformat(self.max_size),
+                                 "size": filesizeformat(data.size)}
+                raise ValidationError(
+                    self.error_messages["max_size"] % error_values)
+
+        if self.content_types is not None:
+            if data.content_type not in self.content_types:
+                raise ValidationError(self.error_messages["content_type"])
+
+        return data
 
 
 # Constants for all available field types.
@@ -55,7 +101,7 @@ CLASSES = {
     SELECT: forms.ChoiceField,
     SELECT_MULTIPLE: forms.MultipleChoiceField,
     RADIO_MULTIPLE: forms.ChoiceField,
-    FILE: forms.FileField,
+    FILE: LimitedFileField,
     DATE: forms.DateField,
     DATE_TIME: forms.DateTimeField,
     DOB: forms.DateField,
@@ -91,6 +137,7 @@ if settings.FORMS_USE_HTML5:
         NUMBER: html5_field("number", forms.TextInput),
         URL: html5_field("url", forms.TextInput),
     })
+
 
 # Allow extra fields types to be defined via the FORMS_EXTRA_FIELDS
 # setting, which should contain a sequence of three-item sequences,
