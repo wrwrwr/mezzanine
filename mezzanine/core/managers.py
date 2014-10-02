@@ -1,15 +1,22 @@
+from __future__ import unicode_literals
+from future.builtins import int, zip
 
+from functools import reduce
 from operator import ior, iand
 from string import punctuation
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Manager, Q, CharField, TextField, get_models
 from django.db.models.manager import ManagerDescriptor
 from django.db.models.query import QuerySet
 from django.contrib.sites.managers import CurrentSiteManager as DjangoCSM
 from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
+from mezzanine.utils.models import get_model
 from mezzanine.utils.sites import current_site_id
+from mezzanine.utils.urls import home_slug
 
 
 class PublishedManager(Manager):
@@ -47,7 +54,7 @@ def search_fields_to_dict(fields):
     if not fields:
         return {}
     try:
-        int(dict(fields).values()[0])
+        int(list(dict(fields).values())[0])
     except (TypeError, ValueError):
         fields = dict(zip(fields, [1] * len(fields)))
     return fields
@@ -132,7 +139,7 @@ class SearchableQuerySet(QuerySet):
         # terms that are explicitly required.
         elif optional:
             queryset = queryset.filter(reduce(ior, optional))
-        return queryset
+        return queryset.distinct()
 
     def _clone(self, *args, **kwargs):
         """
@@ -155,17 +162,30 @@ class SearchableQuerySet(QuerySet):
         If search has occurred and no ordering has occurred, decorate
         each result with the number of search terms so that it can be
         sorted by the number of occurrence of terms.
+
+        In the case of search fields that span model relationships, we
+        cannot accurately match occurrences without some very
+        complicated traversal code, which we won't attempt. So in this
+        case, namely when there are no matches for a result (count=0),
+        and search fields contain relationships (double underscores),
+        we assume one match for one of the fields, and use the average
+        weight of all search fields with relationships.
         """
         results = super(SearchableQuerySet, self).iterator()
         if self._search_terms and not self._search_ordered:
             results = list(results)
             for i, result in enumerate(results):
                 count = 0
+                related_weights = []
                 for (field, weight) in self._search_fields.items():
+                    if "__" in field:
+                        related_weights.append(weight)
                     for term in self._search_terms:
-                        field_value = getattr(result, field)
+                        field_value = getattr(result, field, None)
                         if field_value:
                             count += field_value.lower().count(term) * weight
+                if not count and related_weights:
+                    count = int(sum(related_weights) / len(related_weights))
                 results[i].result_count = count
             return iter(results)
         return results
@@ -237,15 +257,59 @@ class SearchableManager(Manager):
         any models that subclass from this manager's model if the
         model is abstract.
         """
-        if getattr(self.model._meta, "abstract", False):
+        if not settings.SEARCH_MODEL_CHOICES:
+            # No choices defined - build a list of leaf models (those
+            # without subclasses) that inherit from Displayable.
             models = [m for m in get_models() if issubclass(m, self.model)]
+            parents = reduce(ior, [m._meta.get_parent_list() for m in models])
+            models = [m for m in models if m not in parents]
+        elif getattr(self.model._meta, "abstract", False):
+            # When we're combining model subclasses for an abstract
+            # model (eg Displayable), we only want to use models that
+            # are represented by the ``SEARCH_MODEL_CHOICES`` setting.
+            # Now this setting won't contain an exact list of models
+            # we should use, since it can define superclass models such
+            # as ``Page``, so we check the parent class list of each
+            # model when determining whether a model falls within the
+            # ``SEARCH_MODEL_CHOICES`` setting.
+            search_choices = set()
+            models = set()
+            parents = set()
+            errors = []
+            for name in settings.SEARCH_MODEL_CHOICES:
+                try:
+                    model = get_model(*name.split(".", 1))
+                except LookupError:
+                    errors.append(name)
+                else:
+                    search_choices.add(model)
+            if errors:
+                raise ImproperlyConfigured("Could not load the model(s) "
+                        "%s defined in the 'SEARCH_MODEL_CHOICES' setting."
+                        % ", ".join(errors))
+
+            for model in get_models():
+                # Model is actually a subclasses of what we're
+                # searching (eg Displayabale)
+                is_subclass = issubclass(model, self.model)
+                # Model satisfies the search choices list - either
+                # there are no search choices, model is directly in
+                # search choices, or its parent is.
+                this_parents = set(model._meta.get_parent_list())
+                in_choices = not search_choices or model in search_choices
+                in_choices = in_choices or this_parents & search_choices
+                if is_subclass and (in_choices or not search_choices):
+                    # Add to models we'll seach. Also maintain a parent
+                    # set, used below for further refinement of models
+                    # list to search.
+                    models.add(model)
+                    parents.update(this_parents)
             # Strip out any models that are superclasses of models,
             # specifically the Page model which will generally be the
             # superclass for all custom content types, since if we
             # query the Page model as well, we will get duplicate
             # results.
-            parents = reduce(ior, [m._meta.get_parent_list() for m in models])
-            models = [m for m in models if m not in parents]
+            models -= parents
         else:
             models = [self.model]
         all_results = []
@@ -268,6 +332,7 @@ class CurrentSiteManager(DjangoCSM):
     management commands with the ``--site`` arg, finally falling back
     to ``settings.SITE_ID`` if none of those match a site.
     """
+
     def __init__(self, field_name=None, *args, **kwargs):
         super(DjangoCSM, self).__init__(*args, **kwargs)
         self.__field_name = field_name
@@ -275,7 +340,12 @@ class CurrentSiteManager(DjangoCSM):
 
     def get_query_set(self):
         if not self.__is_validated:
-            self._validate_field_name()
+            try:
+                # Django <= 1.6
+                self._validate_field_name()
+            except AttributeError:
+                # Django >= 1.7: will populate "self.__field_name".
+                self._get_field_name()
         lookup = {self.__field_name + "__id__exact": current_site_id()}
         return super(DjangoCSM, self).get_query_set().filter(**lookup)
 
@@ -287,4 +357,21 @@ class DisplayableManager(CurrentSiteManager, PublishedManager,
     and ``SearchableManager`` for the ``Displayable`` model.
 
     """
-    pass
+
+    def url_map(self, for_user=None, **kwargs):
+        """
+        Returns a dictionary of urls mapped to Displayable subclass
+        instances, including a fake homepage instance if none exists.
+        Used in ``mezzanine.core.sitemaps``.
+        """
+        home = self.model(title=_("Home"))
+        setattr(home, "get_absolute_url", home_slug)
+        items = {home.get_absolute_url(): home}
+        for model in get_models():
+            if issubclass(model, self.model):
+                for item in (model.objects.published(for_user=for_user)
+                                  .filter(**kwargs)
+                                  .exclude(slug__startswith="http://")
+                                  .exclude(slug__startswith="https://")):
+                    items[item.get_absolute_url()] = item
+        return items

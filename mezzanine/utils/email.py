@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from future.builtins import bytes, str
 
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
@@ -6,7 +8,8 @@ from django.template import loader, Context
 from django.utils.http import int_to_base36
 
 from mezzanine.conf import settings
-from mezzanine.utils.urls import admin_url
+from mezzanine.utils.urls import admin_url, next_url
+from mezzanine.conf.context_processors import settings as context_settings
 
 
 def split_addresses(email_string_list):
@@ -14,7 +17,7 @@ def split_addresses(email_string_list):
     Converts a string containing comma separated email addresses
     into a list of email addresses.
     """
-    return filter(None, [s.strip() for s in email_string_list.split(",")])
+    return [f for f in [s.strip() for s in email_string_list.split(",")] if f]
 
 
 def subject_template(template, context):
@@ -27,7 +30,8 @@ def subject_template(template, context):
 
 
 def send_mail_template(subject, template, addr_from, addr_to, context=None,
-                       attachments=None, fail_silently=False):
+                       attachments=None, fail_silently=None, addr_bcc=None,
+                       headers=None):
     """
     Send email rendering text and html versions for the specified
     template name using the context dictionary passed in.
@@ -36,14 +40,26 @@ def send_mail_template(subject, template, addr_from, addr_to, context=None,
         context = {}
     if attachments is None:
         attachments = []
+    if fail_silently is None:
+        fail_silently = settings.EMAIL_FAIL_SILENTLY
+    # Add template accessible settings from Mezzanine to the context
+    # (normally added by a context processor for HTTP requests)
+    context.update(context_settings())
     # Allow for a single address to be passed in.
-    if not hasattr(addr_to, "__iter__"):
+    # Python 3 strings have an __iter__ method, so the following hack
+    # doesn't work: if not hasattr(addr_to, "__iter__"):
+    if isinstance(addr_to, str) or isinstance(addr_to, bytes):
         addr_to = [addr_to]
+    if addr_bcc is not None and (isinstance(addr_bcc, str) or
+                                 isinstance(addr_bcc, bytes)):
+        addr_bcc = [addr_bcc]
     # Loads a template passing in vars as context.
     render = lambda type: loader.get_template("%s.%s" %
                           (template, type)).render(Context(context))
     # Create and send email.
-    msg = EmailMultiAlternatives(subject, render("txt"), addr_from, addr_to)
+    msg = EmailMultiAlternatives(subject, render("txt"),
+                                 addr_from, addr_to, addr_bcc,
+                                 headers=headers)
     msg.attach_alternative(render("html"), "text/html")
     for attachment in attachments:
         msg.attach(*attachment)
@@ -62,7 +78,7 @@ def send_verification_mail(request, user, verification_type):
     verify_url = reverse(verification_type, kwargs={
         "uidb36": int_to_base36(user.id),
         "token": default_token_generator.make_token(user),
-    }) + "?next=" + request.GET.get("next", "/")
+    }) + "?next=" + (next_url(request) or "/")
     context = {
         "request": request,
         "user": user,
@@ -72,7 +88,7 @@ def send_verification_mail(request, user, verification_type):
     subject = subject_template(subject_template_name, context)
     send_mail_template(subject, "email/%s" % verification_type,
                        settings.DEFAULT_FROM_EMAIL, user.email,
-                       context=context, fail_silently=settings.DEBUG)
+                       context=context)
 
 
 def send_approve_mail(request, user):
@@ -93,7 +109,7 @@ def send_approve_mail(request, user):
     subject = subject_template("email/account_approve_subject.txt", context)
     send_mail_template(subject, "email/account_approve",
                        settings.DEFAULT_FROM_EMAIL, approval_emails,
-                       context=context, fail_silently=settings.DEBUG)
+                       context=context)
 
 
 def send_approved_mail(request, user):
@@ -106,4 +122,4 @@ def send_approved_mail(request, user):
     subject = subject_template("email/account_approved_subject.txt", context)
     send_mail_template(subject, "email/account_approved",
                        settings.DEFAULT_FROM_EMAIL, user.email,
-                       context=context, fail_silently=settings.DEBUG)
+                       context=context)

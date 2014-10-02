@@ -44,8 +44,12 @@ as a parameter. For example, to create a blog-only search form, you can
 use ``{% search_form "blog.BlogPost" %}``.
 
 If no parameter is passed to ``{% search_form %}``, no drop-down will
-be provided, and the search will be performed on all models that
-subclass ``Displayable``.
+be provided, and the search will be performed on all models defined in
+the ``SEARCH_MODEL_CHOICES`` setting.
+
+Finally, by setting ``SEARCH_MODEL_CHOICES`` to ``None``, the search
+form will not contain a drop-down, but in this case all models that
+subclass ``Displayable`` will be automatically searched.
 
 Search API
 ==========
@@ -185,6 +189,12 @@ we can search across the ``GalleryImage`` and ``Document`` models at once::
     methods onto the result. However when searching across heterogeneous
     models via an abstract model, this is not the case and the result is a
     list of model instances.
+
+    Also of importance is the ``SEARCH_MODEL_CHOICES`` setting mentioned
+    above. When searching across heterogeneous models via an abstract
+    model, the models searched will only be used if they are defined
+    within the ``SEARCH_MODEL_CHOICES`` setting, either explicitly, or
+    implicitly by a model's parent existing in ``SEARCH_MODEL_CHOICES``.
 
 Query Behaviour
 ===============

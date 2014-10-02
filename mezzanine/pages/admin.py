@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 from copy import deepcopy
 
@@ -13,20 +14,22 @@ from mezzanine.pages.models import Page, RichTextPage, Link
 from mezzanine.utils.urls import admin_url
 
 
+# Add extra fields for pages to the Displayable fields.
+# We only add the menu field if PAGE_MENU_TEMPLATES has values.
 page_fieldsets = deepcopy(DisplayableAdmin.fieldsets)
-page_fieldsets[0][1]["fields"] += ("in_menus", "login_required",)
+if settings.PAGE_MENU_TEMPLATES:
+    page_fieldsets[0][1]["fields"] += ("in_menus",)
+page_fieldsets[0][1]["fields"] += ("login_required",)
 
 
 class PageAdminForm(DisplayableAdminForm):
 
     def clean_slug(self):
         """
-        If the slug has been changed, save the old one. We will use it later
-        in PageAdmin.model_save() to make the slug change propagate down the
-        page tree.
+        Save the old slug to be used later in PageAdmin.save_model()
+        to make the slug change propagate down the page tree.
         """
-        if self.instance.slug != self.cleaned_data['slug']:
-            self.instance._old_slug = self.instance.slug
+        self.instance._old_slug = self.instance.slug
         return self.cleaned_data['slug']
 
 
@@ -139,12 +142,12 @@ class PageAdmin(DisplayableAdmin):
 
     def save_model(self, request, obj, form, change):
         """
-        Set the ID of the parent page if passed in via querystring, and make
-        sure the new slug propagates to all descendant pages.
+        Set the ID of the parent page if passed in via querystring, and
+        make sure the new slug propagates to all descendant pages.
         """
-        if change and hasattr(obj, "_old_slug"):
+        if change and obj._old_slug != obj.slug:
             # _old_slug was set in PageAdminForm.clean_slug().
-            new_slug = obj.slug
+            new_slug = obj.slug or obj.generate_unique_slug()
             obj.slug = obj._old_slug
             obj.set_slug(new_slug)
 
@@ -196,17 +199,18 @@ class PageAdmin(DisplayableAdmin):
             except NoReverseMatch:
                 continue
             else:
-                setattr(model, "name", model._meta.verbose_name)
+                setattr(model, "meta_verbose_name", model._meta.verbose_name)
                 setattr(model, "add_url", admin_url(model, "add"))
                 models.append(model)
         order = [name.lower() for name in settings.ADD_PAGE_ORDER]
 
         def sort_key(page):
             name = "%s.%s" % (page._meta.app_label, page._meta.object_name)
+            unordered = len(order)
             try:
-                order.index(name.lower())
+                return (order.index(name.lower()), "")
             except ValueError:
-                return page.name
+                return (unordered, page.meta_verbose_name)
         return sorted(models, key=sort_key)
 
 # Drop the meta data fields, and move slug towards the stop.

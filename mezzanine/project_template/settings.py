@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 
 ######################
 # MEZZANINE SETTINGS #
@@ -5,7 +6,7 @@
 
 # The following settings are already defined with default values in
 # the ``defaults.py`` module within each of Mezzanine's apps, but are
-# common enough to be put here, commented out, for convenient
+# common enough to be put here, commented out, for conveniently
 # overriding. Please consult the settings documentation for a full list
 # of settings Mezzanine implements:
 # http://mezzanine.jupo.org/docs/configuration.html#default-settings
@@ -91,6 +92,10 @@ ADMINS = (
 )
 MANAGERS = ADMINS
 
+# Hosts/domain names that are valid for this site; required if DEBUG is False
+# See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = []
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -107,6 +112,12 @@ USE_TZ = True
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = "en"
 
+# Supported languages
+_ = lambda s: s
+LANGUAGES = (
+    ('en', _('English')),
+)
+
 # A boolean that turns on/off debug mode. When set to ``True``, stack traces
 # are displayed for error pages. Should always be set to ``False`` in
 # production. Best set to ``True`` in local_settings.py
@@ -120,9 +131,6 @@ SITE_ID = 1
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = False
-
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = "%(SECRET_KEY)s"
 
 # Tuple of IP addresses, as strings, that:
 #   * See debug comments, when DEBUG is true
@@ -144,6 +152,10 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
+
+# The numeric mode to set newly-uploaded files to. The value should be
+# a mode you'd pass directly to os.chmod.
+FILE_UPLOAD_PERMISSIONS = 0o644
 
 
 #############
@@ -253,6 +265,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "django.core.context_processors.tz",
     "mezzanine.conf.context_processors.settings",
+    "mezzanine.pages.context_processors.page",
 )
 
 # List of middleware classes to use. Order is important; in the request phase,
@@ -261,6 +274,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 MIDDLEWARE_CLASSES = (
     "mezzanine.core.middleware.UpdateCacheMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -297,8 +311,6 @@ OPTIONAL_APPS = (
     PACKAGE_NAME_GRAPPELLI,
 )
 
-DEBUG_TOOLBAR_CONFIG = {"INTERCEPT_REDIRECTS": False}
-
 ###################
 # DEPLOY SETTINGS #
 ###################
@@ -307,19 +319,19 @@ DEBUG_TOOLBAR_CONFIG = {"INTERCEPT_REDIRECTS": False}
 # Check fabfile.py for defaults.
 
 # FABRIC = {
-#     "SSH_USER": "", # SSH username
-#     "SSH_PASS":  "", # SSH password (consider key-based authentication)
-#     "SSH_KEY_PATH":  "", # Local path to SSH key file, for key-based auth
-#     "HOSTS": [], # List of hosts to deploy to
+#     "SSH_USER": "", # SSH username for host deploying to
+#     "HOSTS": ALLOWED_HOSTS[:1], # List of hosts to deploy to (eg, first host)
+#     "DOMAINS": ALLOWED_HOSTS, # Domains for public site
+#     "REPO_URL": "ssh://hg@bitbucket.org/user/project", # Project's repo URL
 #     "VIRTUALENV_HOME":  "", # Absolute remote path for virtualenvs
 #     "PROJECT_NAME": "", # Unique identifier for project
-#     "REQUIREMENTS_PATH": "", # Path to pip requirements, relative to project
+#     "REQUIREMENTS_PATH": "requirements.txt", # Project's pip requirements
 #     "GUNICORN_PORT": 8000, # Port gunicorn will listen on
 #     "LOCALE": "en_US.UTF-8", # Should end with ".UTF-8"
-#     "LIVE_HOSTNAME": "www.example.com", # Host for public site.
-#     "REPO_URL": "", # Git or Mercurial remote repo URL for the project
 #     "DB_PASS": "", # Live database password
 #     "ADMIN_PASS": "", # Live admin user password
+#     "SECRET_KEY": SECRET_KEY,
+#     "NEVERCACHE_KEY": NEVERCACHE_KEY,
 # }
 
 
@@ -332,8 +344,9 @@ DEBUG_TOOLBAR_CONFIG = {"INTERCEPT_REDIRECTS": False}
 # defined per machine.
 try:
     from local_settings import *
-except ImportError:
-    pass
+except ImportError as e:
+    if "local_settings" not in str(e):
+        raise e
 
 
 ####################

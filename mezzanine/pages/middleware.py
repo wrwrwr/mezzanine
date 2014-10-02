@@ -1,4 +1,7 @@
+from __future__ import unicode_literals
+
 from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.core.exceptions import ImproperlyConfigured, MiddlewareNotUsed
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 from django.utils.http import urlquote
@@ -7,6 +10,7 @@ from mezzanine.conf import settings
 from mezzanine.pages import page_processors
 from mezzanine.pages.models import Page
 from mezzanine.pages.views import page as page_view
+from mezzanine.utils.importing import import_dotted_path
 from mezzanine.utils.urls import path_to_slug
 
 
@@ -31,17 +35,53 @@ class PageMiddleware(object):
     context, so that the current page is always available.
     """
 
-    def process_view(self, request, view_func, view_args, view_kwargs):
+    def __init__(self):
+        if "mezzanine.pages" not in settings.INSTALLED_APPS:
+            raise MiddlewareNotUsed
 
+    @classmethod
+    def installed(cls):
+        """
+        Used in ``mezzanine.pages.views.page`` to ensure
+        ``PageMiddleware`` or a subclass has been installed. We cache
+        the result on the ``PageMiddleware._installed`` to only run
+        this once. Short path is to just check for the dotted path to
+        ``PageMiddleware`` in ``MIDDLEWARE_CLASSES`` - if not found,
+        we need to load each middleware class to match a subclass.
+        """
+        try:
+            return cls._installed
+        except AttributeError:
+            name = "mezzanine.pages.middleware.PageMiddleware"
+            installed = name in settings.MIDDLEWARE_CLASSES
+            if not installed:
+                for name in settings.MIDDLEWARE_CLASSES:
+                    if issubclass(import_dotted_path(name), cls):
+                        installed = True
+                        break
+            setattr(cls, "_installed", installed)
+            return installed
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        """
+        Per-request mechanics for the current page object.
+        """
+
+        cp = "mezzanine.pages.context_processors.page"
+        if cp not in settings.TEMPLATE_CONTEXT_PROCESSORS:
+            raise ImproperlyConfigured("%s is missing from "
+                "settings.TEMPLATE_CONTEXT_PROCESSORS" % cp)
+
+        # Load the closest matching page by slug, and assign it to the
+        # request object. If none found, skip all further processing.
         slug = path_to_slug(request.path_info)
         pages = Page.objects.with_ascendants_for_slug(slug,
                         for_user=request.user, include_login_required=True)
         if pages:
             page = pages[0]
+            setattr(request, "page", page)
         else:
-            # If we can't find a page matching this slug or any
-            # of its sub-slugs, skip all further processing.
-            return None
+            return
 
         # Handle ``page.login_required``.
         if page.login_required and not request.user.is_authenticated():
@@ -49,54 +89,24 @@ class PageMiddleware(object):
             bits = (settings.LOGIN_URL, REDIRECT_FIELD_NAME, path)
             return redirect("%s?%s=%s" % bits)
 
-        if page.slug == slug and view_func == page_view:
-            # Add the page to the ``extra_context`` arg for the
-            # page view, which is responsible for choosing which
-            # template to use, and raising 404 if there's no page
-            # instance loaded.
-            view_kwargs.setdefault("extra_context", {})
-            view_kwargs["extra_context"]["page"] = page
-
-        # We also first do wacky check with non-page views and 404s.
-        # Basically if the view function isn't the page view and
-        # raises a 404, but also matches an exact page slug, we then
-        # forget about the non-page view, and run the page view
-        # with the correct args.
-        # This check allows us to set up pages with URLs that also
-        # match non-page urlpatterns, for example a page could be
-        # created with the URL /blog/about/, which would match the
-        # blog urlpattern, and asusming there wasn't a blog post
-        # with the slug "about", would raise a 404.
-        try:
-            response = view_func(request, *view_args, **view_kwargs)
-        except Http404:
-            if page.slug == slug and view_func != page_view:
-                # Matched a non-page urlpattern, but got a 404
-                # for a URL that matches a valid page slug, so
-                # use the page view.
-                view_kwargs.setdefault("extra_context", {})
-                view_kwargs["extra_context"]["page"] = page
-                view_func = page_view
-                response = view_func(request, *view_args, **view_kwargs)
-            else:
-                raise
-
-        # If we can't add context to the response we just return it.
-        # (redirects, etc)
-        if not hasattr(response, "context_data"):
-            return response
-
-        # Add the page to its template context, and set helper
-        # attributes like ``is_current``.
-        response.context_data["page"] = page
-        try:
-            response.context_data["editable_obj"]
-        except KeyError:
-            response.context_data["editable_obj"] = page
-        response.context_data["_current_page"] = page
-        page.set_helpers(response.context_data)
+        # If the view isn't Mezzanine's page view, try to return the result
+        # immediately. In the case of a 404 with an URL slug that matches a
+        # page exactly, swallow the exception and try Mezzanine's page view.
+        #
+        # This allows us to set up pages with URLs that also match non-page
+        # urlpatterns. For example, a page could be created with the URL
+        # /blog/about/, which would match the blog urlpattern, and assuming
+        # there wasn't a blog post with the slug "about", would raise a 404
+        # and subsequently be rendered by Mezzanine's page view.
+        if view_func != page_view:
+            try:
+                return view_func(request, *view_args, **view_kwargs)
+            except Http404:
+                if page.slug != slug:
+                    raise
 
         # Run page processors.
+        extra_context = {}
         model_processors = page_processors.processors[page.content_model]
         slug_processors = page_processors.processors["slug:%s" % page.slug]
         for (processor, exact_page) in slug_processors + model_processors:
@@ -107,9 +117,9 @@ class PageMiddleware(object):
                 return processor_response
             elif processor_response:
                 try:
-                    for k in processor_response:
-                        if k not in response.context_data:
-                            response.context_data[k] = processor_response[k]
+                    for k, v in processor_response.items():
+                        if k not in extra_context:
+                            extra_context[k] = v
                 except (TypeError, ValueError):
                     name = "%s.%s" % (processor.__module__, processor.__name__)
                     error = ("The page processor %s returned %s but must "
@@ -117,4 +127,4 @@ class PageMiddleware(object):
                              (name, type(processor_response)))
                     raise ValueError(error)
 
-        return response
+        return page_view(request, slug, extra_context=extra_context)

@@ -1,3 +1,6 @@
+from __future__ import print_function, unicode_literals
+from future.builtins import input, open
+
 import os
 import re
 import sys
@@ -5,6 +8,7 @@ from functools import wraps
 from getpass import getpass, getuser
 from glob import glob
 from contextlib import contextmanager
+from posixpath import join
 
 from fabric.api import env, cd, prefix, sudo as _sudo, run as _run, hide, task
 from fabric.contrib.files import exists, upload_template
@@ -16,7 +20,7 @@ from fabric.colors import yellow, green, blue, red
 ################
 
 conf = {}
-if sys.argv[0].split(os.sep)[-1] == "fab":
+if sys.argv[0].split(os.sep)[-1] in ("fab", "fab-script.py"):
     # Ensure we import settings from the current dir
     try:
         conf = __import__("settings", globals(), locals(), [], 0).FABRIC
@@ -25,7 +29,7 @@ if sys.argv[0].split(os.sep)[-1] == "fab":
         except (KeyError, ValueError):
             raise ImportError
     except (ImportError, AttributeError):
-        print "Aborting, no hosts defined."
+        print("Aborting, no hosts defined.")
         exit()
 
 env.db_pass = conf.get("DB_PASS", None)
@@ -33,21 +37,26 @@ env.admin_pass = conf.get("ADMIN_PASS", None)
 env.user = conf.get("SSH_USER", getuser())
 env.password = conf.get("SSH_PASS", None)
 env.key_filename = conf.get("SSH_KEY_PATH", None)
-env.hosts = conf.get("HOSTS", [])
+env.hosts = conf.get("HOSTS", [""])
 
 env.proj_name = conf.get("PROJECT_NAME", os.getcwd().split(os.sep)[-1])
 env.venv_home = conf.get("VIRTUALENV_HOME", "/home/%s" % env.user)
 env.venv_path = "%s/%s" % (env.venv_home, env.proj_name)
 env.proj_dirname = "project"
 env.proj_path = "%s/%s" % (env.venv_path, env.proj_dirname)
-env.manage = "%s/bin/python %s/project/manage.py" % (env.venv_path,
-                                                     env.venv_path)
-env.live_host = conf.get("LIVE_HOSTNAME", env.hosts[0] if env.hosts else None)
+env.manage = "%s/bin/python %s/project/manage.py" % ((env.venv_path,) * 2)
+env.domains = conf.get("DOMAINS", [conf.get("LIVE_HOSTNAME", env.hosts[0])])
+env.domains_nginx = " ".join(env.domains)
+env.domains_python = ", ".join(["'%s'" % s for s in env.domains])
+env.ssl_disabled = "#" if len(env.domains) > 1 else ""
 env.repo_url = conf.get("REPO_URL", "")
 env.git = env.repo_url.startswith("git") or env.repo_url.endswith(".git")
 env.reqs_path = conf.get("REQUIREMENTS_PATH", None)
 env.gunicorn_port = conf.get("GUNICORN_PORT", 8000)
 env.locale = conf.get("LOCALE", "en_US.UTF-8")
+
+env.secret_key = conf.get("SECRET_KEY", "")
+env.nevercache_key = conf.get("NEVERCACHE_KEY", "")
 
 
 ##################
@@ -76,11 +85,11 @@ templates = {
         "mode": "600",
     },
     "gunicorn": {
-        "local_path": "deploy/gunicorn.conf.py",
+        "local_path": "deploy/gunicorn.conf.py.template",
         "remote_path": "%(proj_path)s/gunicorn.conf.py",
     },
     "settings": {
-        "local_path": "deploy/live_settings.py",
+        "local_path": "deploy/local_settings.py.template",
         "remote_path": "%(proj_path)s/local_settings.py",
     },
 }
@@ -116,7 +125,7 @@ def update_changed_requirements():
     Checks for changes in the requirements file across an update,
     and gets new requirements if changes have occurred.
     """
-    reqs_path = os.path.join(env.proj_path, env.reqs_path)
+    reqs_path = join(env.proj_path, env.reqs_path)
     get_reqs = lambda: run("cat %s" % reqs_path, show=False)
     old_reqs = get_reqs() if env.reqs_path else ""
     yield
@@ -144,9 +153,9 @@ def update_changed_requirements():
 ###########################################
 
 def _print(output):
-    print
-    print output
-    print
+    print()
+    print(output)
+    print()
 
 
 def print_command(command):
@@ -203,6 +212,9 @@ def upload_template_and_reload(name):
     """
     template = get_templates()[name]
     local_path = template["local_path"]
+    if not os.path.exists(local_path):
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        local_path = os.path.join(project_root, local_path)
     remote_path = template["remote_path"]
     reload_command = template.get("reload_command")
     owner = template.get("owner")
@@ -310,7 +322,7 @@ def static():
     Returns the live STATIC_ROOT directory.
     """
     return python("from django.conf import settings;"
-                  "print settings.STATIC_ROOT").split("\n")[-1]
+                  "print(settings.STATIC_ROOT)", show=False).split("\n")[-1]
 
 
 @task
@@ -356,10 +368,11 @@ def create():
     # Create virtualenv
     with cd(env.venv_home):
         if exists(env.proj_name):
-            prompt = raw_input("\nVirtualenv exists: %s\nWould you like "
-                               "to replace it? (yes/no) " % env.proj_name)
+            prompt = input("\nVirtualenv exists: %s"
+                           "\nWould you like to replace it? (yes/no) "
+                           % env.proj_name)
             if prompt.lower() != "yes":
-                print "\nAborting!"
+                print("\nAborting!")
                 return False
             remove()
         run("virtualenv %s --distribute" % env.proj_name)
@@ -378,23 +391,24 @@ def create():
          (env.proj_name, env.proj_name, env.locale, env.locale))
 
     # Set up SSL certificate.
-    conf_path = "/etc/nginx/conf"
-    if not exists(conf_path):
-        sudo("mkdir %s" % conf_path)
-    with cd(conf_path):
-        crt_file = env.proj_name + ".crt"
-        key_file = env.proj_name + ".key"
-        if not exists(crt_file) and not exists(key_file):
-            try:
-                crt_local, = glob(os.path.join("deploy", "*.crt"))
-                key_local, = glob(os.path.join("deploy", "*.key"))
-            except ValueError:
-                parts = (crt_file, key_file, env.live_host)
-                sudo("openssl req -new -x509 -nodes -out %s -keyout %s "
-                     "-subj '/CN=%s' -days 3650" % parts)
-            else:
-                upload_template(crt_local, crt_file, use_sudo=True)
-                upload_template(key_local, key_file, use_sudo=True)
+    if not env.ssl_disabled:
+        conf_path = "/etc/nginx/conf"
+        if not exists(conf_path):
+            sudo("mkdir %s" % conf_path)
+        with cd(conf_path):
+            crt_file = env.proj_name + ".crt"
+            key_file = env.proj_name + ".key"
+            if not exists(crt_file) and not exists(key_file):
+                try:
+                    crt_local, = glob(join("deploy", "*.crt"))
+                    key_local, = glob(join("deploy", "*.key"))
+                except ValueError:
+                    parts = (crt_file, key_file, env.domains[0])
+                    sudo("openssl req -new -x509 -nodes -out %s -keyout %s "
+                         "-subj '/CN=%s' -days 3650" % parts)
+                else:
+                    upload_template(crt_local, crt_file, use_sudo=True)
+                    upload_template(key_local, key_file, use_sudo=True)
 
     # Set up project.
     upload_template_and_reload("settings")
@@ -406,9 +420,11 @@ def create():
         manage("createdb --noinput --nodata")
         python("from django.conf import settings;"
                "from django.contrib.sites.models import Site;"
-               "site, _ = Site.objects.get_or_create(id=settings.SITE_ID);"
-               "site.domain = '" + env.live_host + "';"
-               "site.save();")
+               "Site.objects.filter(id=settings.SITE_ID).update(domain='%s');"
+               % env.domains[0])
+        for domain in env.domains:
+            python("from django.contrib.sites.models import Site;"
+                   "Site.objects.get_or_create(domain='%s');" % domain)
         if env.admin_pass:
             pw = env.admin_pass
             user_py = ("from mezzanine.utils.models import get_user_model;"
@@ -436,8 +452,8 @@ def remove():
         remote_path = template["remote_path"]
         if exists(remote_path):
             sudo("rm %s" % remote_path)
-    psql("DROP DATABASE %s;" % env.proj_name)
-    psql("DROP USER %s;" % env.proj_name)
+    psql("DROP DATABASE IF EXISTS %s;" % env.proj_name)
+    psql("DROP USER IF EXISTS %s;" % env.proj_name)
 
 
 ##############
@@ -469,10 +485,11 @@ def deploy():
     processes for the project.
     """
     if not exists(env.venv_path):
-        prompt = raw_input("\nVirtualenv doesn't exist: %s\nWould you like "
-                           "to create it? (yes/no) " % env.proj_name)
+        prompt = input("\nVirtualenv doesn't exist: %s"
+                       "\nWould you like to create it? (yes/no) "
+                       % env.proj_name)
         if prompt.lower() != "yes":
-            print "\nAborting!"
+            print("\nAborting!")
             return False
         create()
     for name in get_templates():
@@ -508,8 +525,8 @@ def rollback():
         with update_changed_requirements():
             update = "git checkout" if env.git else "hg up -C"
             run("%s `cat last.commit`" % update)
-        with cd(os.path.join(static(), "..")):
-            run("tar -xf %s" % os.path.join(env.proj_path, "last.tar"))
+        with cd(join(static(), "..")):
+            run("tar -xf %s" % join(env.proj_path, "last.tar"))
         restore("last.db")
     restart()
 

@@ -1,12 +1,14 @@
+from __future__ import unicode_literals
+from future.builtins import str as _str
 
 from collections import defaultdict
 
-from django.db.models import get_model
 from django.utils.importlib import import_module
 from django.utils.module_loading import module_has_submodule
 
 from mezzanine.conf import settings
 from mezzanine.pages.models import Page
+from mezzanine.utils.models import get_model
 
 
 processors = defaultdict(list)
@@ -26,10 +28,10 @@ def processor_for(content_model_or_slug, exact_page=False):
     """
     content_model = None
     slug = ""
-    if isinstance(content_model_or_slug, basestring):
+    if isinstance(content_model_or_slug, (str, _str)):
         try:
             content_model = get_model(*content_model_or_slug.split(".", 1))
-        except TypeError:
+        except (TypeError, ValueError, LookupError):
             slug = content_model_or_slug
     elif issubclass(content_model_or_slug, Page):
         content_model = content_model_or_slug

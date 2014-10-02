@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from future.builtins import int, range, str
 
 from datetime import date, datetime
 from os.path import join, split
@@ -9,7 +11,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
 from django.template import Template
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from django.utils.timezone import now
 
 from mezzanine.conf import settings
@@ -146,11 +148,15 @@ class FormForForm(forms.ModelForm):
                           "help_text": field.help_text}
             if field.required and not field.help_text:
                 field_args["help_text"] = _("required")
-            arg_names = field_class.__init__.im_func.func_code.co_varnames
+            arg_names = field_class.__init__.__code__.co_varnames
             if "max_length" in arg_names:
                 field_args["max_length"] = settings.FORMS_FIELD_MAX_LENGTH
             if "choices" in arg_names:
-                field_args["choices"] = field.get_choices()
+                choices = list(field.get_choices())
+                if (field.field_type == fields.SELECT and
+                        field.default not in [c[0] for c in choices]):
+                    choices.insert(0, ("", field.placeholder_text))
+                field_args["choices"] = choices
             if field_widget is not None:
                 field_args["widget"] = field_widget
             #
@@ -182,7 +188,7 @@ class FormForForm(forms.ModelForm):
 
             if field.field_type == fields.DOB:
                 _now = datetime.now()
-                years = range(_now.year, _now.year - 120, -1)
+                years = list(range(_now.year, _now.year - 120, -1))
                 self.fields[field_key].widget.years = years
 
             # Add identifying type attr to the field for styling.
@@ -253,8 +259,8 @@ class EntriesForm(forms.Form):
         self.form = form
         self.request = request
         self.form_fields = form.fields.all()
-        self.entry_time_name = unicode(FormEntry._meta.get_field(
-            "entry_time").verbose_name).encode("utf-8")
+        self.entry_time_name = str(FormEntry._meta.get_field(
+            "entry_time").verbose_name)
         super(EntriesForm, self).__init__(*args, **kwargs)
         for field in self.form_fields:
             field_key = "field_%s" % field.id
@@ -318,7 +324,7 @@ class EntriesForm(forms.Form):
         """
         Returns the list of selected column names.
         """
-        fields = [f.label.encode("utf-8") for f in self.form_fields
+        fields = [f.label for f in self.form_fields
                   if self.cleaned_data["field_%s_export" % f.id]]
         if self.cleaned_data["field_0_export"]:
             fields.append(self.entry_time_name)
@@ -351,7 +357,7 @@ class EntriesForm(forms.Form):
         # Get the field entries for the given form and filter by entry_time
         # if specified.
         field_entries = FieldEntry.objects.filter(entry__form=self.form
-            ).order_by("-entry__id").select_related(depth=1)
+            ).order_by("-entry__id").select_related("entry")
         if self.cleaned_data["field_0_filter"] == FILTER_CHOICE_BETWEEN:
             time_from = self.cleaned_data["field_0_from"]
             time_to = self.cleaned_data["field_0_to"]
@@ -411,7 +417,6 @@ class EntriesForm(forms.Form):
                     field_value = mark_safe("<a href=\"%s\">%s</a>" % parts)
             # Only use values for fields that were selected.
             try:
-                field_value = field_value.encode("utf-8")
                 current_row[field_indexes[field_id]] = field_value
             except KeyError:
                 pass

@@ -1,11 +1,12 @@
+from __future__ import unicode_literals
 
 from django.utils.datastructures import SortedDict
 
 from mezzanine import template
 from mezzanine.conf import settings
 from mezzanine.utils.models import get_user_model
-from mezzanine.accounts import (get_profile_form, get_profile_model,
-                                get_profile_user_fieldname)
+from mezzanine.accounts import (get_profile_form, get_profile_user_fieldname,
+                                get_profile_for_user, ProfileNotConfigured)
 from mezzanine.accounts.forms import LoginForm
 
 
@@ -64,13 +65,28 @@ def profile_fields(user):
     setting is set to ``True``.
     """
     fields = SortedDict()
-    Profile = get_profile_model()
-    if Profile is not None:
-        profile = user.get_profile()
+    try:
+        profile = get_profile_for_user(user)
         user_fieldname = get_profile_user_fieldname()
         exclude = tuple(settings.ACCOUNTS_PROFILE_FORM_EXCLUDE_FIELDS)
-        for field in Profile._meta.fields:
+        for field in profile._meta.fields:
             if field.name not in ("id", user_fieldname) + exclude:
                 value = getattr(profile, field.name)
                 fields[field.verbose_name.title()] = value
-    return fields.items()
+    except ProfileNotConfigured:
+        pass
+    return list(fields.items())
+
+
+@register.filter
+def username_or(user, attr):
+    """
+    Returns the user's username for display, or an alternate attribute
+    if ``ACCOUNTS_NO_USERNAME`` is set to ``True``.
+    """
+    if not settings.ACCOUNTS_NO_USERNAME:
+        attr = "username"
+    value = getattr(user, attr)
+    if callable(value):
+        value = value()
+    return value

@@ -1,8 +1,11 @@
+from __future__ import print_function, unicode_literals
+from future.builtins import int, input
 
 from optparse import make_option
 
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import NoArgsCommand, CommandError
 from django.core.management.commands import syncdb
+from django.db import connection
 
 from mezzanine.core.management import install_optional_data
 from mezzanine.conf import settings
@@ -21,16 +24,20 @@ class Command(NoArgsCommand):
         verbosity = int(options.get("verbosity", 0))
         interactive = int(options.get("interactive", 0))
         no_data = int(options.get("nodata", 0))
+        if "conf_setting" in connection.introspection.table_names():
+            raise CommandError("Database already created, you probably "
+                               "want the syncdb or migrate command")
+
         syncdb.Command().execute(**options)
         if not interactive and not no_data:
             install_optional_data(verbosity)
-        if settings.USE_SOUTH:
+        if "south" in settings.INSTALLED_APPS:
             try:
                 from south.management.commands import migrate
             except ImportError:
                 return
             if interactive:
-                confirm = raw_input("\nSouth is installed for this project."
+                confirm = input("\nSouth is installed for this project."
                                     "\nWould you like to fake initial "
                                     "migrations? (yes/no): ")
                 while True:
@@ -38,9 +45,9 @@ class Command(NoArgsCommand):
                         break
                     elif confirm == "no":
                         return
-                    confirm = raw_input("Please enter either 'yes' or 'no': ")
+                    confirm = input("Please enter either 'yes' or 'no': ")
             if verbosity >= 1:
-                print
-                print "Faking initial migrations ..."
-                print
+                print()
+                print("Faking initial migrations ...")
+                print()
             migrate.Command().execute(fake=True)

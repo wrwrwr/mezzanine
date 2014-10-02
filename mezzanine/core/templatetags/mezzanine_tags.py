@@ -1,33 +1,27 @@
+from __future__ import absolute_import, division, unicode_literals
+from future.builtins import int, open, str
 
 from hashlib import md5
 import os
-from urllib import urlopen, urlencode, quote, unquote
+try:
+    from urllib.parse import quote, unquote
+except ImportError:
+    from urllib import quote, unquote
 
 from django.contrib import admin
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.sites.models import Site
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.core.urlresolvers import reverse, resolve, NoReverseMatch
 from django.db.models import Model, get_model
-
 from django.template import (Context, Node, TextNode, Template,
-                             TemplateSyntaxError, TOKEN_TEXT, TOKEN_VAR,
-                             TOKEN_COMMENT, TOKEN_BLOCK)
-
+    TemplateSyntaxError, TOKEN_TEXT, TOKEN_VAR, TOKEN_COMMENT, TOKEN_BLOCK)
 from django.template.defaultfilters import escape
 from django.template.loader import get_template
+from django.utils import translation
 from django.utils.html import strip_tags
-from django.utils.simplejson import loads
 from django.utils.text import capfirst
-
-# Try to import PIL in either of the two ways it can end up installed.
-try:
-    from PIL import Image, ImageFile, ImageOps
-except ImportError:
-    import Image
-    import ImageFile
-    import ImageOps
 
 from mezzanine.conf import settings
 from mezzanine.core.fields import RichTextField
@@ -107,6 +101,15 @@ def fields_for(context, form):
     return context
 
 
+@register.inclusion_tag("includes/form_errors.html", takes_context=True)
+def errors_for(context, form):
+    """
+    Renders an alert if the form has any errors.
+    """
+    context["form"] = form
+    return context
+
+
 @register.filter
 def sort_by(items, attr):
     """
@@ -176,22 +179,11 @@ def ifinstalled(parser, token):
 @register.render_tag
 def set_short_url_for(context, token):
     """
-    Sets the ``short_url`` attribute of the given model using the bit.ly
-    credentials if they have been specified and saves it.
+    Sets the ``short_url`` attribute of the given model for share
+    links in the template.
     """
     obj = context[token.split_contents()[1]]
-    request = context["request"]
-    if getattr(obj, "short_url") is None:
-        obj.short_url = request.build_absolute_uri(request.path)
-        if context["settings"].BITLY_ACCESS_TOKEN:
-            url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
-                "access_token": context["settings"].BITLY_ACCESS_TOKEN,
-                "uri": obj.short_url,
-            })
-            response = loads(urlopen(url).read())
-            if response["status_code"] == 200:
-                obj.short_url = response["data"]["url"]
-                obj.save()
+    obj.set_short_url()
     return ""
 
 
@@ -200,28 +192,33 @@ def gravatar_url(email, size=32):
     """
     Return the full URL for a Gravatar given an email hash.
     """
-    bits = (md5(email.lower()).hexdigest(), size)
-    return "http://www.gravatar.com/avatar/%s?s=%s&d=identicon&r=PG" % bits
+    bits = (md5(email.lower().encode("utf-8")).hexdigest(), size)
+    return "//www.gravatar.com/avatar/%s?s=%s&d=identicon&r=PG" % bits
 
 
 @register.to_end_tag
 def metablock(parsed):
     """
-    Remove HTML tags, entities and superfluous characters from meta blocks.
+    Remove HTML tags, entities and superfluous characters from
+    meta blocks.
     """
     parsed = " ".join(parsed.replace("\n", "").split()).replace(" ,", ",")
     return escape(strip_tags(decode_entities(parsed)))
 
 
 @register.inclusion_tag("includes/pagination.html", takes_context=True)
-def pagination_for(context, current_page, page_var="page"):
+def pagination_for(context, current_page, page_var="page", exclude_vars=""):
     """
-    Include the pagination template and data for persisting querystring in
-    pagination links.
+    Include the pagination template and data for persisting querystring
+    in pagination links. Can also contain a comma separated string of
+    var names in the current querystring to exclude from the pagination
+    links, via the ``exclude_vars`` arg.
     """
     querystring = context["request"].GET.copy()
-    if page_var in querystring:
-        del querystring[page_var]
+    exclude_vars = [v for v in exclude_vars.split(",") if v] + [page_var]
+    for exclude_var in exclude_vars:
+        if exclude_var in querystring:
+            del querystring[exclude_var]
     querystring = querystring.urlencode()
     return {
         "current_page": current_page,
@@ -233,13 +230,13 @@ def pagination_for(context, current_page, page_var="page"):
 @register.inclusion_tag("includes/search_form.html", takes_context=True)
 def search_form(context, search_model_names=None):
     """
-    Includes the search form with a list of models to use as choices for
-    filtering the search by. Models should be a string with models in the
-    format ``app_label.model_name`` separated by spaces. The string ``all``
-    can also be used, in which case the models defined by the
-    ``SEARCH_MODEL_CHOICES`` setting will be used.
+    Includes the search form with a list of models to use as choices
+    for filtering the search by. Models should be a string with models
+    in the format ``app_label.model_name`` separated by spaces. The
+    string ``all`` can also be used, in which case the models defined
+    by the ``SEARCH_MODEL_CHOICES`` setting will be used.
     """
-    if not search_model_names:
+    if not search_model_names or not settings.SEARCH_MODEL_CHOICES:
         search_model_names = []
     elif search_model_names == "all":
         search_model_names = list(settings.SEARCH_MODEL_CHOICES)
@@ -247,8 +244,11 @@ def search_form(context, search_model_names=None):
         search_model_names = search_model_names.split(" ")
     search_model_choices = []
     for model_name in search_model_names:
-        model = get_model(*model_name.split(".", 1))
-        if model:  # Might not be installed.
+        try:
+            model = get_model(*model_name.split(".", 1))
+        except LookupError:
+            pass
+        else:
             verbose_name = model._meta.verbose_name_plural.capitalize()
             search_model_choices.append((verbose_name, model_name))
     context["search_model_choices"] = sorted(search_model_choices)
@@ -256,30 +256,50 @@ def search_form(context, search_model_names=None):
 
 
 @register.simple_tag
-def thumbnail(image_url, width, height, quality=95):
+def thumbnail(image_url, width, height, quality=95, left=.5, top=.5,
+              padding=False, padding_color="#fff"):
     """
     Given the URL to an image, resizes the image using the given width and
     height on the first time it is requested, and returns the URL to the new
     resized image. if width or height are zero then original ratio is
     maintained.
     """
+
     if not image_url:
         return ""
+    try:
+        from PIL import Image, ImageFile, ImageOps
+    except ImportError:
+        return ""
 
-    image_url = unquote(unicode(image_url))
+    image_url = unquote(str(image_url)).split("?")[0]
     if image_url.startswith(settings.MEDIA_URL):
         image_url = image_url.replace(settings.MEDIA_URL, "", 1)
     image_dir, image_name = os.path.split(image_url)
     image_prefix, image_ext = os.path.splitext(image_name)
     filetype = {".png": "PNG", ".gif": "GIF"}.get(image_ext, "JPEG")
-    thumb_name = "%s-%sx%s%s" % (image_prefix, width, height, image_ext)
+    thumb_name = "%s-%sx%s" % (image_prefix, width, height)
+    if left != .5 or top != .5:
+        left = min(1, max(0, left))
+        top = min(1, max(0, top))
+        thumb_name = "%s-%sx%s" % (thumb_name, left, top)
+    thumb_name += "-padded-%s" % padding_color if padding else ""
+    thumb_name = "%s%s" % (thumb_name, image_ext)
+
+    # `image_name` is used here for the directory path, as each image
+    # requires its own sub-directory using its own name - this is so
+    # we can consistently delete all thumbnails for an individual
+    # image, which is something we do in filebrowser when a new image
+    # is written, allowing us to purge any previously generated
+    # thumbnails that may match a new image name.
     thumb_dir = os.path.join(settings.MEDIA_ROOT, image_dir,
-                             settings.THUMBNAILS_DIR_NAME)
+                             settings.THUMBNAILS_DIR_NAME, image_name)
     if not os.path.exists(thumb_dir):
         os.makedirs(thumb_dir)
     thumb_path = os.path.join(thumb_dir, thumb_name)
-    thumb_url = "%s/%s" % (settings.THUMBNAILS_DIR_NAME,
-                           quote(thumb_name.encode("utf-8")))
+    thumb_url = "%s/%s/%s" % (settings.THUMBNAILS_DIR_NAME,
+                              quote(image_name.encode("utf-8")),
+                              quote(thumb_name.encode("utf-8")))
     image_url_path = os.path.dirname(image_url)
     if image_url_path:
         thumb_url = "%s/%s" % (image_url_path, thumb_url)
@@ -303,32 +323,58 @@ def thumbnail(image_url, width, height, quality=95):
     try:
         image = Image.open(f)
     except:
-        # Invalid image format
+        # Invalid image format.
         return image_url
 
     image_info = image.info
-    width = int(width)
-    height = int(height)
+    to_width = int(width)
+    to_height = int(height)
+    from_width = image.size[0]
+    from_height = image.size[1]
 
-    # If already right size, don't do anything.
-    if width == image.size[0] and height == image.size[1]:
-        return image_url
     # Set dimensions.
-    if width == 0:
-        width = image.size[0] * height / image.size[1]
-    elif height == 0:
-        height = image.size[1] * width / image.size[0]
+    if to_width == 0:
+        to_width = from_width * to_height // from_height
+    elif to_height == 0:
+        to_height = from_height * to_width // from_width
     if image.mode not in ("P", "L", "RGBA"):
-        image = image.convert("RGBA")
+        try:
+            image = image.convert("RGBA")
+        except:
+            return image_url
     # Required for progressive jpgs.
-    ImageFile.MAXBLOCK = image.size[0] * image.size[1]
+    ImageFile.MAXBLOCK = 2 * (max(image.size) ** 2)
+
+    # Padding.
+    if padding and to_width and to_height:
+        from_ratio = float(from_width) / from_height
+        to_ratio = float(to_width) / to_height
+        pad_size = None
+        if to_ratio < from_ratio:
+            pad_height = int(to_height * (float(from_width) / to_width))
+            pad_size = (from_width, pad_height)
+            pad_top = (pad_height - from_height) // 2
+            pad_left = 0
+        elif to_ratio > from_ratio:
+            pad_width = int(to_width * (float(from_height) / to_height))
+            pad_size = (pad_width, from_height)
+            pad_top = 0
+            pad_left = (pad_width - from_width) // 2
+        if pad_size is not None:
+            pad_container = Image.new("RGBA", pad_size, padding_color)
+            pad_container.paste(image, (pad_left, pad_top))
+            image = pad_container
+
+    # Create the thumbnail.
+    to_size = (to_width, to_height)
+    to_pos = (left, top)
     try:
-        image = ImageOps.fit(image, (width, height), Image.ANTIALIAS)
+        image = ImageOps.fit(image, to_size, Image.ANTIALIAS, 0, to_pos)
         image = image.save(thumb_path, filetype, quality=quality, **image_info)
         # Push a remote copy of the thumbnail if MEDIA_URL is
         # absolute.
         if "://" in settings.MEDIA_URL:
-            with open(thumb_path, "r") as f:
+            with open(thumb_path, "rb") as f:
                 default_storage.save(thumb_url, File(f))
     except Exception:
         # If an error occurred, a corrupted image may have been saved,
@@ -352,31 +398,56 @@ def editable_loader(context):
     if settings.INLINE_EDITING_ENABLED and context["has_site_permission"]:
         t = get_template("includes/editable_toolbar.html")
         context["REDIRECT_FIELD_NAME"] = REDIRECT_FIELD_NAME
+        try:
+            context["editable_obj"]
+        except KeyError:
+            context["editable_obj"] = context.get("page", None)
         context["toolbar"] = t.render(Context(context))
         context["richtext_media"] = RichTextField().formfield().widget.media
     return context
 
 
 @register.filter
+def richtext_filters(content):
+    """
+    Takes a value edited via the WYSIWYG editor, and passes it through
+    each of the functions specified by the RICHTEXT_FILTERS setting.
+    """
+    filter_names = settings.RICHTEXT_FILTERS
+    if not filter_names:
+        try:
+            filter_names = [settings.RICHTEXT_FILTER]
+        except AttributeError:
+            pass
+        else:
+            from warnings import warn
+            warn("The `RICHTEXT_FILTER` setting is deprecated in favor of "
+                 "the new plural setting `RICHTEXT_FILTERS`.")
+    for filter_name in filter_names:
+        filter_func = import_dotted_path(filter_name)
+        content = filter_func(content)
+    return content
+
+
+@register.filter
 def richtext_filter(content):
     """
-    This template filter takes a string value and passes it through the
-    function specified by the RICHTEXT_FILTER setting.
+    Deprecated version of richtext_filters above.
     """
-    if settings.RICHTEXT_FILTER:
-        func = import_dotted_path(settings.RICHTEXT_FILTER)
-    else:
-        func = lambda s: s
-    return func(content)
+    from warnings import warn
+    warn("The `richtext_filter` template tag is deprecated in favor of "
+         "the new plural tag `richtext_filters`.")
+    return richtext_filters(content)
 
 
 @register.to_end_tag
 def editable(parsed, context, token):
     """
-    Add the required HTML to the parsed content for in-line editing, such as
-    the icon and edit form if the object is deemed to be editable - either it
-    has an ``editable`` method which returns ``True``, or the logged in user
-    has change permissions for the model.
+    Add the required HTML to the parsed content for in-line editing,
+    such as the icon and edit form if the object is deemed to be
+    editable - either it has an ``editable`` method which returns
+    ``True``, or the logged in user has change permissions for the
+    model.
     """
     def parse_field(field):
         field = field.split(".")
@@ -384,6 +455,9 @@ def editable(parsed, context, token):
         attr = field.pop()
         while field:
             obj = getattr(obj, field.pop(0))
+            if callable(obj):
+                # Allows {% editable page.get_content_model.content %}
+                obj = obj()
         return obj, attr
 
     fields = [parse_field(f) for f in token.split_contents()[1:]]
@@ -391,7 +465,7 @@ def editable(parsed, context, token):
         fields = [f for f in fields if len(f) == 2 and f[0] is fields[0][0]]
     if not parsed.strip():
         try:
-            parsed = "".join([unicode(getattr(*field)) for field in fields])
+            parsed = "".join([str(getattr(*field)) for field in fields])
         except AttributeError:
             pass
 
@@ -399,7 +473,7 @@ def editable(parsed, context, token):
         obj = fields[0][0]
         if isinstance(obj, Model) and is_editable(obj, context["request"]):
             field_names = ",".join([f[1] for f in fields])
-            context["form"] = get_edit_form(obj, field_names)
+            context["editable_form"] = get_edit_form(obj, field_names)
             context["original"] = parsed
             t = get_template("includes/editable_form.html")
             return t.render(Context(context))
@@ -409,9 +483,9 @@ def editable(parsed, context, token):
 @register.simple_tag
 def try_url(url_name):
     """
-    Mimics Django's ``url`` template tag but fails silently. Used for url
-    names in admin templates as these won't resolve when admin tests are
-    running.
+    Mimics Django's ``url`` template tag but fails silently. Used for
+    url names in admin templates as these won't resolve when admin
+    tests are running.
     """
     from warnings import warn
     warn("try_url is deprecated, use the url tag with the 'as' arg instead.")
@@ -424,8 +498,8 @@ def try_url(url_name):
 
 def admin_app_list(request):
     """
-    Adopted from ``django.contrib.admin.sites.AdminSite.index``. Returns a
-    list of lists of models grouped and ordered according to
+    Adopted from ``django.contrib.admin.sites.AdminSite.index``.
+    Returns a list of lists of models grouped and ordered according to
     ``mezzanine.conf.ADMIN_MENU_ORDER``. Called from the
     ``admin_dropdown_menu`` template tag as well as the ``app_list``
     dashboard widget.
@@ -493,7 +567,7 @@ def admin_app_list(request):
                 })
 
     # Menu may also contain view or url pattern names given as (title, name).
-    for (item_url, item) in menu_order.iteritems():
+    for (item_url, item) in menu_order.items():
         app_index, app_title, item_index, item_title = item
         try:
             item_url = reverse(item_url)
@@ -512,8 +586,8 @@ def admin_app_list(request):
             "admin_url": item_url,
         })
 
-    app_list = app_dict.values()
-    sort = lambda x: x["name"] if x["index"] is None else x["index"]
+    app_list = list(app_dict.values())
+    sort = lambda x: (x["index"] if x["index"] is not None else 999, x["name"])
     for app in app_list:
         app["models"].sort(key=sort)
     app_list.sort(key=sort)
@@ -559,7 +633,8 @@ def recent_actions(context):
 def dashboard_column(context, token):
     """
     Takes an index for retrieving the sequence of template tags from
-    ``mezzanine.conf.DASHBOARD_TAGS`` to render into the admin dashboard.
+    ``mezzanine.conf.DASHBOARD_TAGS`` to render into the admin
+    dashboard.
     """
     column_index = int(token.split_contents()[1])
     output = []
@@ -567,3 +642,33 @@ def dashboard_column(context, token):
         t = Template("{%% load %s %%}{%% %s %%}" % tuple(tag.split(".")))
         output.append(t.render(Context(context)))
     return "".join(output)
+
+
+@register.simple_tag(takes_context=True)
+def translate_url(context, language):
+    """
+    Translates the current URL for the given language code, eg:
+
+        {% translate_url de %}
+    """
+    try:
+        request = context["request"]
+    except KeyError:
+        return ""
+    view = resolve(request.path)
+    current_language = translation.get_language()
+    translation.activate(language)
+    try:
+        url = reverse(view.func, args=view.args, kwargs=view.kwargs)
+    except NoReverseMatch:
+        try:
+            url_name = (view.url_name if not view.namespace
+                        else '%s:%s' % (view.namespace, view.url_name))
+            url = reverse(url_name, args=view.args, kwargs=view.kwargs)
+        except NoReverseMatch:
+            url_name = "admin:" + view.url_name
+            url = reverse(url_name, args=view.args, kwargs=view.kwargs)
+    translation.activate(current_language)
+    if context['request'].META["QUERY_STRING"]:
+        url += "?" + context['request'].META["QUERY_STRING"]
+    return url

@@ -1,10 +1,20 @@
+from __future__ import unicode_literals
+from future.builtins import open, range, str
 
 from _ast import PyCF_ONLY_AST
 import os
 from shutil import copyfile, copytree
 
+from django.db import connection
+from django.template import Context, Template
+from django.test import TestCase as BaseTestCase
+
 from mezzanine.conf import settings
 from mezzanine.utils.importing import path_for_import
+from mezzanine.utils.models import get_user_model
+
+
+User = get_user_model()
 
 
 # Ignore these warnings in pyflakes - if added to, please comment why.
@@ -38,7 +48,62 @@ IGNORE_ERRORS = (
     # Deprecated compat timezones for Django 1.3
     "mezzanine/utils/timezone",
 
+    # Actually a Python template file.
+    "live_settings.py",
+
 )
+
+
+class TestCase(BaseTestCase):
+    """
+    This is the base test case providing common features for all tests
+    across the different apps in Mezzanine.
+    """
+
+    def setUp(self):
+        """
+        Creates an admin user and sets up the debug cursor, so that
+        we can track the number of queries used in various places.
+        """
+        self._username = "test"
+        self._password = "test"
+        self._emailaddress = "example@example.com"
+        args = (self._username, self._emailaddress, self._password)
+        self._user = User.objects.create_superuser(*args)
+        self._debug_cursor = connection.use_debug_cursor
+        connection.use_debug_cursor = True
+
+    def tearDown(self):
+        """
+        Clean up the admin user created and debug cursor.
+        """
+        self._user.delete()
+        connection.use_debug_cursor = self._debug_cursor
+
+    def queries_used_for_template(self, template, **context):
+        """
+        Return the number of queries used when rendering a template
+        string.
+        """
+        connection.queries = []
+        t = Template(template)
+        t.render(Context(context))
+        return len(connection.queries)
+
+    def create_recursive_objects(self, model, parent_field, **kwargs):
+        """
+        Create multiple levels of recursive objects.
+        """
+        per_level = list(range(3))
+        for _ in per_level:
+            kwargs[parent_field] = None
+            level1 = model.objects.create(**kwargs)
+            for _ in per_level:
+                kwargs[parent_field] = level1
+                level2 = model.objects.create(**kwargs)
+                for _ in per_level:
+                    kwargs[parent_field] = level2
+                    model.objects.create(**kwargs)
 
 
 def copy_test_to_media(module, name):
@@ -71,12 +136,11 @@ def _run_checker_for_package(checker, package_name, extra_ignore=None):
     if extra_ignore:
         ignore_strings += extra_ignore
     package_path = path_for_import(package_name)
-    for (root, dirs, files) in os.walk(package_path):
+    for (root, dirs, files) in os.walk(str(package_path)):
         for f in files:
-            # Ignore migrations.
-            directory = root.split(os.sep)[-1]
             if (f == "local_settings.py" or not f.endswith(".py")
-                or directory == "migrations"):
+                or root.split(os.sep)[-1] in ["migrations", "south"]):
+                # Ignore
                 continue
             for warning in checker(os.path.join(root, f)):
                 for ignore in ignore_strings:
@@ -98,13 +162,13 @@ def run_pyflakes_for_package(package_name, extra_ignore=None):
             source = source_file.read()
         try:
             tree = compile(source, path, "exec", PyCF_ONLY_AST)
-        except (SyntaxError, IndentationError), value:
+        except (SyntaxError, IndentationError) as value:
             info = (path, value.lineno, value.args[0])
             yield "Invalid syntax in %s:%d: %s" % info
         else:
             result = Checker(tree, path)
             for warning in result.messages:
-                yield unicode(warning)
+                yield str(warning)
 
     args = (pyflakes_checker, package_name, extra_ignore)
     return _run_checker_for_package(*args)

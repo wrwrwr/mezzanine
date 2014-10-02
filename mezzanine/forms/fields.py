@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 from django.core.exceptions import ImproperlyConfigured
 from django import forms
@@ -81,8 +82,8 @@ DATES = (DATE, DATE_TIME, DOB)
 MULTIPLE = (CHECKBOX_MULTIPLE, SELECT_MULTIPLE)
 
 # HTML5 Widgets
-if settings.FORMS_USE_HTML5:
-    html5_field = lambda name, base: type("", (base,), {"input_type": name})
+html5_field = lambda name, base: type(str(""), (base,), {"input_type": name})
+if getattr(settings, "FORMS_USE_HTML5", False):
     WIDGETS.update({
         DATE: html5_field("date", forms.DateInput),
         DATE_TIME: html5_field("datetime", forms.DateTimeInput),
@@ -96,9 +97,20 @@ if settings.FORMS_USE_HTML5:
 # setting, which should contain a sequence of three-item sequences,
 # each containing the ID, dotted import path for the field class,
 # and field name, for each custom field type.
-for field_id, field_path, field_name in settings.FORMS_EXTRA_FIELDS:
+extra_fields = getattr(settings, "FORMS_EXTRA_FIELDS", [])
+for field_id, field_path, field_name in extra_fields:
     if field_id in CLASSES:
         err = "ID %s for field %s in FORMS_EXTRA_FIELDS already exists"
         raise ImproperlyConfigured(err % (field_id, field_name))
     CLASSES[field_id] = import_dotted_path(field_path)
     NAMES += ((field_id, _(field_name)),)
+
+# Similar to above but for widgets - expects a sequence of pairs,
+# each with a field ID as per above, and a dotted path to the custom
+# widget class to use for the corresponding form field.
+extra_widgets = getattr(settings, "FORMS_EXTRA_WIDGETS", [])
+for field_id, widget_path in extra_widgets:
+    if field_id not in CLASSES:
+        err = "ID %s in FORMS_EXTRA_WIDGETS does not match a field"
+        raise ImproperlyConfigured(err % field_id)
+    WIDGETS[field_id] = import_dotted_path(widget_path)

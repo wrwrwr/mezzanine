@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n future mezzanine_tags blog_tags keyword_tags disqus_tags %}
 
-{% block meta_title %}{% if page %}{{ page.richtextpage.meta_title }}{% else %}{% trans "Blog" %}{% endif %}{% endblock %}
+{% block meta_title %}{% if page %}{{ page.meta_title }}{% else %}{% trans "Blog" %}{% endif %}{% endblock %}
 
 {% block meta_keywords %}{% metablock %}
 {% keywords_for page as keywords %}
@@ -62,9 +62,11 @@
 {% else %}
     {% if page %}
     {% block blog_post_list_pagecontent %}
-    {% editable page.richtextpage.content %}
-    {{ page.richtextpage.content|richtext_filter|safe }}
-    {% endeditable %}
+    {% if page.get_content_model.content %}
+        {% editable page.get_content_model.content %}
+        {{ page.get_content_model.content|richtext_filters|safe }}
+        {% endeditable %}
+    {% endif %}
     {% endblock %}
     {% endif %}
 {% endif %}
@@ -79,16 +81,16 @@
 {% endblock %}
 {% block blog_post_list_post_metainfo %}
 {% editable blog_post.publish_date %}
-<h6>
+<h6 class="post-meta">
     {% trans "Posted by" %}:
     {% with blog_post.user as author %}
     <a href="{% url "blog_post_list_author" author %}">{{ author.get_full_name|default:author.username }}</a>
     {% endwith %}
-    {% with blog_post.category.all as categories %}
+    {% with blog_post.categories.all as categories %}
     {% if categories %}
     {% trans "in" %}
     {% for category in categories %}
-    <a href="{% url "blog_post_list_category" category.slug %}">{{ category }}</a>
+    <a href="{% url "blog_post_list_category" category.slug %}">{{ category }}</a>{% if not forloop.last %}, {% endif %}
     {% endfor %}
     {% endif %}
     {% endwith %}
@@ -99,7 +101,9 @@
 
 {% if settings.BLOG_USE_FEATURED_IMAGE and blog_post.featured_image %}
 {% block blog_post_list_post_featured_image %}
-<img class="featured-thumb" src="{{ MEDIA_URL }}{% thumbnail blog_post.featured_image 90 90 %}">
+<a href="{{ blog_post.get_absolute_url }}">
+    <img class="img-thumbnail pull-left" src="{{ MEDIA_URL }}{% thumbnail blog_post.featured_image 90 90 %}">
+</a>
 {% endblock %}
 {% endif %}
 
@@ -110,18 +114,21 @@
 {% endblock %}
 
 {% block blog_post_list_post_links %}
-<p class="blog-list-detail">
+<div class="blog-list-detail">
     {% keywords_for blog_post as tags %}
     {% if tags %}
+    <ul class="list-inline tags">
     {% trans "Tags" %}:
     {% spaceless %}
     {% for tag in tags %}
-    <a href="{% url "blog_post_list_tag" tag.slug %}" class="tag">{{ tag }}</a>
+    <li><a href="{% url "blog_post_list_tag" tag.slug %}" class="tag">{{ tag }}</a></li>
     {% endfor %}
     {% endspaceless %}
-    <br>
+    </ul>
     {% endif %}
+    <p>
     <a href="{{ blog_post.get_absolute_url }}">{% trans "read more" %}</a>
+    {% if blog_post.allow_comments %}
     /
     {% if settings.COMMENTS_DISQUS_SHORTNAME %}
     <a href="{{ blog_post.get_absolute_url }}#disqus_thread"
@@ -130,10 +137,12 @@
     </a>
     {% else %}
     <a href="{{ blog_post.get_absolute_url }}#comments">
-        {% blocktrans count blog_post.comments_count as comments_count %}1 comment{% plural %}{{ comments_count }} comments{% endblocktrans %}
+        {% blocktrans count comments_count=blog_post.comments_count %}{{ comments_count }} comment{% plural %}{{ comments_count }} comments{% endblocktrans %}
     </a>
     {% endif %}
-</p>
+    {% endif %}
+    </p>
+</div>
 {% endblock %}
 {% endfor %}
 

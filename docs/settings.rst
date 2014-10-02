@@ -1,11 +1,32 @@
 .. THIS DOCUMENT IS AUTO GENERATED VIA conf.py
 
+``ACCOUNTS_APPROVAL_EMAILS``
+----------------------------
+
+A comma separated list of email addresses that will receive an email notification each time a new account is created that requires approval.
+
+Default: ``''``
+
+``ACCOUNTS_APPROVAL_REQUIRED``
+------------------------------
+
+If ``True``, when users create an account, they will not be enabled by default and a staff member will need to activate their account in the admin interface.
+
+Default: ``False``
+
 ``ACCOUNTS_MIN_PASSWORD_LENGTH``
 --------------------------------
 
 Minimum length for passwords
 
 Default: ``6``
+
+``ACCOUNTS_NO_USERNAME``
+------------------------
+
+If ``True``, the username field will be excluded from sign up and account update forms.
+
+Default: ``False``
 
 ``ACCOUNTS_PROFILE_FORM_CLASS``
 -------------------------------
@@ -42,12 +63,19 @@ A sequence of ``Page`` subclasses in the format ``app_label.model_name``, that c
 
 Default: ``('pages.RichTextPage',)``
 
+``ADMIN_MENU_COLLAPSED``
+------------------------
+
+Controls whether or not the left-hand admin menu is collpased by default.
+
+Default: ``False``
+
 ``ADMIN_MENU_ORDER``
 --------------------
 
 Controls the ordering and grouping of the admin menu.
 
-Default: ``((u'Content', ('pages.Page', 'blog.BlogPost', 'generic.ThreadedComment', (u'Media Library', 'fb_browse'))), (u'Site', ('sites.Site', 'redirects.Redirect', 'conf.Setting')), (u'Users', ('auth.User', 'auth.Group')))``
+Default: ``(('Content', ('pages.Page', 'blog.BlogPost', 'generic.ThreadedComment', ('Media Library', 'fb_browse'))), ('Site', ('sites.Site', 'redirects.Redirect', 'conf.Setting')), ('Users', ('auth.User', 'auth.Group')))``
 
 ``ADMIN_REMOVAL``
 -----------------
@@ -98,12 +126,12 @@ Slug of the page object for the blog.
 
 Default: ``'blog'``
 
-``BLOG_URLS_USE_DATE``
-----------------------
+``BLOG_URLS_DATE_FORMAT``
+-------------------------
 
-If ``True``, URLs for blog post include the month and year. Eg: /blog/yyyy/mm/slug/
+A string containing the value ``year``, ``month``, or ``day``, which controls the granularity of the date portion in the URL for each blog post. Eg: ``year`` will define URLs in the format /blog/yyyy/slug/, while ``day`` will define URLs with the format /blog/yyyy/mm/dd/slug/. An empty string means the URLs will only use the slug, and not contain any portion of the date at all.
 
-Default: ``False``
+Default: ``''``
 
 ``BLOG_USE_FEATURED_IMAGE``
 ---------------------------
@@ -115,7 +143,7 @@ Default: ``False``
 ``CACHE_SET_DELAY_SECONDS``
 ---------------------------
 
-Mezzanine's caching uses a technique know as mint caching. This is where the requested expiry for a cache entry is stored with the cache entry in cache, and the real expiry used has the ``CACHE_SET_DELAY`` added to it. Then on a cache get, the store expiry is checked, and if it has past, the cache entry is set again, and no entry is returned. This tries to ensure that cache misses never occur, and if many clients were to get a cache miss at once, only one would actually need to re-generated the cache entry.
+Mezzanine's caching uses a technique know as mint caching. This is where the requested expiry for a cache entry is stored with the cache entry in cache, and the real expiry used has the ``CACHE_SET_DELAY`` added to it. Then on a cache get, the store expiry is checked, and if it has passed, the cache entry is set again, and no entry is returned. This tries to ensure that cache misses never occur, and if many clients were to get a cache miss at once, only one would actually need to re-generated the cache entry.
 
 Default: ``30``
 
@@ -217,6 +245,13 @@ Mapping of device specific template sub-directory names to the sequence of strin
 
 Default: ``(('mobile', ('2.0 MMP', '240x320', '400X240', 'AvantGo', 'BlackBerry', 'Blazer', 'Cellphone', 'Danger', 'DoCoMo', 'Elaine/3.0', 'EudoraWeb', 'Googlebot-Mobile', 'hiptop', 'IEMobile', 'KYOCERA/WX310K', 'LG/U990', 'MIDP-2.', 'MMEF20', 'MOT-V', 'NetFront', 'Newt', 'Nintendo Wii', 'Nitro', 'Nokia', 'Opera Mini', 'Palm', 'PlayStation Portable', 'portalmmm', 'Proxinet', 'ProxiNet', 'SHARP-TQ-GX10', 'SHG-i900', 'Small', 'SonyEricsson', 'Symbian OS', 'SymbianOS', 'TS21i-10', 'UP.Browser', 'UP.Link', 'webOS', 'Windows CE', 'WinWAP', 'YahooSeeker/M1A1-R2D2', 'iPhone', 'iPod', 'Android', 'BlackBerry9530', 'LG-TU915 Obigo', 'LGE VX', 'webOS', 'Nokia5800')),)``
 
+``EMAIL_FAIL_SILENTLY``
+-----------------------
+
+If ``True``, failures to send email will happen silently, otherwise an exception is raised. Defaults to ``settings.DEBUG``.
+
+Default: ``True``
+
 ``EXTRA_MODEL_FIELDS``
 ----------------------
 
@@ -231,17 +266,17 @@ Char to use as a field delimiter when exporting form responses as CSV.
 
 Default: ``','``
 
-``FORMS_DISABLE_SEND_FROM_EMAIL_FIELD``
----------------------------------------
-
-If ``True``, emails sent to extra recipients for form submissions won't be sent from an address taken from one of the form's email fields.
-
-Default: ``False``
-
 ``FORMS_EXTRA_FIELDS``
 ----------------------
 
 Extra field types for the forms app. Should contain a sequence of three-item sequences, each containing the ID, dotted import path for the field class, and field name, for each custom field type. The ID is simply a numeric constant for the field, but cannot be a value already used, so choose a high number such as 100 or greater to avoid conflicts.
+
+Default: ``()``
+
+``FORMS_EXTRA_WIDGETS``
+-----------------------
+
+Extra field widgets for the forms app. Should contain a sequence of two-item sequences, each containing an existing ID for a form field, and a dotted import path for the widget class.
 
 Default: ``()``
 
@@ -283,9 +318,16 @@ Default: ``''``
 ``HOST_THEMES``
 ---------------
 
-A sequence mapping host names to themes, allowing different templates to be served per HTTP hosts Each item in the sequence is a two item sequence, containing a host such as ``othersite.example.com``, and the name of an importable Python package for the theme. If the host is matched for a request, the templates directory inside the theme package will be first searched when loading templates.
+A sequence mapping host names to themes, allowing different templates to be served per HTTP host. Each item in the sequence is a two item sequence, containing a host such as ``othersite.example.com``, and the name of an importable Python package for the theme. If the host is matched for a request, the templates directory inside the theme package will be first searched when loading templates.
 
 Default: ``()``
+
+``INLINE_EDITING_ENABLED``
+--------------------------
+
+If ``True``, front-end inline editing will be enabled.
+
+Default: ``True``
 
 ``JQUERY_FILENAME``
 -------------------
@@ -334,7 +376,7 @@ Default: ``False``
 
 A sequence of templates used by the ``page_menu`` template tag. Each item in the sequence is a three item sequence, containing a unique ID for the template, a label for the template, and the template path. These templates are then available for selection when editing which menus a page should appear in. Note that if a menu template is used that doesn't appear in this setting, all pages will appear in it.
 
-Default: ``((1, u'Top navigation bar', 'pages/menus/dropdown.html'), (2, u'Left-hand tree', 'pages/menus/tree.html'), (3, u'Footer', 'pages/menus/footer.html'))``
+Default: ``((1, 'Top navigation bar', 'pages/menus/dropdown.html'), (2, 'Left-hand tree', 'pages/menus/tree.html'), (3, 'Footer', 'pages/menus/footer.html'))``
 
 ``PAGE_MENU_TEMPLATES_DEFAULT``
 -------------------------------
@@ -369,21 +411,21 @@ Default: ``('abbr', 'accept', 'accept-charset', 'accesskey', 'action', 'align', 
 
 List of inline CSS styles that won't be stripped from ``RichTextField`` instances.
 
-Default: ``()``
+Default: ``('margin-top', 'margin-bottom', 'margin-left', 'margin-right', 'float', 'vertical-align', 'border', 'margin')``
 
 ``RICHTEXT_ALLOWED_TAGS``
 -------------------------
 
 List of HTML tags that won't be stripped from ``RichTextField`` instances.
 
-Default: ``('a', 'abbr', 'acronym', 'address', 'area', 'b', 'bdo', 'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt', 'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map', 'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp', 'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u', 'ul', 'var', 'wbr')``
+Default: ``('a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'b', 'bdo', 'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt', 'em', 'fieldset', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map', 'men', 'nav', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp', 'section', 'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', '', 'ul', 'var', 'wbr')``
 
-``RICHTEXT_FILTER``
--------------------
+``RICHTEXT_FILTERS``
+--------------------
 
-Dotted path to the function to call on a ``RichTextField`` value before it is rendered to the template.
+List of dotted paths to functions, called in order, on a ``RichTextField`` value before it is rendered to the template.
 
-Default: ``None``
+Default: ``('mezzanine.utils.html.thumbnails',)``
 
 ``RICHTEXT_FILTER_LEVEL``
 -------------------------
@@ -434,7 +476,7 @@ Default: ``''``
 
 A tag line that will appear at the top of all pages.
 
-Default: ``u'An open source content management platform.'``
+Default: ``'An open source content management platform.'``
 
 ``SITE_TITLE``
 --------------
@@ -446,7 +488,7 @@ Default: ``'Mezzanine'``
 ``SLUGIFY``
 -----------
 
-Dotted Python path to the callable for converting strings into URL slugs. Defaults to ``mezzanine.utils.urls.slugify_unicode`` which allows for non-ascii URLS. Change to ``django.template.defaultfilters.slugify`` to use Django's slugify function, or something of your own if required.
+Dotted Python path to the callable for converting strings into URL slugs. Defaults to ``mezzanine.utils.urls.slugify_unicode`` which allows for non-ascii URLs. Change to ``django.template.defaultfilters.slugify`` to use Django's slugify function, or something of your own if required.
 
 Default: ``'mezzanine.utils.urls.slugify_unicode'``
 
@@ -490,7 +532,7 @@ Default: ``('/admin', '/account')``
 
 List of words which will be stripped from search queries.
 
-Default: ``('a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'again', 'against', 'all', 'almost', 'alone', 'along', 'already', 'also', 'although', 'always', 'am', 'among', 'amongst', 'amoungst', 'amount', 'an', 'and', 'another', 'any', 'anyhow', 'anyone', 'anything', 'anyway', 'anywhere', 'are', 'around', 'as', 'at', 'back', 'be', 'became', 'because', 'become', 'becomes', 'becoming', 'been', 'before', 'beforehand', 'behind', 'being', 'below', 'beside', 'besides', 'between', 'beyond', 'bill', 'both', 'bottom', 'but', 'by', 'call', 'can', 'cannot', 'cant', 'co', 'con', 'could', 'couldnt', 'cry', 'de', 'describe', 'detail', 'do', 'done', 'down', 'due', 'during', 'each', 'eg', 'eight', 'either', 'eleven', 'else', 'elsewhere', 'empty', 'enough', 'etc', 'even', 'ever', 'every', 'everyone', 'everything', 'everywhere', 'except', 'few', 'fifteen', 'fify', 'fill', 'find', 'fire', 'first', 'five', 'for', 'former', 'formerly', 'forty', 'found', 'four', 'from', 'front', 'full', 'further', 'get', 'give', 'go', 'had', 'has', 'hasnt', 'have', 'he', 'hence', 'her', 'here', 'hereafter', 'hereby', 'herein', 'hereupon', 'hers', 'herself', 'him', 'himself', 'his', 'how', 'however', 'hundred', 'ie', 'if', 'in', 'inc', 'indeed', 'interest', 'into', 'is', 'it', 'its', 'itself', 'keep', 'last', 'latter', 'latterly', 'least', 'less', 'ltd', 'made', 'many', 'may', 'me', 'meanwhile', 'might', 'mill', 'mine', 'more', 'moreover', 'most', 'mostly', 'move', 'much', 'must', 'my', 'myself', 'name', 'namely', 'neither', 'never', 'nevertheless', 'next', 'nine', 'no', 'nobody', 'none', 'noone', 'nor', 'not', 'nothing', 'now', 'nowhere', 'of', 'off', 'often', 'on', 'once', 'one', 'only', 'onto', 'or', 'other', 'others', 'otherwise', 'our', 'ours', 'ourselves', 'out', 'over', 'own', 'part', 'per', 'perhaps', 'please', 'put', 'rather', 're', 'same', 'see', 'seem', 'seemed', 'seeming', 'seems', 'serious', 'several', 'she', 'should', 'show', 'side', 'since', 'sincere', 'six', 'sixty', 'so', 'some', 'somehow', 'someone', 'something', 'sometime', 'sometimes', 'somewhere', 'still', 'such', 'system', 'take', 'ten', 'than', 'that', 'the', 'their', 'them', 'themselves', 'then', 'thence', 'there', 'thereafter', 'thereby', 'therefore', 'therein', 'thereupon', 'these', 'they', 'thickv', 'thin', 'third', 'this', 'those', 'though', 'three', 'through', 'throughout', 'thru', 'thus', 'to', 'together', 'too', 'top', 'toward', 'towards', 'twelve', 'twenty', 'two', 'un', 'under', 'until', 'up', 'upon', 'us', 'very', 'via', 'was', 'we', 'well', 'were', 'what', 'whatever', 'when', 'whence', 'whenever', 'where', 'whereafter', 'whereas', 'whereby', 'wherein', 'whereupon', 'wherever', 'whether', 'which', 'while', 'whither', 'who', 'whoever', 'whole', 'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet', 'you', 'your', 'yours', 'yourself', 'yourselves', 'the')``
+Default: ``('a', 'about', 'above', 'above', 'across', 'after', 'afterwards', 'again', 'against', 'all', 'almost', 'alone', 'along', 'already', 'also', 'although', 'always', 'am', 'among', 'amongst', 'amoungst', 'amount', 'an', 'and', 'another', 'any', 'anyhow', 'anyone', 'anything', 'anyway', 'anywhere', 'are', 'around', 'as', 'at', 'back', 'be', 'became', 'because', 'become', 'becomes', 'becoming', 'been', 'before', 'beforehand', 'behind', 'being', 'below', 'beside', 'besides', 'between', 'beyond', 'bill', 'both', 'bottom', 'but', 'by', 'call', 'can', 'cannot', 'cant', 'co', 'con', 'could', 'couldnt', 'cry', 'de', 'describe', 'detail', 'do', 'done', 'down', 'due', 'during', 'each', 'eg', 'eight', 'either', 'eleven', 'else', 'elsewhere', 'empty', 'enough', 'etc', 'even', 'ever', 'every', 'everyone', 'everything', 'everywhere', 'except', 'few', 'fifteen', 'fifty', 'fill', 'find', 'fire', 'first', 'five', 'for', 'former', 'formerly', 'forty', 'found', 'four', 'from', 'front', 'full', 'further', 'get', 'give', 'go', 'had', 'has', 'hasnt', 'have', 'he', 'hence', 'her', 'here', 'hereafter', 'hereby', 'herein', 'hereupon', 'hers', 'herself', 'him', 'himself', 'his', 'how', 'however', 'hundred', 'ie', 'if', 'in', 'inc', 'indeed', 'interest', 'into', 'is', 'it', 'its', 'itself', 'keep', 'last', 'latter', 'latterly', 'least', 'less', 'ltd', 'made', 'many', 'may', 'me', 'meanwhile', 'might', 'mill', 'mine', 'more', 'moreover', 'most', 'mostly', 'move', 'much', 'must', 'my', 'myself', 'name', 'namely', 'neither', 'never', 'nevertheless', 'next', 'nine', 'no', 'nobody', 'none', 'noone', 'nor', 'not', 'nothing', 'now', 'nowhere', 'of', 'off', 'often', 'on', 'once', 'one', 'only', 'onto', 'or', 'other', 'others', 'otherwise', 'our', 'ours', 'ourselves', 'out', 'over', 'own', 'part', 'per', 'perhaps', 'please', 'put', 'rather', 're', 'same', 'see', 'seem', 'seemed', 'seeming', 'seems', 'serious', 'several', 'she', 'should', 'show', 'side', 'since', 'sincere', 'six', 'sixty', 'so', 'some', 'somehow', 'someone', 'something', 'sometime', 'sometimes', 'somewhere', 'still', 'such', 'system', 'take', 'ten', 'than', 'that', 'the', 'their', 'them', 'themselves', 'then', 'thence', 'there', 'thereafter', 'thereby', 'therefore', 'therein', 'thereupon', 'these', 'they', 'thickv', 'thin', 'third', 'this', 'those', 'though', 'three', 'through', 'throughout', 'thr', 'thus', 'to', 'together', 'too', 'top', 'toward', 'towards', 'twelve', 'twenty', 'two', 'un', 'under', 'until', 'up', 'upon', 'us', 'very', 'via', 'was', 'we', 'well', 'were', 'what', 'whatever', 'when', 'whence', 'whenever', 'where', 'whereafter', 'whereas', 'whereby', 'wherein', 'whereupon', 'wherever', 'whether', 'which', 'while', 'whither', 'who', 'whoever', 'whole', 'whom', 'whose', 'why', 'will', 'with', 'within', 'without', 'would', 'yet', 'you', 'your', 'yours', 'yourself', 'yourselves', 'the')``
 
 ``TAG_CLOUD_SIZES``
 -------------------
@@ -504,7 +546,7 @@ Default: ``4``
 
 Sequence of setting names available within templates.
 
-Default: ``('ACCOUNTS_VERIFICATION_REQUIRED', 'BITLY_ACCESS_TOKEN', 'BLOG_USE_FEATURED_IMAGE', 'COMMENTS_DISQUS_SHORTNAME', 'COMMENTS_NUM_LATEST', 'COMMENTS_DISQUS_API_PUBLIC_KEY', 'COMMENTS_DISQUS_API_SECRET_KEY', 'COMMENTS_USE_RATINGS', 'DEV_SERVER', 'FORMS_USE_HTML5', 'GRAPPELLI_INSTALLED', 'GOOGLE_ANALYTICS_ID', 'JQUERY_FILENAME', 'LOGIN_URL', 'LOGOUT_URL', 'SITE_TITLE', 'SITE_TAGLINE')``
+Default: ``('ACCOUNTS_APPROVAL_REQUIRED', 'ACCOUNTS_VERIFICATION_REQUIRED', 'ADMIN_MENU_COLLAPSED', 'BITLY_ACCESS_TOKEN', 'BLOG_USE_FEATURED_IMAGE', 'COMMENTS_DISQUS_SHORTNAME', 'COMMENTS_NUM_LATEST', 'COMMENTS_DISQUS_API_PUBLIC_KEY', 'COMMENTS_DISQUS_API_SECRET_KEY', 'COMMENTS_USE_RATINGS', 'DEV_SERVER', 'FORMS_USE_HTML5', 'GRAPPELLI_INSTALLED', 'GOOGLE_ANALYTICS_ID', 'JQUERY_FILENAME', 'LOGIN_URL', 'LOGOUT_URL', 'SITE_TITLE', 'SITE_TAGLINE', 'USE_L10N')``
 
 ``THUMBNAILS_DIR_NAME``
 -----------------------
@@ -520,6 +562,34 @@ URL for the JavaScript file (relative to ``STATIC_URL``) that handles configurin
 
 Default: ``'mezzanine/js/tinymce_setup.js'``
 
+``TWITTER_ACCESS_TOKEN_KEY``
+----------------------------
+
+
+
+Default: ``''``
+
+``TWITTER_ACCESS_TOKEN_SECRET``
+-------------------------------
+
+
+
+Default: ``''``
+
+``TWITTER_CONSUMER_KEY``
+------------------------
+
+
+
+Default: ``''``
+
+``TWITTER_CONSUMER_SECRET``
+---------------------------
+
+
+
+Default: ``''``
+
 ``TWITTER_DEFAULT_NUM_TWEETS``
 ------------------------------
 
@@ -530,9 +600,11 @@ Default: ``3``
 ``TWITTER_DEFAULT_QUERY``
 -------------------------
 
-Twitter query to use for the default query type.
+Twitter query to use for the default query type. 
 
-Default: ``'django mezzanine'``
+*Note:* Once you change this from the default, you'll need to configure each of the oAuth consumer/access key/secret settings. Please refer to `http://dev.twitter.com <http://dev.twitter.com>`_ for more information on creating an application and acquiring these settings.
+
+Default: ``'from:stephen_mcd mezzanine'``
 
 ``TWITTER_DEFAULT_QUERY_TYPE``
 ------------------------------

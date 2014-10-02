@@ -1,5 +1,13 @@
+from __future__ import absolute_import, unicode_literals
+from future.builtins import int, open
+
 import os
-from urlparse import urljoin, urlparse
+from mezzanine.utils.models import get_model
+
+try:
+    from urllib.parse import urljoin, urlparse
+except ImportError:
+    from urlparse import urljoin, urlparse
 
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
@@ -7,7 +15,6 @@ from django.contrib.admin.options import ModelAdmin
 from django.contrib.staticfiles import finders
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models import get_model
 from django.http import (HttpResponse, HttpResponseServerError,
                          HttpResponseNotFound)
 from django.shortcuts import redirect
@@ -22,6 +29,7 @@ from mezzanine.core.models import Displayable, SitePermission
 from mezzanine.utils.cache import add_cache_bypass
 from mezzanine.utils.views import is_editable, paginate, render, set_cookie
 from mezzanine.utils.sites import has_site_permission
+from mezzanine.utils.urls import next_url
 
 
 def set_device(request, device=""):
@@ -29,7 +37,7 @@ def set_device(request, device=""):
     Sets a device name in a cookie when a user explicitly wants to go
     to the site for a particular device (eg mobile).
     """
-    response = redirect(add_cache_bypass(request.GET.get("next", "/")))
+    response = redirect(add_cache_bypass(next_url(request) or "/"))
     set_cookie(response, "mezzanine-device", device, 60 * 60 * 24 * 365)
     return response
 
@@ -50,7 +58,7 @@ def set_site(request):
             raise PermissionDenied
     request.session["site_id"] = site_id
     admin_url = reverse("admin:index")
-    next = request.GET.get("next", admin_url)
+    next = next_url(request) or admin_url
     # Don't redirect to a change view for an object that won't exist
     # on the selected site - go to its list view instead.
     if next.startswith(admin_url):
@@ -91,8 +99,8 @@ def edit(request):
         model_admin.log_change(request, obj, message)
         response = ""
     else:
-        response = form.errors.values()[0][0]
-    return HttpResponse(unicode(response))
+        response = list(form.errors.values())[0][0]
+    return HttpResponse(response)
 
 
 def search(request, template="search_results.html"):
@@ -109,7 +117,7 @@ def search(request, template="search_results.html"):
         search_model = get_model(*request.GET.get("type", "").split(".", 1))
         if not issubclass(search_model, Displayable):
             raise TypeError
-    except TypeError:
+    except (ValueError, TypeError, LookupError):
         search_model = Displayable
         search_type = _("Everything")
     else:
@@ -128,36 +136,66 @@ def static_proxy(request):
     SWF, as these are normally static files, and will break with
     cross-domain JavaScript errors if ``STATIC_URL`` is an external
     host. URL for the file is passed in via querystring in the inline
-    popup plugin template.
+    popup plugin template, and we then attempt to pull out the relative
+    path to the file, so that we can serve it locally via Django.
     """
-    # Get the relative URL after STATIC_URL.
-    url = request.GET["u"]
-    protocol = "http" if not request.is_secure() else "https"
-    host = protocol + "://" + request.get_host()
-    generic_host = "//" + request.get_host()
-    for prefix in (host, generic_host, settings.STATIC_URL):
+    normalize = lambda u: ("//" + u.split("://")[-1]) if "://" in u else u
+    url = normalize(request.GET["u"])
+    host = "//" + request.get_host()
+    static_url = normalize(settings.STATIC_URL)
+    for prefix in (host, static_url, "/"):
         if url.startswith(prefix):
             url = url.replace(prefix, "", 1)
     response = ""
-    mimetype = ""
+    content_type = ""
     path = finders.find(url)
     if path:
         if isinstance(path, (list, tuple)):
             path = path[0]
-        with open(path, "rb") as f:
-            response = f.read()
-        mimetype = "application/octet-stream"
         if url.endswith(".htm"):
             # Inject <base href="{{ STATIC_URL }}"> into TinyMCE
             # plugins, since the path static files in these won't be
             # on the same domain.
-            mimetype = "text/html"
             static_url = settings.STATIC_URL + os.path.split(url)[0] + "/"
             if not urlparse(static_url).scheme:
                 static_url = urljoin(host, static_url)
             base_tag = "<base href='%s'>" % static_url
-            response = response.replace("<head>", "<head>" + base_tag)
-    return HttpResponse(response, mimetype=mimetype)
+            content_type = "text/html"
+            with open(path, "r") as f:
+                response = f.read().replace("<head>", "<head>" + base_tag)
+        else:
+            content_type = "application/octet-stream"
+            with open(path, "rb") as f:
+                response = f.read()
+    return HttpResponse(response, content_type=content_type)
+
+
+def displayable_links_js(request, template_name="admin/displayable_links.js"):
+    """
+    Renders a list of url/title pairs for all ``Displayable`` subclass
+    instances into JavaScript that's used to populate a list of links
+    in TinyMCE.
+    """
+    links = []
+    if "mezzanine.pages" in settings.INSTALLED_APPS:
+        from mezzanine.pages.models import Page
+        is_page = lambda obj: isinstance(obj, Page)
+    else:
+        is_page = lambda obj: False
+    # For each item's title, we use its model's verbose_name, but in the
+    # case of Page subclasses, we just use "Page", and then sort the items
+    # by whether they're a Page subclass or not, then by their URL.
+    for url, obj in Displayable.objects.url_map(for_user=request.user).items():
+        title = getattr(obj, "titles", obj.title)
+        real = hasattr(obj, "id")
+        page = is_page(obj)
+        if real:
+            verbose_name = _("Page") if page else obj._meta.verbose_name
+            title = "%s: %s" % (verbose_name, title)
+        links.append((not page and real, url, title))
+    context = {"links": [link[1:] for link in sorted(links)]}
+    content_type = "text/javascript"
+    return render(request, template_name, context, content_type=content_type)
 
 
 @requires_csrf_token

@@ -1,12 +1,17 @@
 
-from __future__ import with_statement
 import os
 import sys
+from setuptools import setup, find_packages
+from shutil import rmtree
+from mezzanine import __version__ as version
 
 
 exclude = ["mezzanine/project_template/dev.db",
            "mezzanine/project_template/local_settings.py"]
+if sys.argv == ["setup.py", "test"]:
+    exclude = []
 exclude = dict([(e, None) for e in exclude])
+
 for e in exclude:
     if e.endswith(".py"):
         try:
@@ -20,57 +25,60 @@ for e in exclude:
     except:
         pass
 
-from setuptools import setup, find_packages
-
-from mezzanine import __version__ as version
-
-install_requires = [
-    "django >= 1.4, < 1.6",
-    "filebrowser_safe >= 0.2.25",
-    "grappelli_safe >= 0.2.20",
-    "bleach",
-    "pytz",
-]
-
-try:
-    from PIL import Image, ImageOps
-except ImportError:
+if sys.argv[:2] == ["setup.py", "bdist_wheel"]:
+    # Remove previous build dir when creating a wheel build,
+    # since if files have been removed from the project,
+    # they'll still be cached in the build dir and end up
+    # as part of the build, which is really neat!
     try:
-        import Image, ImageFile, ImageOps
-    except ImportError:
-        # no way to install pillow/PIL with jython, so exclude this in any case
-        if not sys.platform.startswith('java'):
-            install_requires += ["pillow"]
-
+        rmtree("build")
+    except:
+        pass
 
 try:
     setup(
-
         name="Mezzanine",
         version=version,
         author="Stephen McDonald",
         author_email="stephen.mc@gmail.com",
         description="An open source content management platform built using "
                     "the Django framework.",
-        long_description=open("README.rst").read(),
+        long_description=open("README.rst", 'rb').read().decode('utf-8'),
         license="BSD",
         url="http://mezzanine.jupo.org/",
         zip_safe=False,
         include_package_data=True,
         packages=find_packages(),
-        install_requires=install_requires,
+        install_requires=[
+            "django >= 1.4.10, != 1.6.0",
+            "filebrowser_safe >= 0.3.4",
+            "grappelli_safe >= 0.3.12",
+            "tzlocal >= 1.0",
+            "bleach >= 1.4",
+            "beautifulsoup4 >= 4.1.3",
+            "requests >= 2.1.0",
+            "requests-oauthlib >= 0.4",
+            "future == 0.9.0",
+            "pillow",
+        ],
         entry_points="""
             [console_scripts]
             mezzanine-project=mezzanine.bin.mezzanine_project:create_project
         """,
+        test_suite="mezzanine.bin.runtests.main",
+        tests_require=["pyflakes==0.6.1", "pep8==1.4.1"],
         classifiers=[
-            "Development Status :: 4 - Beta",
+            "Development Status :: 5 - Production/Stable",
             "Environment :: Web Environment",
             "Framework :: Django",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: BSD License",
             "Operating System :: OS Independent",
             "Programming Language :: Python",
+            "Programming Language :: Python :: 2.6",
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.3",
             "Topic :: Internet :: WWW/HTTP",
             "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
             "Topic :: Internet :: WWW/HTTP :: WSGI",
@@ -78,7 +86,6 @@ try:
                                                 "Application Frameworks",
             "Topic :: Software Development :: Libraries :: Python Modules",
         ])
-
 finally:
     for e in exclude:
         if exclude[e] is not None:

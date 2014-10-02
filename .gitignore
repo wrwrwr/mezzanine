@@ -1,6 +1,9 @@
 *.pyc
 *.pyo
 *.db
+*.pot
+*.doctree
+.doctrees
 .DS_Store
 .coverage
 .idea/
@@ -10,3 +13,5 @@ build/
 docs/build/
 dist/
 mezzanine/project_template/static/
+/mezzanine/.project
+/mezzanine/.pydevproject

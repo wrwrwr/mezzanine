@@ -1,17 +1,22 @@
+from __future__ import unicode_literals
+from future.builtins import str
+
+from json import dumps
+from string import punctuation
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.messages import error
 from django.core.urlresolvers import reverse
-from django.db.models import get_model, ObjectDoesNotExist
+from django.db.models import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from django.utils.simplejson import dumps
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
 from mezzanine.generic.forms import ThreadedCommentForm, RatingForm
 from mezzanine.generic.models import Keyword
 from mezzanine.utils.cache import add_cache_bypass
+from mezzanine.utils.models import get_model
 from mezzanine.utils.views import render, set_cookie, is_spam
 
 
@@ -23,14 +28,12 @@ def admin_keywords_submit(request):
     keywords field.
     """
     keyword_ids, titles = [], []
+    remove = punctuation.replace("-", "")  # Strip punctuation, allow dashes.
     for title in request.POST.get("text_keywords", "").split(","):
-        title = "".join([c for c in title if c.isalnum() or c in "- "]).strip()
+        title = "".join([c for c in title if c not in remove]).strip()
         if title:
-            try:
-                keyword = Keyword.objects.get(title__iexact=title)
-            except Keyword.DoesNotExist:
-                keyword = Keyword.objects.create(title=title)
-            keyword_id = str(keyword.id)
+            kw, created = Keyword.objects.get_or_create_iexact(title=title)
+            keyword_id = str(kw.id)
             if keyword_id not in keyword_ids:
                 keyword_ids.append(keyword_id)
                 titles.append(title)
@@ -61,7 +64,7 @@ def initial_validation(request, prefix):
     if getattr(settings, login_required_setting_name, False):
         if not request.user.is_authenticated():
             request.session[posted_session_key] = request.POST
-            error(request, _("You must logged in. Please log in or "
+            error(request, _("You must be logged in. Please log in or "
                              "sign up to complete this action."))
             redirect_url = "%s?next=%s" % (settings.LOGIN_URL, reverse(prefix))
         elif posted_session_key in request.session:
@@ -69,9 +72,8 @@ def initial_validation(request, prefix):
     if not redirect_url:
         try:
             model = get_model(*post_data.get("content_type", "").split(".", 1))
-            if model:
-                obj = model.objects.get(id=post_data.get("object_pk", None))
-        except (TypeError, ObjectDoesNotExist):
+            obj = model.objects.get(id=post_data.get("object_pk", None))
+        except (TypeError, ObjectDoesNotExist, LookupError):
             redirect_url = "/"
     if redirect_url:
         if request.is_ajax():

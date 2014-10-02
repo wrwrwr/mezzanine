@@ -10,6 +10,9 @@ that are only read during startup shouldn't be editable, since changing
 them would require an application reload.
 """
 
+from __future__ import unicode_literals
+from future.builtins import range
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -128,6 +131,6 @@ register_setting(
     name="RATINGS_RANGE",
     description=_("A sequence of integers that are valid ratings."),
     editable=False,
-    default=range(getattr(settings, "RATINGS_MIN", 1),
-                  getattr(settings, "RATINGS_MAX", 5) + 1),
+    default=list(range(getattr(settings, "RATINGS_MIN", 1),
+                  getattr(settings, "RATINGS_MAX", 5) + 1)),
 )

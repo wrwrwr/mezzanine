@@ -8,6 +8,7 @@ until ``admin.autodiscover`` to avoid some timing issues around
 custom fields not being available when custom admin classes are
 registered.
 """
+from __future__ import unicode_literals
 
 from collections import defaultdict
 
@@ -38,7 +39,7 @@ for entry in getattr(settings, "EXTRA_MODEL_FIELDS", []):
                                    "imported." % entry[1])
     try:
         field = field_class(*field_args, **field_kwargs)
-    except TypeError, e:
+    except TypeError as e:
         raise ImproperlyConfigured("The EXTRA_MODEL_FIELDS setting contains "
                                    "arguments for the field '%s' which could "
                                    "not be applied: %s" % (entry[1], e))

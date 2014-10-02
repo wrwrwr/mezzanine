@@ -1,13 +1,5 @@
 {% load mezzanine_tags %}
 
-{% if form_for_fields.non_field_errors %}
-<div class="control-group error non-field-errors">
-    {% for error in form_for_fields.non_field_errors %}
-    <span class="help-inline">{{ error }}</span>
-    {% endfor %}
-</div>
-{% endif %}
-
 {% nevercache %}
 <input type="hidden" name="referrer" value="{{ request.META.HTTP_REFERER }}">
 {% csrf_token %}
@@ -17,21 +9,19 @@
 {% if field.is_hidden %}
 {{ field }}
 {% else %}
-<div class="control-group input_{{ field.id_for_label }} {{ field.field.type }}
-    {% if field.errors %} error{% endif %}">
-    {{ field.label_tag }}
-    <div class="controls">
-        {{ field }}
-        {% if field.errors %}
-        <span class="help-inline">
-            {% for e in field.errors %}
-            {% if not forloop.first %} / {% endif %}{{ e }}
-            {% endfor %}
-        </span>
-        {% else %}
-        <span class="help-inline">{{ field.help_text }}</span>
-        {% endif %}
-    </div>
+<div class="form-group input_{{ field.id_for_label }} {{ field.field.type }}
+    {% if field.errors %} has-error{% endif %}">
+    {% if field.label %}<label class="control-label" for="{{ field.auto_id }}">{{ field.label }}</label>{% endif %}
+    {{ field }}
+    {% if field.errors %}
+    <p class="help-block">
+        {% for e in field.errors %}
+        {% if not forloop.first %} / {% endif %}{{ e }}
+        {% endfor %}
+    </p>
+    {% elif field.help_text %}
+    <p class="help-block">{{ field.help_text }}</p>
+    {% endif %}
 </div>
 {% endif %}
 {% endfor %}

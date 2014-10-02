@@ -1,6 +1,14 @@
+from __future__ import unicode_literals
+from future.builtins import filter, str
+try:
+    from urllib.parse import urljoin
+except ImportError:     # Python 2
+    from urlparse import urljoin
+
 from django.core.urlresolvers import resolve, reverse
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from mezzanine.conf import settings
 from mezzanine.core.models import Displayable, Orderable, RichText
@@ -22,6 +30,7 @@ class BasePage(Orderable, Displayable):
         abstract = True
 
 
+@python_2_unicode_compatible
 class Page(BasePage):
     """
     A page in the page tree. This is the base class that custom content types
@@ -33,7 +42,7 @@ class Page(BasePage):
     in_menus = MenusField(_("Show in menus"), blank=True, null=True)
     titles = models.CharField(editable=False, max_length=1000, null=True)
     content_model = models.CharField(editable=False, max_length=50, null=True)
-    login_required = models.BooleanField(_("Login required"),
+    login_required = models.BooleanField(_("Login required"), default=False,
         help_text=_("If checked, only logged in users can view this page"))
 
     class Meta:
@@ -42,7 +51,7 @@ class Page(BasePage):
         ordering = ("titles",)
         order_with_respect_to = "parent"
 
-    def __unicode__(self):
+    def __str__(self):
         return self.titles
 
     def get_absolute_url(self):
@@ -54,8 +63,7 @@ class Page(BasePage):
         slug = self.slug
         if self.content_model == "link":
             # Ensure the URL is absolute.
-            if not slug.lower().startswith("http"):
-                slug = "/" + self.slug.lstrip("/")
+            slug = urljoin('/', slug)
             return slug
         if slug == "/":
             return reverse("home")
@@ -128,7 +136,7 @@ class Page(BasePage):
         Return all Page subclasses.
         """
         is_content_model = lambda m: m is not Page and issubclass(m, Page)
-        return filter(is_content_model, models.get_models())
+        return list(filter(is_content_model, models.get_models()))
 
     def get_content_model(self):
         """
@@ -151,7 +159,8 @@ class Page(BasePage):
         Changes this page's slug, and all other pages whose slugs
         start with this page's slug.
         """
-        for page in Page.objects.filter(slug__startswith=self.slug):
+        slug_prefix = "%s/" % self.slug
+        for page in Page.objects.filter(slug__startswith=slug_prefix):
             if not page.overridden():
                 page.slug = new_slug + page.slug[len(self.slug):]
                 page.save()
@@ -213,6 +222,15 @@ class Page(BasePage):
         """
         return True
 
+    def can_move(self, request, new_parent):
+        """
+        Dynamic ``move`` permission for content types to override. Controls
+        whether a given page move in the page tree is permitted. When the
+        permission is denied, raises a ``PageMoveException`` with a single
+        argument (message explaining the reason).
+        """
+        pass
+
     def set_helpers(self, context):
         """
         Called from the ``page_menu`` template tag and assigns a
@@ -238,9 +256,10 @@ class Page(BasePage):
 
         # Is the current page me or any page up the parent chain?
         def is_c_or_a(page_id):
-            parent_id = context["_parent_page_ids"].get(page_id)
+            parent_id = context.get("_parent_page_ids", {}).get(page_id)
             return self.id == page_id or (parent_id and is_c_or_a(parent_id))
         self.is_current_or_ascendant = lambda: bool(is_c_or_a(current_page_id))
+        self.is_current_parent = self.id == current_parent_id
         # Am I a primary page?
         self.is_primary = self.parent_id is None
         # What's an ID I can use in HTML?
@@ -251,9 +270,16 @@ class Page(BasePage):
     def in_menu_template(self, template_name):
         if self.in_menus is not None:
             for i, l, t in settings.PAGE_MENU_TEMPLATES:
-                if not unicode(i) in self.in_menus and t == template_name:
+                if not str(i) in self.in_menus and t == template_name:
                     return False
         return True
+
+    def get_template_name(self):
+        """
+        Subclasses can implement this to provide a template to use
+        in ``mezzanine.pages.views.page``.
+        """
+        return None
 
 
 class RichTextPage(Page, RichText):
@@ -276,3 +302,18 @@ class Link(Page):
     class Meta:
         verbose_name = _("Link")
         verbose_name_plural = _("Links")
+
+
+class PageMoveException(Exception):
+    """
+    Raised by ``can_move()`` when the move permission is denied. Takes
+    an optinal single argument: a message explaining the denial.
+    """
+
+    def __init__(self, msg=None):
+        self.msg = msg or ugettext("Illegal page move")
+
+    def __str__(self):
+        return self.msg
+
+    __unicode__ = __str__

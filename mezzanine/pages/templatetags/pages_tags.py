@@ -1,13 +1,15 @@
+from __future__ import unicode_literals
+from future.builtins import str
 
 from collections import defaultdict
 
 from django.core.exceptions import ImproperlyConfigured
-from django.template import TemplateSyntaxError, Variable
+from django.template import Context, TemplateSyntaxError, Variable
 from django.template.loader import get_template
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.pages.models import Page
-from mezzanine.utils.urls import admin_url, home_slug
+from mezzanine.utils.urls import home_slug
 from mezzanine import template
 
 
@@ -28,7 +30,7 @@ def page_menu(context, token):
     parts = token.split_contents()[1:]
     for part in parts:
         part = Variable(part).resolve(context)
-        if isinstance(part, unicode):
+        if isinstance(part, str):
             template_name = part
         elif isinstance(part, Page):
             parent_page = part
@@ -48,12 +50,8 @@ def page_menu(context, token):
             slug = ""
         num_children = lambda id: lambda: len(context["menu_pages"][id])
         has_children = lambda id: lambda: num_children(id)() > 0
-        published = Page.objects.published(for_user=user)
-        if slug == admin_url(Page, "changelist"):
-            related = [m.__name__.lower() for m in Page.get_content_models()]
-            published = published.select_related(*related)
-        else:
-            published = published.select_related(depth=2)
+        rel = [m.__name__.lower() for m in Page.get_content_models()]
+        published = Page.objects.published(for_user=user).select_related(*rel)
         # Store the current page being viewed in the context. Used
         # for comparisons in page.set_menu_helpers.
         if "page" not in context:
@@ -113,6 +111,7 @@ def page_menu(context, token):
         page.has_children_in_menu = page.num_children_in_menu > 0
         page.branch_level = context["branch_level"]
         page.parent = parent_page
+        context["parent_page"] = page.parent
 
         # Prior to pages having the ``in_menus`` field, pages had two
         # boolean fields ``in_navigation`` and ``in_footer`` for
@@ -127,7 +126,7 @@ def page_menu(context, token):
             context["page_branch_in_footer"] = True
 
     t = get_template(template_name)
-    return t.render(context)
+    return t.render(Context(context))
 
 
 @register.as_tag
@@ -178,11 +177,17 @@ def set_page_permissions(context, token):
     try:
         opts = model._meta
     except AttributeError:
-        # A missing inner Meta class usually means the Page model
-        # hasn't been directly subclassed.
-        error = _("An error occured with the following class. Does "
-                  "it subclass Page directly?")
-        raise ImproperlyConfigured(error + " '%s'" % model.__class__.__name__)
+        if model is None:
+            error = _("Could not load the model for the following page, "
+                      "was it removed?")
+            obj = page
+        else:
+            # A missing inner Meta class usually means the Page model
+            # hasn't been directly subclassed.
+            error = _("An error occured with the following class. Does "
+                      "it subclass Page directly?")
+            obj = model.__class__.__name__
+        raise ImproperlyConfigured(error + " '%s'" % obj)
     perm_name = opts.app_label + ".%s_" + opts.object_name.lower()
     request = context["request"]
     setattr(page, "perms", {})

@@ -53,7 +53,7 @@ update profile forms, as well as in the user's public profile page.
     model is configured.
 
 For more information consult the `Django docs for profiles
-<https://docs.djangoproject.com/en/dev/topics/auth/#storing-additional-information-about-users>`_.
+<https://docs.djangoproject.com/en/1.4/topics/auth/#storing-additional-information-about-users>`_.
 
 Restricting Account Fields
 ==========================
@@ -79,6 +79,9 @@ Django's user model. In our ``settings.py`` module we would define::
         "last_name",
         "signup_date",
     )
+
+If you don't want to expose the ``username`` field to the user, Mezzanine
+provides the setting ``ACCOUNTS_NO_USERNAME``, which when set to ``True``, will expose the ``email`` field as the sole login for the user.
 
 Account Verification
 ====================

@@ -2,10 +2,78 @@
 Content Architecture
 ====================
 
-Mezzanine primarily revolves around the models found in two packages,
-``mezzanine.core`` and ``mezzanine.pages``. This section describes
-these models and how to extend them to create your own custom content
-for a Mezzanine site.
+Content in Mezzanine primarily revolves around the models found in
+two packages, ``mezzanine.core`` and ``mezzanine.pages``. Many of
+these models are abstract, and very small in scope, and are then
+combined together as the building blocks that form the models you'll
+actually be exposed to, such as ``mezzanine.core.models.Displayable``
+and ``mezzanine.core.pages.Page``, which are the two main models you
+will inherit from when building your own models for content types.
+
+Before we look at ``Displayable`` and ``Page``, here's a quick list of
+all the abstract models used to build them:
+
+  * ``mezzanine.core.models.SiteRelated`` - Contains a related
+    ``django.contrib.sites.models.Site`` field.
+  * ``mezzanine.core.models.Slugged`` - Implements a title and URL
+    (slug).
+  * ``mezzanine.core.models.MetaData`` - Provides SEO meta data, such
+    as title, description and keywords.
+  * ``mezzanine.core.models.TimeStamped`` - Provides created and
+    updated timestamps.
+  * ``mezzanine.core.models.Displayable`` - Combines all the models
+    above, then implements publishing features, such as status and
+    dates.
+  * ``mezzanine.core.models.Ownable`` - Contains a related user field,
+    suitable for content owned by specific authors.
+  * ``mezzanine.core.models.RichText`` - Provides a WYSIWYG editable
+    field.
+  * ``mezzanine.core.models.Orderable`` - Used to implement drag/drop
+    ordering of content, whether out of the box as Django admin
+    inlines, or custom such as Mezzanine's page tree.
+
+And for completeness, here are the primary content types provided
+out of the box to end users, that make use of ``Displayable`` and
+``Page``:
+
+  * ``mezzanine.blog.models.BlogPost`` - Blog posts that subclass
+    ``Displayable`` as they're not part of the site's navigation.
+  * ``mezzanine.pages.models.RichTextPage`` - Default ``Page`` subclass,
+    providing a WYSIWYG editable field.
+  * ``mezzanine.pages.models.Link`` - ``Page`` subclass for links
+    pointing to other URLs.
+  * ``mezzanine.forms.models.Form`` - ``Page`` subclass for building
+    forms.
+  * ``mezzanine.galleries.models.Gallery`` - ``Page`` subclass for
+    building image gallery pages.
+
+These certainly serve as examples for implementing your own types of
+content.
+
+``Displayable`` vs ``Page``
+===========================
+
+``Displayable`` itself is also an abstract model, that at its simplest,
+is used to represent content that contains a URL (also known as a slug).
+It also provides the core features of content such as:
+
+  * Meta data such as a title, description and keywords.
+  * Auto-generated slug from the title.
+  * Draft/published status with the ability to preview drafts.
+  * Pre-dated publishing.
+  * Searchable by Mezzanine's :doc:`search-engine`.
+
+Subclassing ``Displayable`` best suits low-level content that doesn't
+form part of the site's navigation - such as blog posts, or events in a
+calendar. Unlike ``Page``, there's nothing particularly special about
+the ``Displayable`` model - it simply provides a common set of features
+useful to content.
+
+In contrast, the concrete ``Page`` model forms the primary API for
+building a Mezzanine site. It extends ``Displayable``, and implements a
+hierarchical navigation tree. The rest of this section of the
+documentation will focus on the ``Page`` model, and the way it is
+used to build all the types of content a site will have available.
 
 The ``Page`` Model
 ==================
@@ -143,14 +211,14 @@ checked for. So given the above example the templates
 ``pages/dr-seuss.html`` and ``pages/author.html`` would be checked for
 respectively.
 
-The view function futher looks through the parent hierarchy of the ``Page``.
-If a ``Page`` instance with slug ``authors/dr-suess`` is a child of the
+The view function further looks through the parent hierarchy of the ``Page``.
+If a ``Page`` instance with slug ``authors/dr-seuss`` is a child of the
 ``Page`` with slug ``authors``, the templates ``pages/authors/dr-seuss.html``,
 ``pages/authors/dr-seuss/author.html``, ``pages/authors/author.html``,
 ``pages/author.html``, and ``pages/page.html`` would be checked for
 respectively. This lets you specify a template for all children of a ``Page``
 and a different template for the ``Page`` itself. For example, if an
-additional author were added as a child page of ``authors/dr-suess`` with the
+additional author were added as a child page of ``authors/dr-seuss`` with the
 slug ``authors/dr-seuss/theo-lesieg``, the template
 ``pages/authors/dr-seuss/author.html`` would be among those checked.
 
@@ -173,7 +241,7 @@ app's template instead, and only override the template blocks we're
 interested in. The problem with this however, is that the app will
 attempt to load the template with a specific name, so we can't override
 *and* extend a template at the same time, as circular inheritance will
-occur, eg Django thinks the template is trying to extend itself, which
+occur, e.g. Django thinks the template is trying to extend itself, which
 is impossible.
 
 To solve this problem, Mezzanine provides the ``overextends`` template
@@ -247,15 +315,16 @@ instances of the ``Author`` model from our previous example, it won't
 be listed in the types of pages that user can add when viewing the
 navigation tree in the admin.
 
-In conjunction with Django's permission system, the ``Page`` model also
-implements the methods ``can_add``, ``can_change`` and ``can_delete``.
-These methods provide a way for custom page types to implement their
-own permissions by being overridden on subclasses of the ``Page``
-model.
+In conjunction with Django's permission system, the ``Page`` model
+also implements the methods ``can_add``, ``can_change``,
+``can_delete``, and ``can_move``. These methods provide a way for
+custom page types to implement their own permissions by being
+overridden on subclasses of the ``Page`` model.
 
-Each of these methods takes a single argument which is the current
-request object. This provides the ability to define custom permission
-methods with access to the current user as well.
+With the exception of ``can_move``, each of these methods takes a
+single argument which is the current request object, and return a
+Boolean. This provides the ability to define custom permission methods
+with access to the current user as well.
 
 .. note::
 
@@ -264,10 +333,31 @@ methods with access to the current user as well.
     the case with Django's permission system. In the case of a page
     instance, ``can_add`` refers to the ability to add child pages.
 
+The ``can_move`` method has a slightly different interface, as it
+needs an additional argument, which is the new parent should the move
+be completed, and an additional output, which is a message to be
+displayed when the move is denied. The message helps justify reverting
+the page to its position prior to the move, and is displayed using
+Django messages framework. Instead of a Boolean return value,
+``can_move`` raises a ``PageMoveException`` when the move is denied,
+with an optional argument representing the message to be displayed.
+In any case, ``can_move`` does not return any values.
+
+.. note::
+
+    The ``can_move`` permission can only constrain moving existing
+    pages, and is not observed when creating a new page. If you want
+    to enforce the same rules when creating pages, you need to
+    implement them explicitly through other means, such as the
+    ``save`` method of the model or the ``save_model`` method of the
+    model's admin.
+
 For example, if our ``Author`` content type should only contain one
-child page at most, and only be deletable when added as a child page
-(unless you're a superuser), the following permission methods could
-be implemented::
+child page at most, can only be deleted when added as a child page
+(unless you're a superuser), and cannot be moved to a top-level
+position, the following permission methods could be implemented::
+
+    from mezzanine.pages.models import Page, PageMoveException
 
     class Author(Page):
         dob = models.DateField("Date of birth")
@@ -278,11 +368,16 @@ be implemented::
         def can_delete(self, request):
             return request.user.is_superuser or self.parent is not None
 
+        def can_move(self, request, new_parent):
+            if new_parent is None:
+                msg = 'An author page cannot be a top-level page'
+                raise PageMoveException(msg)
+
 Page Menus
 ==========
 
 We've looked closely at the aspects of individual pages, now let's look
-at displaying all of the pages as a heirarchical menu. A typical site
+at displaying all of the pages as a hierarchical menu. A typical site
 may contain several different page menus, for example a menu that shows
 primary pages on the header of the site, with secondary pages as
 drop-down lists. Another type of menu would be a full or partial tree in
@@ -351,6 +446,12 @@ the template path. For example in your ``settings.py`` module::
         (3, "Footer", "pages/menus/footer.html"),
     )
 
+Which of these entries is selected for new pages (all are selected by default)
+is controlled by the ``PAGE_MENU_TEMPLATES_DEFAULT`` setting. For example,
+``PAGE_MENU_TEMPLATES_DEFAULT = (1, 3)`` will cause the admin section
+to pre-select the "Top navigation bar" and the "Footer" when using
+the example above.
+
 The selections made for the ``in_menus`` field on each page don't
 actually filter a page from being included in the ``page_branch``
 variable that contains the list of pages for the current branch. Instead
@@ -393,6 +494,8 @@ helping you to build advanced menus.
   * ``branch_level`` - an integer for the current branch depth
   * ``page_branch_in_menu`` - a boolean for whether this branch should
     be in the menu (see "filtering menus" below)
+  * ``parent_page`` - a reference to the parent page
+  * ``page.parent`` - same as ``parent_page``.
   * ``page.in_menu`` - a boolean for whether the branch page should
     be in the menu (see "filtering menus" below)
   * ``page.has_children`` - a boolean for whether the branch page has
@@ -407,6 +510,8 @@ helping you to build advanced menus.
     is a child of the current page being viewed
   * ``page.is_current_sibling`` - a boolean for whether the branch page
     is a sibling (has the same parent) of the current page being viewed
+  * ``page.is_current_parent`` - a boolean for whether the branch page
+    is the direct parent of the current page being viewed.
   * ``page.is_current_or_ascendant`` - a boolean for whether the branch
     page is the current page being viewed, or an ascendant (parent,
     grand-parent, etc) of the current page being viewed
@@ -444,47 +549,24 @@ page if it isn't the primary page for the section::
     {% endfor %}
     </ul>
 
-Non-Page Content
-================
+Integrating Third-party Apps with Pages
+=======================================
 
 Sometimes you might need to use regular Django applications within your
-site, that fall outside of Mezzanine's page structure. Mezzanine fully
-supports using regular Django applications. All you need to do is add
-the app's urlpatterns to your project's ``urls.py`` module. Mezzanine's
-blog application for example, does not use ``Page`` content types, and
-is just a regular Django app.
+site, that fall outside of Mezzanine's page structure. Of course this is
+fine since Mezzanine is just Django - you can simply add the app's
+urlpatterns to your project's ``urls.py`` module like a regular Django
+project.
 
-Mezzanine provides some helpers for your Django apps to integrate more
-closely with Mezzanine.
+A common requirement however is for pages in Mezzanine's navigation to
+point to the urlpatterns for these regular Django apps. Implementing
+this simply requires creating a page in the admin, with a URL matching
+a pattern used by the application. With that in place, the template
+rendered by the application's view will have a ``page`` variable in
+its context, that contains the current page object that was created
+with the same URL. This allows Mezzanine to mark the ``page`` instance
+as active in the navigation, and to generate breadcrumbs for the
+``page`` instance as well.
 
-The ``Displayable`` Model
--------------------------
-
-The abstract model ``mezzanine.core.models.Displayable`` and associated
-manager ``mezzanine.core.managers.PublishedManager`` provide common
-features for items that can be displayed on the site with their own
-URLs (also known as slugs). Mezzanine's ``Page`` model subclasses it.
-Some of its features are:
-
-  * Meta data such as a title, description and keywords.
-  * Auto-generated slug from the title.
-  * Draft/published status with the ability to preview drafts.
-  * Pre-dated publishing.
-  * Searchable by Mezzanine's :doc:`search-engine`.
-
-Models that do not inherit from the ``Page`` model described earlier
-should subclass the ``Displayable`` model if any of the above features
-are required. An example of this can be found in the ``mezzanine.blog``
-application, where ``BlogPost`` instances contain their own URLs and
-views that fall outside of the regular URL/view structure of the
-``Page`` model.
-
-Third-party App Integration
----------------------------
-
-A common requirement when using regular Django apps with Mezzanine is
-for pages in the site's navigation to point to the urlpatterns for the
-app. Implementing this simply requires creating a page with a URL used
-by the application. The template rendered by the application's view
-will have a ``page`` variable in its context, that contains the current
-page object that was created with the same URL.
+An example of this setup is Mezzanine's blog application, which does not
+use ``Page`` content types, and is just a regular Django app.

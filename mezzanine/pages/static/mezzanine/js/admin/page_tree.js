@@ -1,34 +1,34 @@
 
-var cookie = 'mezzanine-admin-tree';
-var at = ('; ' + document.cookie).indexOf('; ' + cookie + '=');
-var ids = '';
+jQuery(function($) {
 
-if (at > -1) {
-    ids = document.cookie.substr(at + cookie.length + 1).split(';')[0];
-}
+    var cookie = 'mezzanine-admin-tree';
+    var at = ('; ' + document.cookie).indexOf('; ' + cookie + '=');
+    var ids = '';
 
-var toggleID = function(opened, id) {
-    // Add or remove the page ID from the cookie IDs string.
-    var index = $.inArray(id, ids.split(','));
-    if (opened) {
-        if (index == -1) {
-            if (ids) {ids += ',';}
-            ids += id;
-        }
-    } else if (index > -1) {
-        ids = ids.split(',');
-        ids.splice(index, 1);
-        ids = ids.join(',');
+    if (at > -1) {
+        ids = document.cookie.substr(at + cookie.length + 1).split(';')[0];
     }
-    document.cookie = cookie + '=' + ids + '; path=/';
-};
 
-function showButtonWithChildren() {
-    $('li:has(li) .tree-toggle').css({visibility: 'visible'});
-    $('li:not(:has(li)) .tree-toggle').css({visibility: 'hidden'});
-}
+    var toggleID = function(opened, id) {
+        // Add or remove the page ID from the cookie IDs string.
+        var index = $.inArray(id, ids.split(','));
+        if (opened) {
+            if (index == -1) {
+                if (ids) {ids += ',';}
+                ids += id;
+            }
+        } else if (index > -1) {
+            ids = ids.split(',');
+            ids.splice(index, 1);
+            ids = ids.join(',');
+        }
+        document.cookie = cookie + '=' + ids + '; path=/';
+    };
 
-$(function() {
+    function showButtonWithChildren() {
+        $('li:has(li) .tree-toggle').css({visibility: 'visible'});
+        $('li:not(:has(li)) .tree-toggle').css({visibility: 'hidden'});
+    }
 
     showButtonWithChildren();
 
@@ -83,15 +83,17 @@ $(function() {
 
         var args = {
             id: ui.item[0].id,
-            parent_id: parent.length ? parent[0].id : null,
+            parent_id: parent.length ? parent[0].id : "null",
             siblings: ui.item.parent().children().map(function(index, elem) {
                 return elem.id;
             }).get()
         };
 
         $.post(window.__page_ordering_url, args, function(data) {
-            if (data !== "ok") {
-                alert("Error occured: " + data + "\nOrdering wasn't updated.");
+            if (String(data).substr(0, 2) !== "ok") {
+                location.reload();
+            } else {
+                $(".messagelist").remove();
             }
         });
 

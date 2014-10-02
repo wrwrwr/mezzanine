@@ -1,5 +1,11 @@
+from __future__ import unicode_literals
+from future.builtins import str
+from future.utils import with_metaclass
+
+from bleach import clean
 
 from django.conf import settings
+from django.contrib.admin.widgets import AdminTextareaWidget
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models
 from django.forms import MultipleChoiceField
@@ -30,14 +36,18 @@ class RichTextField(models.TextField):
         Apply the widget class defined by the
         ``RICHTEXT_WIDGET_CLASS`` setting.
         """
-        from mezzanine.conf import settings
-        try:
-            widget_class = import_dotted_path(settings.RICHTEXT_WIDGET_CLASS)
-        except ImportError:
-            raise ImproperlyConfigured(_("Could not import the value of "
-                                         "settings.RICHTEXT_WIDGET_CLASS: %s"
-                                         % settings.RICHTEXT_WIDGET_CLASS))
-        kwargs["widget"] = widget_class()
+        default = kwargs.get("widget", None) or AdminTextareaWidget
+        if default is AdminTextareaWidget:
+            from mezzanine.conf import settings
+            richtext_widget_path = settings.RICHTEXT_WIDGET_CLASS
+            try:
+                widget_class = import_dotted_path(richtext_widget_path)
+            except ImportError:
+                raise ImproperlyConfigured(_("Could not import the value of "
+                                             "settings.RICHTEXT_WIDGET_CLASS: "
+                                             "%s" % richtext_widget_path))
+            kwargs["widget"] = widget_class()
+        kwargs.setdefault("required", False)
         formfield = super(RichTextField, self).formfield(**kwargs)
         return formfield
 
@@ -57,22 +67,15 @@ class RichTextField(models.TextField):
         if settings.RICHTEXT_FILTER_LEVEL == RICHTEXT_FILTER_LEVEL_LOW:
             tags += LOW_FILTER_TAGS
             attrs += LOW_FILTER_ATTRS
-        try:
-            from bleach import clean
-        except ImportError:
-            return value
-        else:
-            return clean(value, tags=tags, attributes=attrs, strip=True,
-                         strip_comments=False, styles=styles)
+        return clean(value, tags=tags, attributes=attrs, strip=True,
+                     strip_comments=False, styles=styles)
 
 
-class MultiChoiceField(models.CharField):
+class MultiChoiceField(with_metaclass(models.SubfieldBase, models.CharField)):
     """
     Charfield that stores multiple choices selected as a comma
     separated string. Based on http://djangosnippets.org/snippets/2753/
     """
-
-    __metaclass__ = models.SubfieldBase  # triggers to_python()
 
     def formfield(self, *args, **kwargs):
         from mezzanine.core.forms import CheckboxSelectMultiple
@@ -89,16 +92,16 @@ class MultiChoiceField(models.CharField):
 
     def get_db_prep_value(self, value, **kwargs):
         if isinstance(value, (tuple, list)):
-            value = ",".join([unicode(i) for i in value])
+            value = ",".join([str(i) for i in value])
         return value
 
     def to_python(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = value.split(",")
         return value
 
     def validate(self, value, instance):
-        choices = [unicode(choice[0]) for choice in self.choices]
+        choices = [str(choice[0]) for choice in self.choices]
         if set(value) - set(choices):
             error = self.error_messages["invalid_choice"] % value
             raise ValidationError(error)

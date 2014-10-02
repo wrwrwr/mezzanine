@@ -1,9 +1,11 @@
+from __future__ import unicode_literals
+from future.builtins import int, str, zip
 
 from django import forms
 from django.contrib.comments.forms import CommentSecurityForm, CommentForm
 from django.contrib.comments.signals import comment_was_posted
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext, ugettext_lazy as _
 
 from mezzanine.conf import settings
 from mezzanine.core.forms import Html5Mixin
@@ -31,8 +33,7 @@ class KeywordsWidget(forms.MultiWidget):
     """
 
     class Media:
-        js = ("mezzanine/js/%s" % settings.JQUERY_FILENAME,
-              "mezzanine/js/admin/keywords_field.js",)
+        js = ("mezzanine/js/admin/keywords_field.js",)
 
     def __init__(self, attrs=None):
         """
@@ -53,7 +54,7 @@ class KeywordsWidget(forms.MultiWidget):
             keywords = [a.keyword for a in value.select_related("keyword")]
             if keywords:
                 keywords = [(str(k.id), k.title) for k in keywords]
-                self._ids, words = zip(*keywords)
+                self._ids, words = list(zip(*keywords))
                 return (",".join(self._ids), ", ".join(words))
         return ("", "")
 
@@ -66,7 +67,7 @@ class KeywordsWidget(forms.MultiWidget):
         links = ""
         for keyword in Keyword.objects.all().order_by("title"):
             prefix = "+" if str(keyword.id) not in self._ids else "-"
-            links += ("<a href='#'>%s%s</a>" % (prefix, unicode(keyword)))
+            links += ("<a href='#'>%s%s</a>" % (prefix, str(keyword)))
         rendered += mark_safe("<p class='keywords-field'>%s</p>" % links)
         return rendered
 
@@ -134,7 +135,7 @@ class ThreadedCommentForm(CommentForm, Html5Mixin):
                                 request=request)
         notify_emails = split_addresses(settings.COMMENTS_NOTIFICATION_EMAILS)
         if notify_emails:
-            subject = _("New comment for: ") + unicode(obj)
+            subject = ugettext("New comment for: ") + str(obj)
             context = {
                 "comment": comment,
                 "comment_url": add_cache_bypass(comment.get_absolute_url()),
@@ -143,7 +144,7 @@ class ThreadedCommentForm(CommentForm, Html5Mixin):
             }
             send_mail_template(subject, "email/comment_notification",
                                settings.DEFAULT_FROM_EMAIL, notify_emails,
-                               context, fail_silently=settings.DEBUG)
+                               context)
         return comment
 
 
@@ -153,7 +154,8 @@ class RatingForm(CommentSecurityForm):
     of its easy setup for generic relations.
     """
     value = forms.ChoiceField(label="", widget=forms.RadioSelect,
-                              choices=zip(*(settings.RATINGS_RANGE,) * 2))
+                              choices=list(zip(
+                                             *(settings.RATINGS_RANGE,) * 2)))
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
@@ -170,7 +172,7 @@ class RatingForm(CommentSecurityForm):
         self.previous = request.COOKIES.get("mezzanine-rating", "").split(",")
         already_rated = self.current in self.previous
         if already_rated and not self.request.user.is_authenticated():
-            raise forms.ValidationError(_("Already rated."))
+            raise forms.ValidationError(ugettext("Already rated."))
         return self.cleaned_data
 
     def save(self):
@@ -192,6 +194,10 @@ class RatingForm(CommentSecurityForm):
                 if rating_instance.value != int(rating_value):
                     rating_instance.value = rating_value
                     rating_instance.save()
+                else:
+                    # User submitted the same rating as previously,
+                    # which we treat as undoing the rating (like a toggle).
+                    rating_instance.delete()
         else:
             rating_instance = Rating(value=rating_value)
             rating_manager.add(rating_instance)

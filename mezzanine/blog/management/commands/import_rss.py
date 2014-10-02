@@ -1,9 +1,14 @@
+from __future__ import unicode_literals
 
 from datetime import timedelta
 from optparse import make_option
 from time import timezone
-from urllib import urlopen
-from urlparse import urljoin
+try:
+    from urllib.request import urlopen
+    from urllib.parse import urljoin
+except ImportError:
+    from urllib import urlopen
+    from urlparse import urljoin
 
 from django.core.management.base import CommandError
 
@@ -56,8 +61,12 @@ class Command(BaseImporterCommand):
 
         posts = parse(rss_url)["entries"]
         for post in posts:
-            tags = [tag["term"] for tag in post.tags]
+            if hasattr(post, 'content'):
+                content = post.content[0]["value"]
+            else:
+                content = post.summary
+            tags = [tag["term"] for tag in getattr(post, 'tags', [])]
             pub_date = parser.parse(post.updated)
             pub_date -= timedelta(seconds=timezone)
-            self.add_post(title=post.title, content=post.content[0]["value"],
+            self.add_post(title=post.title, content=content,
                           pub_date=pub_date, tags=tags, old_url=None)

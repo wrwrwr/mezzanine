@@ -1,39 +1,44 @@
 
-var selectFieldDirty = function(select, unselectedIndex) {
-    return $.grep(select.options, function(option) {
-        return option.selected && !option.defaultSelected;
-    }).length > 0 && select.selectedIndex != unselectedIndex;
-};
+jQuery(function($) {
 
-var anyFieldsDirty = function(fields) {
-    // Return true if any of the fields have been given a value
-    // that isn't the default.
-    return $.grep(fields, function(field) {
-        switch (field.type) {
-            case 'select-one':
-                return selectFieldDirty(field, 0);
-            case 'select-multiple':
-                return selectFieldDirty(field, -1);
-            case 'text':
-            case 'textarea':
-            case 'file':
-                return field.value && field.value != field.defaultValue;
-            case 'checkbox':
-                return field.checked != field.defaultChecked;
-            case 'hidden':
-                return false;
-            default:
-                alert('Unhandled field in dynamic_inline.js:' +
-                      field.name + ':' + field.type);
-                return false;
-        }
-    }).length > 0;
-}
+    var selectFieldDirty = function(select, unselectedIndex) {
+        return $.grep(select.options, function(option) {
+            return option.selected && !option.defaultSelected;
+        }).length > 0 && select.selectedIndex != unselectedIndex;
+    };
 
-$(function() {
+    var anyFieldsDirty = function(fields) {
+        // Return true if any of the fields have been given a value
+        // that isn't the default.
+        return $.grep(fields, function(field) {
+            switch (field.type) {
+                case 'select-one':
+                    return selectFieldDirty(field, 0);
+                case 'select-multiple':
+                    return selectFieldDirty(field, -1);
+                case 'text':
+                case 'textarea':
+                case 'file':
+                case 'email':
+                case 'number':
+                case 'password':
+                case 'url':
+                    return field.value && field.value != field.defaultValue;
+                case 'checkbox':
+                    return field.checked != field.defaultChecked;
+                case 'hidden':
+                    return false;
+                default:
+                    alert('Unhandled field in dynamic_inline.js:' +
+                          field.name + ':' + field.type);
+                    return false;
+            }
+        }).length > 0;
+    };
 
     var itemSelector = window.__grappelli_installed ? '.items' : 'tbody';
     var parentSelector = '.dynamic-inline ' + itemSelector;
+    var orderSelector = window.__grappelli_installed ? '._order input' : '.field-_order input';
 
     // Apply drag and drop to orderable inlines.
     $(parentSelector).sortable({handle: '.ordering', axis: 'y', opacity: '.7',
@@ -43,9 +48,12 @@ $(function() {
 
     // Set the value of the _order fields on submit.
     $('input[type=submit]').click(function() {
+        if (typeof tinyMCE != 'undefined') {
+            tinyMCE.triggerSave();
+        }
         $.each($(parentSelector), function(i, parent) {
             var order = 0;
-            $.each($(parent).find('._order input'), function(i, field) {
+            $.each($(parent).find(orderSelector), function(i, field) {
                 var parent = $(field).parent().parent();
                 if (window.__grappelli_installed) {
                     parent = parent.parent();
@@ -83,7 +91,7 @@ $(function() {
         if (window.__grappelli_installed && $(rows[0]).hasClass('legend')) {
             $(rows[1]).show();
         }
-        if (getRows().length == 0) {
+        if (getRows().length === 0) {
             $(this).hide();
         }
         return false;

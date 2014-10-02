@@ -9,6 +9,7 @@ making it editable, as it may be inappropriate - for example settings
 that are only read during startup shouldn't be editable, since changing
 them would require an application reload.
 """
+from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,6 +21,14 @@ register_setting(
     description=_("Minimum length for passwords"),
     editable=False,
     default=6,
+)
+
+register_setting(
+    name="ACCOUNTS_NO_USERNAME",
+    description=_("If ``True``, the username field will be excluded "
+        "from sign up and account update forms."),
+    editable=False,
+    default=False,
 )
 
 register_setting(

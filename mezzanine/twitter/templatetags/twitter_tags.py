@@ -1,10 +1,12 @@
+from __future__ import unicode_literals
+from future.builtins import int, str
 
 from collections import defaultdict
 
 from mezzanine.conf import settings
 from mezzanine.twitter import (QUERY_TYPE_USER, QUERY_TYPE_LIST,
                                QUERY_TYPE_SEARCH)
-from mezzanine.twitter.models import Tweet
+from mezzanine.twitter.models import Tweet, TwitterQueryException
 from mezzanine import template
 
 
@@ -17,8 +19,11 @@ def tweets_for(query_type, args, per_user=None):
     ``per_user`` arg limits the number of tweets per user, for
     example to allow a fair spread of tweets per user for a list.
     """
-    lookup = {"query_type": query_type, "value": args[0].strip("\"'")}
-    tweets = Tweet.objects.get_for(**lookup)
+    lookup = {"query_type": query_type, "value": args[0]}
+    try:
+        tweets = Tweet.objects.get_for(**lookup)
+    except TwitterQueryException:
+        return []
     if per_user is not None:
         _tweets = defaultdict(list)
         for tweet in tweets:

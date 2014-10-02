@@ -39,7 +39,30 @@ you would define the following in your projects's ``settings`` module::
     )
 
 Any admin classes that aren't specifed are included using Django's normal
-approach of grouping models alphabetically by application name.
+approach of grouping models alphabetically by application name. You can
+also control this behavior by implementing a ``in_menu`` method on your
+admin class, which should return ``True`` or ``False``. When implemented,
+this method controls whether the admin class appears in the menu or not.
+Here's an advanced example that excludes the ``BlogCategoryAdmin`` class
+from the menu, unless it is explicitly defined in ``ADMIN_MENU_ORDER``::
+
+    class BlogCategoryAdmin(admin.ModelAdmin):
+        """
+        Admin class for blog categories. Hides itself from the admin menu
+        unless explicitly specified.
+        """
+
+        fieldsets = ((None, {"fields": ("title",)}),)
+
+        def in_menu(self):
+            """
+            Hide from the admin menu unless explicitly set in ``ADMIN_MENU_ORDER``.
+            """
+            for (name, items) in settings.ADMIN_MENU_ORDER:
+                if "blog.BlogCategory" in items:
+                    return True
+            return False
+
 
 Custom Items
 ============
@@ -118,23 +141,24 @@ of TinyMCE, a different editor or even no editor at all.
     which lets you specify the URL to your own TinyMCE setup JavaScript
     file.
 
-The default value for the ``RICHTEXT_WIDGET_CLASS`` setting is the string
-``"mezzanine.core.forms.TinyMceWidget"``. The ``TinyMceWidget`` class
-referenced here provides the necessary media files and HTML for
+The default value for the ``RICHTEXT_WIDGET_CLASS`` setting is the
+string ``"mezzanine.core.forms.TinyMceWidget"``. The ``TinyMceWidget``
+class referenced here provides the necessary media files and HTML for
 implementing the TinyMCE editor, and serves as a good reference point
 for implementing your own widget class which would then be specified
 via the ``RICHTEXT_WIDGET_CLASS`` setting.
 
-In addition to ``RICHTEXT_WIDGET_CLASS`` you may need to customize the way
-your content is rendered at the template level. Post processing of the content
-can be achieved through the ``RICHTEXT_FILTER`` setting.
+In addition to ``RICHTEXT_WIDGET_CLASS`` you may need to customize the
+way your content is rendered at the template level. Post processing of
+the content can be achieved through the ``RICHTEXT_FILTERS`` setting,
+which is a sequence of string, each one containing the dotted path to
+a Python function, that will be used as a processing pipeline for the
+content. Think of them like Django's middleware or context processors.
 
-The default behaviour for ``RICHTEXT_FILTER`` is to simply return the parameter
-passed to it.
-
-Say, for example, you had a ``RICHTEXT_WIDGET_CLASS`` that allowed you to write
-your content in a popular wiki syntax. You'd need a way to convert that wiki
-syntax into html right before the content was rendered::
+Say, for example, you had a ``RICHTEXT_WIDGET_CLASS`` that allowed you
+to write your content in a popular wiki syntax such as markdown. You'd
+need a way to convert that wiki syntax into HTML right before the
+content was rendered::
 
     # ... in myproj.filter
     from markdown import markdown
@@ -145,9 +169,13 @@ syntax into html right before the content was rendered::
         """
         return markdown(content)
 
-Then by setting ``RICHTEXT_FILTER`` to ``'myproj.filter.markdown_filter'``
-you'd see the converted html content rendered to the template, rather than
-the raw markdown formatting.
+    # ... in myproj.settings
+    RICHTEXT_FILTERS = (
+        "myproj.filter.markdown_filter",
+    )
+
+With the above, you'd now see the converted HTML content rendered to
+the template, rather than the raw markdown formatting.
 
 Media Library Integration
 =========================
