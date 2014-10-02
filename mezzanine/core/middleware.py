@@ -6,9 +6,12 @@ from django.contrib.auth import logout
 from django.contrib.messages import error
 from django.contrib.redirects.models import Redirect
 from django.core.exceptions import MiddlewareNotUsed
-from django.core.urlresolvers import reverse, resolve
+from django.core.urlresolvers import NoReverseMatch, resolve, reverse
 from django.http import (HttpResponse, HttpResponseRedirect,
                          HttpResponsePermanentRedirect, HttpResponseGone)
+from django.utils.cache import get_max_age
+from django.utils.translation import get_language_from_path, override
+from django.template import Template, RequestContext
 from django.middleware.csrf import CsrfViewMiddleware, get_token
 from django.template import Template, RequestContext
 from django.utils.cache import get_max_age
@@ -293,4 +296,54 @@ class RedirectFallbackMiddleware(object):
                     response = HttpResponseGone()
                 else:
                     response = HttpResponseRedirect(redirect.new_path)
+        return response
+
+
+class LocaleURLMiddleware(object):
+    """
+    Adds ``LANGUAGES_URLS`` list to the context with a ``(language_code,
+    language_name, localized_url)`` triple for every language;
+    ``localized_url`` starts with a language prefix and has page / product
+    slugs translated.
+
+    This should be one of the last middlewares listed, past session and locale
+    middlewares or anything that can change the view that will be used.
+    """
+
+    def process_request(self, request):
+        """
+        Stores language in session, to prevent language switches on redirects.
+        ``LocaleMiddleware`` will make the stored language active on its own.
+        """
+        if hasattr(request, 'session'):
+            request.session['django_language'] = request.LANGUAGE_CODE
+
+    def process_template_response(self, request, response):
+        """
+        Attempts to determine URLs for the current page for each language and
+        puts them into response's context.
+
+        If a page or product is being displayed, simply get its path with each
+        language active. Otherwise try to reverse the current view for all
+        languages. If all fails, just replace language prefix in request.path.
+        """
+        languages_urls = []
+        for (code, name) in settings.LANGUAGES:
+            with override(code):
+                if "page" in response.context_data:
+                    url = response.context_data["page"].get_absolute_url()
+                elif "product" in response.context_data:
+                    url = response.context_data["product"].get_absolute_url()
+                elif hasattr(request, "view_func"):
+                    try:
+                        url = reverse(*request.resolver_match)
+                    except NoReverseMatch:
+                        url = request.path
+                        path_code = get_language_from_path(url)
+                        if path_code:
+                            url = url.replace(path_code, code, 1)
+                else:
+                    url = "/"
+                languages_urls.append((code, name, url))
+        response.context_data["LANGUAGES_URLS"] = languages_urls
         return response

@@ -316,6 +316,8 @@ MIDDLEWARE_CLASSES = (
     # Uncomment the following if using any of the SSL settings:
     # "mezzanine.core.middleware.SSLRedirectMiddleware",
     "mezzanine.pages.middleware.PageMiddleware",
+    # Uncomment if you want to use the language chooser template.
+    "mezzanine.core.middleware.LocaleURLMiddleware",
     "mezzanine.core.middleware.FetchFromCacheMiddleware",
 )
 

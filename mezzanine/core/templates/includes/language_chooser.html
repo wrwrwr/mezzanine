@@ -1,0 +1,12 @@
+{% load staticfiles %}
+<nav class="language-chooser">
+    <ul>
+        {% for code, name, url in LANGUAGES_URLS %}
+		<li{% ifequal code LANGUAGE_CODE %} class="active"{% endifequal %}>
+			<a href="{{ url }}">
+				<img src="{% static "language_chooser/"|add:code|add:".png" %}" alt="{{ name }}" />
+			</a>
+		</li>
+		{% endfor %}
+    </ul>
+</nav>
