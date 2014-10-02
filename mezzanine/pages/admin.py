@@ -76,7 +76,7 @@ class PageAdmin(DisplayableAdmin):
                                                          translator)
                 try:
                     trans_opts = translator.get_options_for_model(self.model)
-                    exclude_fields.update(trans_opts.fields.keys())
+                    exclude_fields.extend(trans_opts.fields.keys())
                 except NotRegistered:
                     pass
             fields = self.model._meta.fields + self.model._meta.many_to_many
