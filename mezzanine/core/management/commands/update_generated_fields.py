@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 from optparse import make_option
 
@@ -26,8 +27,8 @@ class Command(NoArgsCommand):
 
         for model in get_models():
             if reset_slugs and issubclass(model, Slugged):
-                if verbosity > 0:
-                    print "Reseting slugs of %s" % model.__name__
+                if verbosity > 1:
+                    print("Resetting slugs of %s" % model.__name__)
                 for instance in model.objects.all():
                     def reset_slug():
                         instance.slug = None
@@ -35,7 +36,7 @@ class Command(NoArgsCommand):
                     instance.save()
 
             if issubclass(model, (Slugged, MetaData, Page)):
-                if verbosity > 0:
-                    print "Updating %s" % model.__name__
+                if verbosity > 1:
+                    print("Updating %s" % model.__name__)
                 for instance in model.objects.all():
                     instance.save()
