@@ -63,10 +63,16 @@ def create_pages(app, created_models, verbosity, interactive, **kwargs):
                 confirm = input("Please enter either 'yes' or 'no': ")
             if confirm == "yes":
                 install_optional_data(verbosity)
-    if settings.USE_MODELTRANSLATION:
-        # Fixtures have slugs only for one langague, not necessarily
-        # loaded for the default one.
-        call_command("update_generated_fields", verbosity=0)
+        if settings.USE_MODELTRANSLATION:
+            # Initial data fixtures have slugs only for one languague, not
+            # necessarily loaded for the default one.
+            # TODO: We should quite likely auto-run ``makemigrations`` and
+            #       ``migrate`` here -- you can't generate the translated
+            #       slugs until the fields are created. However, at the
+            #       moment of writing, the required/optional content is not
+            #       loaded with 1.7 -- ``created_models`` does not contain
+            #       models created for "migrated" apps.
+            call_command("update_generated_fields", verbosity)
 
 
 def create_site(app, created_models, verbosity, interactive, **kwargs):
