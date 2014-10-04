@@ -6,7 +6,8 @@
 {% block extrahead %}
 <link rel="stylesheet" href="{% static "mezzanine/css/admin/global.css" %}">
 {% if settings.USE_MODELTRANSLATION %}
-<link rel="stylesheet" href="{% static "mezzanine/css/smoothness/"|add:settings.JQUERY_UI_FILENAME|slice:":-3"|add:"css" %}">
+<link rel="stylesheet" href="{% static "mezzanine/css/smoothness/"|add:settings.JQUERY_UI_FILENAME|slice:":-2"|add:"css" %}">
+<link rel="stylesheet" href="{% static "modeltranslation/css/tabbed_translation_fields.css" %}">
 {% endif %}
 <style>
     /* These are set in PageAdmin's view methods, and mezzanine.core.admin.SingletonAdmin */
@@ -71,8 +72,8 @@ jQuery(function($) {
         <script src="{% static "mezzanine/js/admin/collapse_backport.js" %}"></script>
         {% endif %}
         {% if settings.USE_MODELTRANSLATION %}
-        <script src="{% static "mezzanine/js/"|add:settings.JQUERY_UI_FILENAME %}></script>
-        <script src="{% static "modeltranslation/js/tabbed_translation_fields.js" %}></script>
+        <script src="{% static "mezzanine/js/"|add:settings.JQUERY_UI_FILENAME %}"></script>
+        <script src="{% static "modeltranslation/js/tabbed_translation_fields.js" %}"></script>
         {% endif %}
     {% endif %}
 {% endif %}
