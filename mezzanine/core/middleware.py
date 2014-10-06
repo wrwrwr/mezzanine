@@ -9,14 +9,12 @@ from django.core.exceptions import MiddlewareNotUsed
 from django.core.urlresolvers import NoReverseMatch, resolve, reverse
 from django.http import (HttpResponse, HttpResponseRedirect,
                          HttpResponsePermanentRedirect, HttpResponseGone)
-from django.utils.cache import get_max_age
-from django.utils.translation import get_language_from_path, override
-from django.template import Template, RequestContext
 from django.middleware.csrf import CsrfViewMiddleware, get_token
 from django.template import Template, RequestContext
 from django.utils.cache import get_max_age
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import (get_language_from_path, override,
+                                      ugettext as _)
 
 from mezzanine.conf import settings
 from mezzanine.core.models import SitePermission
