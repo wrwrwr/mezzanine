@@ -246,6 +246,7 @@ class KeywordsField(BaseGenericRelation):
         Stores the keywords as a single string for searching.
         """
         assigned = related_manager.select_related("keyword")
+
         class Nonlocal:
             # With Python 3 this artificial scope can be replaced by just a
             # ``nonlocal`` keyword before the assignment inside the function.
