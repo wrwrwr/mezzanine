@@ -8,6 +8,7 @@ from shutil import copyfile, copytree
 from django.db import connection
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
+from django.test.runner import DiscoverRunner
 
 from mezzanine.conf import settings
 from mezzanine.utils.importing import path_for_import
@@ -49,6 +50,30 @@ IGNORE_ERRORS = (
     "live_settings.py",
 
 )
+
+
+class TestRunner(DiscoverRunner):
+    """
+    Defines two additional test targets:
+    * ``installed_apps`` -- runs tests for apps in ``INSTALLED_APPS``,
+      except ``django.contrib`` modules;
+    * ``installed_nonoptional_apps`` -- also excludes apps from the
+      ``OPTIONAL_APPS`` list.
+    """
+
+    def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
+        test_labels = list(test_labels)
+        if "installed_apps" in test_labels:
+            test_labels.remove("installed_apps")
+            test_labels.extend(a for a in settings.INSTALLED_APPS if
+                                not a.startswith('django.contrib'))
+        elif "installed_nonoptional_apps" in test_labels:
+            test_labels.remove("installed_nonoptional_apps")
+            test_labels.extend(a for a in settings.INSTALLED_APPS if
+                                a not in settings.OPTIONAL_APPS and
+                                not a.startswith('django.contrib'))
+        return super(TestRunner, self).build_suite(
+            test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
 
 class TestCase(BaseTestCase):
