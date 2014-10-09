@@ -197,13 +197,22 @@ class Settings(object):
             return getattr(django_settings, name, setting["default"])
 
 
-mezz_first = lambda app: not app.startswith("mezzanine.")
-for app in sorted(django_settings.INSTALLED_APPS, key=mezz_first):
+def import_defaults(app):
+    """
+    Processes dynamic setting registrations from ``defaults`` submodule
+    of the given app.
+    """
     module = import_module(app)
     try:
         import_module("%s.defaults" % app)
     except:
         if module_has_submodule(module, "defaults"):
             raise
+
+
+# Import defaults for all installed apps.
+mezz_first = lambda app: not app.startswith("mezzanine.")
+for app in sorted(django_settings.INSTALLED_APPS, key=mezz_first):
+    import_defaults(app)
 
 settings = Settings()

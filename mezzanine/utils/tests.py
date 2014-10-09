@@ -2,7 +2,9 @@ from __future__ import unicode_literals
 from future.builtins import open, range, str
 
 from _ast import PyCF_ONLY_AST
+from importlib import import_module
 import os
+from pkgutil import walk_packages
 from shutil import copyfile, copytree
 
 from django.db import connection
@@ -10,7 +12,7 @@ from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
 from django.test.runner import DiscoverRunner
 
-from mezzanine.conf import settings
+from mezzanine.conf import import_defaults, settings
 from mezzanine.utils.importing import path_for_import
 from mezzanine.utils.models import get_user_model
 
@@ -54,11 +56,20 @@ IGNORE_ERRORS = (
 
 class TestRunner(DiscoverRunner):
     """
-    Defines two additional test targets:
-    * ``installed_apps`` -- runs tests for apps in ``INSTALLED_APPS``,
+    Registers default settings for tested, but not installed apps.
+
+    Also defines two additional test targets:
+    * ``installed_apps``: runs tests for apps in ``INSTALLED_APPS``,
       except ``django.contrib`` modules;
-    * ``installed_nonoptional_apps`` -- also excludes apps from the
+    * ``installed_nonoptional_apps``: also excludes apps from the
       ``OPTIONAL_APPS`` list.
+
+    Some examples:
+    * ``./manage.py test``: to only run your project tests;
+    * ``./manage.py test mezzanine``: to run the whole Mezzanine suite;
+    * ``./manage.py test mezzanine.core``: to run tests for a single app;
+    * ``./manage.py test mezzanine.core.tests.CoreTests.test_syntax``:
+      to run a single test.
     """
 
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
@@ -66,12 +77,56 @@ class TestRunner(DiscoverRunner):
         if "installed_apps" in test_labels:
             test_labels.remove("installed_apps")
             test_labels.extend(a for a in settings.INSTALLED_APPS if
-                                not a.startswith('django.contrib'))
+                                not a.startswith("django.contrib"))
         elif "installed_nonoptional_apps" in test_labels:
             test_labels.remove("installed_nonoptional_apps")
             test_labels.extend(a for a in settings.INSTALLED_APPS if
                                 a not in settings.OPTIONAL_APPS and
-                                not a.startswith('django.contrib'))
+                                not a.startswith("django.contrib"))
+
+        # Register default settings for tested, but not installed apps.
+        # TODO: Refactor defaults loading, so it's always done before any
+        #       module in a package is imported (package's __init__?) and
+        #       remove this workaround? Or just import .defaults in tests?
+        packages = []
+        for label in test_labels:
+            if os.path.exists(os.path.abspath(label)):
+                # Label is a file system path, we could support a case with
+                # the path pointing to a Python package, but is it worth it?
+                raise ValueError("Specifying tests by directory paths is not "
+                                 "supported, please use a dotted package or "
+                                 "module name.")
+            # Label is a dotted package, module, test case or a method name.
+            # Find the lowest-level package on the label.
+            label_package = None
+            parts = label.split(".")
+            while parts:
+                try:
+                    module = import_module(".".join(parts))
+                except:
+                    # No such module or there is a module, but trying to import
+                    # it raises an exception, possibly due to unloaded defaults
+                    # -- we'll try loading defaults from its package.
+                    del parts[-1]
+                else:
+                    if hasattr(module, "__path__"):
+                        # Let's say if it has a path attribute it's a package.
+                        label_package = module
+                    else:
+                        label_package = module.__package__
+                    break
+            if label_package is not None:
+                # For cases like "mezzanine" we also need to load defaults
+                # from subpackages.
+                packages.append(label_package.__name__)
+                for loader, name, is_package in walk_packages(
+                        label_package.__path__, label_package.__name__ + "."):
+                    if is_package:
+                        packages.append(name)
+        for package in packages:
+            if package not in settings.INSTALLED_APPS:
+                import_defaults(package)
+
         return super(TestRunner, self).build_suite(
             test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
