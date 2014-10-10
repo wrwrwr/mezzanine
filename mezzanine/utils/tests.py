@@ -2,11 +2,14 @@ from __future__ import unicode_literals
 from future.builtins import open, range, str
 
 from _ast import PyCF_ONLY_AST
+from fnmatch import fnmatch
 from importlib import import_module
 import os
 from pkgutil import walk_packages
 from shutil import copyfile, copytree
+from warnings import warn
 
+from django.apps import apps
 from django.db import connection
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
@@ -18,6 +21,16 @@ from mezzanine.utils.models import get_user_model
 
 
 User = get_user_model()
+
+
+# Apps required by tests, assumed to always be installed.
+MANDATORY_APPS = (
+    "mezzanine.boot",
+    "mezzanine.conf",
+    "mezzanine.core",
+    "mezzanine.generic",
+    "mezzanine.pages",
+)
 
 
 # Ignore these warnings in pyflakes - if added to, please comment why.
@@ -56,20 +69,22 @@ IGNORE_ERRORS = (
 
 class TestRunner(DiscoverRunner):
     """
-    Registers default settings for tested, but not installed apps.
+    Registers default settings and forces installation of apps requested
+    to be tested and mandatory apps not in ``INSTALLED_APPS``.
 
-    Also defines two additional test targets:
+    Also provides two additional test targets:
     * ``installed_apps``: runs tests for apps in ``INSTALLED_APPS``,
       except ``django.contrib`` modules;
     * ``installed_nonoptional_apps``: also excludes apps from the
       ``OPTIONAL_APPS`` list.
 
     Some examples:
-    * ``./manage.py test``: to only run your project tests;
-    * ``./manage.py test mezzanine``: to run the whole Mezzanine suite;
-    * ``./manage.py test mezzanine.core``: to run tests for a single app;
+    * ``./manage.py test``: only your project tests;
+    * ``./manage.py test mezzanine``: the whole Mezzanine suite,
+      including apps you have commented out in your settings;
+    * ``./manage.py test mezzanine.core``: tests for a single app;
     * ``./manage.py test mezzanine.core.tests.CoreTests.test_syntax``:
-      to run a single test.
+      a single test.
     """
 
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
@@ -84,20 +99,20 @@ class TestRunner(DiscoverRunner):
                                 a not in settings.OPTIONAL_APPS and
                                 not a.startswith("django.contrib"))
 
-        # Register default settings for tested, but not installed apps.
-        # TODO: Refactor defaults loading, so it's always done before any
-        #       module in a package is imported (package's __init__?) and
-        #       remove this workaround? Or just import .defaults in tests?
+        # Find what packages are to be tested, understood as packages
+        # specified by a label or any of their subpackages, that contain
+        # some tests (modules matching self.pattern).
         packages = []
         for label in test_labels:
             if os.path.exists(os.path.abspath(label)):
                 # Label is a file system path, we could support a case with
                 # the path pointing to a Python package, but is it worth it?
-                raise ValueError("Specifying tests by directory paths is not "
-                                 "supported, please use a dotted package or "
-                                 "module name.")
+                warn("Specifying tests by directory paths is not supported, "
+                     "requested tests for non-installed apps may fail, "
+                     "please use a dotted package or module names.")
+                continue
             # Label is a dotted package, module, test case or a method name.
-            # Find the lowest-level package on the label.
+            # Find the most-specific package in the label.
             label_package = None
             parts = label.split(".")
             while parts:
@@ -113,19 +128,47 @@ class TestRunner(DiscoverRunner):
                         # Let's say if it has a path attribute it's a package.
                         label_package = module
                     else:
-                        label_package = module.__package__
+                        # Package import should succeed considering its module
+                        # got imported, anyway we don't know what to do if it
+                        # fails.
+                        label_package = import_module(module.__package__)
                     break
             if label_package is not None:
-                # For cases like "mezzanine" we also need to load defaults
-                # from subpackages.
-                packages.append(label_package.__name__)
-                for loader, name, is_package in walk_packages(
+                # For labels like "mezzanine" we need to process subpackages.
+                for loader, name, _ in walk_packages(
                         label_package.__path__, label_package.__name__ + "."):
-                    if is_package:
-                        packages.append(name)
+                    module_filename = os.path.basename(
+                        loader.find_module(name).filename)
+                    if fnmatch(module_filename, self.pattern):
+                        package = ".".join(name.split(".")[:-1])
+                        packages.append(package)
+
+        # Register default settings and force installation for missing
+        # mandatory and tested non-installed apps.
+        packages.extend(MANDATORY_APPS)
+        settings.INSTALLED_APPS = list(settings.INSTALLED_APPS)
         for package in packages:
             if package not in settings.INSTALLED_APPS:
+                warn("Package {} is to be tested or is mandatory for testing, "
+                     "but is not in INSTALLED_APPS, it will be loaded for the "
+                     "tests.".format(package))
                 import_defaults(package)
+                settings.INSTALLED_APPS += (package,)
+        apps.set_installed_apps(settings.INSTALLED_APPS)
+
+        # Loading new models with foreign keys to those loaded previously
+        # should invalidate related object caches.
+        # TODO: Any cleaner solution to "missing" related fields?
+        for model in apps.get_models():
+            opts = model._meta
+            related_caches = ("_related_objects_cache",
+                              "_related_objects_proxy_cache",
+                              "_related_many_to_many_cache",)
+            for cache in related_caches:
+                try:
+                    delattr(opts, cache)
+                except AttributeError:
+                    pass
 
         return super(TestRunner, self).build_suite(
             test_labels=test_labels, extra_tests=extra_tests, **kwargs)
