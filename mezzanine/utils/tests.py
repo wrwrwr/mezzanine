@@ -11,6 +11,9 @@ from warnings import warn
 
 from django.apps import apps
 from django.db import connection
+from django.db.models.signals import (pre_migrate, post_migrate,
+                                      pre_syncdb, post_syncdb)
+from django.dispatch.dispatcher import _make_id
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
 from django.test.runner import DiscoverRunner
@@ -111,20 +114,25 @@ class TestRunner(DiscoverRunner):
                 import_defaults(package)
                 settings.INSTALLED_APPS += (package,)
 
-        return super(TestRunner, self).build_suite(
-            test_labels=test_labels, extra_tests=extra_tests, **kwargs)
-
-    def run_suite(self, suite, **kwargs):
-        """
-        We may have modified ``INSTALLED_APPS`` in ``build_suite``, thus
-        need to rebuild app registry.
-
-        The app registry rebuilding has to be executed after test database
-        setup to work around ``post_migrate`` signal receiver / sender
-        mismatch in apps registering signals on module import (e.g. missing
-        default ``Site``).
-        """
+        # The app registry rebuilding creates new instances of AppConfigs,
+        # but does not reregister signals for them (unless they're connected
+        # in ``ready``). This causes pre/post_migrate signals not to be run
+        # for the test databases (a signal emitted by the migration machinery
+        # has a different sender id then the one stored by the dispatcher).
+        # This usually shows up as a missing default Site (create_default_site
+        # from contrib.sites is only connected for the original app instance).
+        # TODO: Now, this is properly hackish :-)
+        old_app_ids = {_make_id(a): a.label for a in apps.get_app_configs()}
         apps.set_installed_apps(settings.INSTALLED_APPS)
+        new_app_ids = {a.label: _make_id(a) for a in apps.get_app_configs()}
+        for signal in (pre_migrate, post_migrate, pre_syncdb, post_syncdb):
+            for index, ((receiver_id, sender_id), receiver) in enumerate(
+                    signal.receivers):
+                if sender_id in old_app_ids:
+                    # Note: we're only adding apps.
+                    new_sender_id = new_app_ids[old_app_ids[sender_id]]
+                    signal.receivers[index] = ((receiver_id, new_sender_id),
+                                               receiver)
 
         # Loading new models with foreign keys to those loaded previously
         # should invalidate related object caches.
@@ -140,7 +148,8 @@ class TestRunner(DiscoverRunner):
                 except AttributeError:
                     pass
 
-        return super(TestRunner, self).run_suite(suite, **kwargs)
+        return super(TestRunner, self).build_suite(
+            test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
     def packages_for_labels(self, test_labels):
         """
