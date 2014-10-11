@@ -69,8 +69,8 @@ IGNORE_ERRORS = (
 
 class TestRunner(DiscoverRunner):
     """
-    Registers default settings and forces installation of apps requested
-    to be tested and mandatory apps not in ``INSTALLED_APPS``.
+    Registers default settings and forces installation of non-installed apps
+    requested to be tested and mandatory apps not in ``INSTALLED_APPS``.
 
     Also provides two additional test targets:
     * ``installed_apps``: runs tests for apps in ``INSTALLED_APPS``,
@@ -99,9 +99,62 @@ class TestRunner(DiscoverRunner):
                                 a not in settings.OPTIONAL_APPS and
                                 not a.startswith("django.contrib"))
 
-        # Find what packages are to be tested, understood as packages
-        # specified by a label or any of their subpackages, that contain
-        # some tests (modules matching self.pattern).
+        # Register default settings and force installation for missing
+        # mandatory and tested non-installed apps.
+        packages = self.packages_for_labels(test_labels) + list(MANDATORY_APPS)
+        settings.INSTALLED_APPS = list(settings.INSTALLED_APPS)
+        for package in packages:
+            if package not in settings.INSTALLED_APPS:
+                warn("Package {} is to be tested or is mandatory for testing, "
+                     "but is not in INSTALLED_APPS, it will be loaded for the "
+                     "tests.".format(package))
+                import_defaults(package)
+                settings.INSTALLED_APPS += (package,)
+
+        return super(TestRunner, self).build_suite(
+            test_labels=test_labels, extra_tests=extra_tests, **kwargs)
+
+    def run_suite(self, suite, **kwargs):
+        """
+        We may have modified ``INSTALLED_APPS`` in ``build_suite``, thus
+        need to rebuild app registry.
+
+        The app registry rebuilding has to be executed after test database
+        setup to work around ``post_migrate`` signal receiver / sender
+        mismatch in apps registering signals on module import (e.g. missing
+        default ``Site``).
+        """
+        apps.set_installed_apps(settings.INSTALLED_APPS)
+
+        # Loading new models with foreign keys to those loaded previously
+        # should invalidate related object caches.
+        # TODO: Any cleaner solution to "missing" related fields?
+        for model in apps.get_models():
+            opts = model._meta
+            related_caches = ("_related_objects_cache",
+                              "_related_objects_proxy_cache",
+                              "_related_many_to_many_cache",)
+            for cache in related_caches:
+                try:
+                    delattr(opts, cache)
+                except AttributeError:
+                    pass
+
+        return super(TestRunner, self).run_suite(suite, **kwargs)
+
+    def packages_for_labels(self, test_labels):
+        """
+        Finds what packages are to be tested based on test labels.
+
+        Packages to be tested are understood as packages specified by a label
+        or any of their subpackages, that contain some tests (modules matching
+        ``self.pattern``).
+
+        TODO: Consider subclassing TestLoader, getting the actual tests list
+              (while avoiding to trigger import exceptions) would be more
+              accurate.
+        """
+
         packages = []
         for label in test_labels:
             if os.path.exists(os.path.abspath(label)):
@@ -142,36 +195,7 @@ class TestRunner(DiscoverRunner):
                     if fnmatch(module_filename, self.pattern):
                         package = ".".join(name.split(".")[:-1])
                         packages.append(package)
-
-        # Register default settings and force installation for missing
-        # mandatory and tested non-installed apps.
-        packages.extend(MANDATORY_APPS)
-        settings.INSTALLED_APPS = list(settings.INSTALLED_APPS)
-        for package in packages:
-            if package not in settings.INSTALLED_APPS:
-                warn("Package {} is to be tested or is mandatory for testing, "
-                     "but is not in INSTALLED_APPS, it will be loaded for the "
-                     "tests.".format(package))
-                import_defaults(package)
-                settings.INSTALLED_APPS += (package,)
-        apps.set_installed_apps(settings.INSTALLED_APPS)
-
-        # Loading new models with foreign keys to those loaded previously
-        # should invalidate related object caches.
-        # TODO: Any cleaner solution to "missing" related fields?
-        for model in apps.get_models():
-            opts = model._meta
-            related_caches = ("_related_objects_cache",
-                              "_related_objects_proxy_cache",
-                              "_related_many_to_many_cache",)
-            for cache in related_caches:
-                try:
-                    delattr(opts, cache)
-                except AttributeError:
-                    pass
-
-        return super(TestRunner, self).build_suite(
-            test_labels=test_labels, extra_tests=extra_tests, **kwargs)
+        return packages
 
 
 class TestCase(BaseTestCase):
