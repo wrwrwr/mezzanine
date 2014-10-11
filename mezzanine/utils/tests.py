@@ -128,9 +128,13 @@ class TestRunner(DiscoverRunner):
         for signal in (pre_migrate, post_migrate, pre_syncdb, post_syncdb):
             for index, ((receiver_id, sender_id), receiver) in enumerate(
                     signal.receivers):
-                if sender_id in old_app_ids:
-                    # Note: we're only adding apps.
+                try:
                     new_sender_id = new_app_ids[old_app_ids[sender_id]]
+                except KeyError:
+                    # Receiver is not an app or the app has been uninstalled.
+                    # TODO: Consider disconnecting uninstalled apps.
+                    pass
+                else:
                     signal.receivers[index] = ((receiver_id, new_sender_id),
                                                receiver)
 
