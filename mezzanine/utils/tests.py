@@ -72,8 +72,8 @@ IGNORE_ERRORS = (
 
 class TestRunner(DiscoverRunner):
     """
-    Registers default settings and forces installation of non-installed apps
-    requested to be tested and mandatory apps not in ``INSTALLED_APPS``.
+    Registers default settings and forces installation of mandatory
+    and requested-to-be-tested apps not in ``INSTALLED_APPS``.
 
     Also provides two additional test targets:
     * ``installed_apps``: runs tests for apps in ``INSTALLED_APPS``,
