@@ -52,6 +52,22 @@ def processor_for(content_model_or_slug, exact_page=False):
     return decorator
 
 
+def import_page_processors(app):
+    """
+    Imports page processors for an app -- if there are any.
+    The app argument may be an ``AppConfig`` or a Python package name.
+    """
+    try:
+        module = app.module
+    except AttributeError:
+        module = import_module(app)
+    try:
+        import_module("%s.page_processors" % app)
+    except:
+        if module_has_submodule(module, "page_processors"):
+            raise
+
+
 LOADED = False
 
 
@@ -65,9 +81,4 @@ def autodiscover():
         return
     LOADED = True
     for app in settings.INSTALLED_APPS:
-        module = import_module(app)
-        try:
-            import_module("%s.page_processors" % app)
-        except:
-            if module_has_submodule(module, "page_processors"):
-                raise
+        import_page_processors(app)

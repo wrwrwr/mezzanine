@@ -201,8 +201,12 @@ def import_defaults(app):
     """
     Processes dynamic setting registrations from ``defaults`` submodule
     of the given app.
+    The app argument may be an ``AppConfig`` or a Python package name.
     """
-    module = import_module(app)
+    try:
+        module = app.module
+    except AttributeError:
+        module = import_module(app)
     try:
         import_module("%s.defaults" % app)
     except:

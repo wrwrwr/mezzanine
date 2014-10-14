@@ -2,11 +2,8 @@ from __future__ import unicode_literals
 from future.builtins import open, range, str
 
 from _ast import PyCF_ONLY_AST
-from fnmatch import fnmatch
-from importlib import import_module
 from inspect import getmodule
 import os
-from pkgutil import walk_packages
 from shutil import copyfile, copytree
 import sys
 from warnings import warn
@@ -19,11 +16,11 @@ from django.db.models.signals import (pre_migrate, post_migrate,
 from django.dispatch.dispatcher import _make_id
 from django.template import Context, Template
 from django.test import (TestCase as BaseTestCase,
-                         modify_settings as base_modify_settings,
-                         override_settings)
+                         modify_settings as base_modify_settings)
 from django.test.runner import DiscoverRunner
 
 from mezzanine.conf import import_defaults, settings
+from mezzanine.pages.page_processors import import_page_processors
 from mezzanine.utils.importing import path_for_import
 from mezzanine.utils.models import get_user_model
 
@@ -38,9 +35,9 @@ MANDATORY_APPS = (
     "mezzanine.core",
     "mezzanine.generic",
     "mezzanine.blog",
-    "mezzanine.forms",
+    # "mezzanine.forms",
     "mezzanine.pages",
-    "mezzanine.galleries",
+    # "mezzanine.galleries",
     # "mezzanine.twitter",
     # "mezzanine.accounts",
     # "mezzanine.mobile",
@@ -170,9 +167,10 @@ class TestRunner(DiscoverRunner):
                 warn("Package {} is to be tested or is mandatory for "
                      "testing, but is not in INSTALLED_APPS, it will be "
                      "loaded for the tests.".format(test_package))
-                import_defaults(test_package)
                 if test_package not in install:
                     install.append(test_package)
+        for package in install:
+            import_defaults(package)
         self.install = install
 
         return suite
@@ -187,8 +185,9 @@ class TestRunner(DiscoverRunner):
                 # Mezzanine urls uses some "if installed" conditions.
                 reload(sys.modules['mezzanine.urls'])
                 clear_url_caches()
-
-            import_module('mezzanine.forms.page_processors')
+            for app_config in apps.get_app_configs():
+                # Some newly installed apps can have page processors.
+                import_page_processors(app_config.name)
             return super(TestRunner, self).run_suite(suite, **kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
