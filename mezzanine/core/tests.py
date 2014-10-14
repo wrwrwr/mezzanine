@@ -21,6 +21,7 @@ from django.utils.unittest import skipUnless
 from django.test.utils import override_settings
 
 from mezzanine.conf import settings
+from mezzanine.core import defaults
 from mezzanine.core.managers import DisplayableManager
 from mezzanine.core.models import (CONTENT_STATUS_DRAFT,
                                    CONTENT_STATUS_PUBLISHED)

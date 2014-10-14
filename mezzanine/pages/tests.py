@@ -7,6 +7,7 @@ from django.template import Context, Template
 from mezzanine.conf import settings
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
 from mezzanine.core.request import current_request
+from mezzanine.pages import defaults
 from mezzanine.pages.models import Page, RichTextPage
 from mezzanine.urls import PAGES_SLUG
 from mezzanine.utils.tests import TestCase

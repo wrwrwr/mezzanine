@@ -4,18 +4,23 @@ from future.builtins import open, range, str
 from _ast import PyCF_ONLY_AST
 from fnmatch import fnmatch
 from importlib import import_module
+from inspect import getmodule
 import os
 from pkgutil import walk_packages
 from shutil import copyfile, copytree
+import sys
 from warnings import warn
 
 from django.apps import apps
+from django.core.urlresolvers import clear_url_caches
 from django.db import connection
 from django.db.models.signals import (pre_migrate, post_migrate,
                                       pre_syncdb, post_syncdb)
 from django.dispatch.dispatcher import _make_id
 from django.template import Context, Template
-from django.test import TestCase as BaseTestCase
+from django.test import (TestCase as BaseTestCase,
+                         modify_settings as base_modify_settings,
+                         override_settings)
 from django.test.runner import DiscoverRunner
 
 from mezzanine.conf import import_defaults, settings
@@ -32,7 +37,13 @@ MANDATORY_APPS = (
     "mezzanine.conf",
     "mezzanine.core",
     "mezzanine.generic",
+    "mezzanine.blog",
+    "mezzanine.forms",
     "mezzanine.pages",
+    "mezzanine.galleries",
+    # "mezzanine.twitter",
+    # "mezzanine.accounts",
+    # "mezzanine.mobile",
 )
 
 
@@ -70,6 +81,52 @@ IGNORE_ERRORS = (
 )
 
 
+class modify_settings(base_modify_settings):
+    """
+    Fixes two problems with ``modify_settings`` when used to extend installed
+    apps outside of a test case. Hopefully, to be removed at some point.
+    """
+    def enable(self):
+        # The app registry rebuilding creates new instances of AppConfigs,
+        # but does not reregister signals for them (unless they're connected
+        # in ``ready``). This causes pre/post_migrate signals not to be run
+        # for the test databases (a signal emitted by the migration machinery
+        # has a different sender id then the one stored by the dispatcher).
+        # This usually shows up as a missing default Site (create_default_site
+        # from contrib.sites is only connected for the original app instance).
+        # TODO: Now, this is properly hackish :-) See Django ticket: #23641.
+        old_app_ids = {_make_id(a): a.label for a in apps.get_app_configs()}
+        super(modify_settings, self).enable()
+        apps.set_installed_apps(settings.INSTALLED_APPS)
+        new_app_ids = {a.label: _make_id(a) for a in apps.get_app_configs()}
+        for signal in (pre_migrate, post_migrate, pre_syncdb, post_syncdb):
+            for index, ((receiver_id, sender_id), receiver) in enumerate(
+                    signal.receivers):
+                try:
+                    new_sender_id = new_app_ids[old_app_ids[sender_id]]
+                except KeyError:
+                    # Receiver is not an app or the app has been uninstalled.
+                    # TODO: Consider disconnecting uninstalled apps.
+                    pass
+                else:
+                    signal.receivers[index] = ((receiver_id, new_sender_id),
+                                               receiver)
+
+        # Loading new models with foreign keys to those loaded previously
+        # should invalidate related object caches.
+        # TODO: Any cleaner solution to "missing" related fields?
+        for model in apps.get_models():
+            opts = model._meta
+            related_caches = ("_related_objects_cache",
+                              "_related_objects_proxy_cache",
+                              "_related_many_to_many_cache",)
+            for cache in related_caches:
+                try:
+                    delattr(opts, cache)
+                except AttributeError:
+                    pass
+
+
 class TestRunner(DiscoverRunner):
     """
     Registers default settings and forces installation of mandatory
@@ -102,113 +159,42 @@ class TestRunner(DiscoverRunner):
                                 a not in settings.OPTIONAL_APPS and
                                 not a.startswith("django.contrib"))
 
-        # Register default settings and force installation for missing
-        # mandatory and tested non-installed apps.
-        packages = self.packages_for_labels(test_labels) + list(MANDATORY_APPS)
-        settings.INSTALLED_APPS = list(settings.INSTALLED_APPS)
-        for package in packages:
-            if package not in settings.INSTALLED_APPS:
-                warn("Package {} is to be tested or is mandatory for testing, "
-                     "but is not in INSTALLED_APPS, it will be loaded for the "
-                     "tests.".format(package))
-                import_defaults(package)
-                settings.INSTALLED_APPS += (package,)
-
-        # The app registry rebuilding creates new instances of AppConfigs,
-        # but does not reregister signals for them (unless they're connected
-        # in ``ready``). This causes pre/post_migrate signals not to be run
-        # for the test databases (a signal emitted by the migration machinery
-        # has a different sender id then the one stored by the dispatcher).
-        # This usually shows up as a missing default Site (create_default_site
-        # from contrib.sites is only connected for the original app instance).
-        # TODO: Now, this is properly hackish :-)
-        old_app_ids = {_make_id(a): a.label for a in apps.get_app_configs()}
-        apps.set_installed_apps(settings.INSTALLED_APPS)
-        new_app_ids = {a.label: _make_id(a) for a in apps.get_app_configs()}
-        for signal in (pre_migrate, post_migrate, pre_syncdb, post_syncdb):
-            for index, ((receiver_id, sender_id), receiver) in enumerate(
-                    signal.receivers):
-                try:
-                    new_sender_id = new_app_ids[old_app_ids[sender_id]]
-                except KeyError:
-                    # Receiver is not an app or the app has been uninstalled.
-                    # TODO: Consider disconnecting uninstalled apps.
-                    pass
-                else:
-                    signal.receivers[index] = ((receiver_id, new_sender_id),
-                                               receiver)
-
-        # Loading new models with foreign keys to those loaded previously
-        # should invalidate related object caches.
-        # TODO: Any cleaner solution to "missing" related fields?
-        for model in apps.get_models():
-            opts = model._meta
-            related_caches = ("_related_objects_cache",
-                              "_related_objects_proxy_cache",
-                              "_related_many_to_many_cache",)
-            for cache in related_caches:
-                try:
-                    delattr(opts, cache)
-                except AttributeError:
-                    pass
-
-        return super(TestRunner, self).build_suite(
+        suite = super(TestRunner, self).build_suite(
             test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
-    def packages_for_labels(self, test_labels):
-        """
-        Finds what packages are to be tested based on test labels.
+        install = list(MANDATORY_APPS)
+        for test in suite:
+            test_method = getattr(test, test._testMethodName)
+            test_package = getmodule(test_method).__package__
+            if not apps.is_installed(test_package):
+                warn("Package {} is to be tested or is mandatory for "
+                     "testing, but is not in INSTALLED_APPS, it will be "
+                     "loaded for the tests.".format(test_package))
+                import_defaults(test_package)
+                if test_package not in install:
+                    install.append(test_package)
+        self.install = install
 
-        Packages to be tested are understood as packages specified by a label
-        or any of their subpackages, that contain some tests (modules matching
-        ``self.pattern``).
+        return suite
 
-        TODO: Consider subclassing TestLoader, getting the actual tests list
-              (while avoiding to trigger import exceptions) would be more
-              accurate.
-        """
+    def setup_databases(self, **kwargs):
+        with modify_settings(INSTALLED_APPS={'append': self.install}):
+            return super(TestRunner, self).setup_databases(**kwargs)
 
-        packages = []
-        for label in test_labels:
-            if os.path.exists(os.path.abspath(label)):
-                # Label is a file system path, we could support a case with
-                # the path pointing to a Python package, but is it worth it?
-                warn("Specifying tests by directory paths is not supported, "
-                     "requested tests for non-installed apps may fail, "
-                     "please use a dotted package or module names.")
-                continue
-            # Label is a dotted package, module, test case or a method name.
-            # Find the most-specific package in the label.
-            label_package = None
-            parts = label.split(".")
-            while parts:
-                try:
-                    module = import_module(".".join(parts))
-                except:
-                    # No such module or there is a module, but trying to import
-                    # it raises an exception, possibly due to unloaded defaults
-                    # -- we'll try loading defaults from its package.
-                    del parts[-1]
-                else:
-                    if hasattr(module, "__path__"):
-                        # Let's say if it has a path attribute it's a package.
-                        label_package = module
-                    else:
-                        # Package import should succeed considering its module
-                        # got imported, anyway we don't know what to do if it
-                        # fails.
-                        label_package = import_module(module.__package__)
-                    break
-            if label_package is not None:
-                # For labels like "mezzanine" we need to process subpackages.
-                for loader, name, _ in walk_packages(
-                        label_package.__path__, label_package.__name__ + "."):
-                    module_filename = os.path.basename(
-                        loader.find_module(name).filename)
-                    if fnmatch(module_filename, self.pattern):
-                        package = ".".join(name.split(".")[:-1])
-                        packages.append(package)
-        return packages
+    def run_suite(self, suite, **kwargs):
+        with modify_settings(INSTALLED_APPS={'append': self.install}):
+            if 'mezzanine.urls' in sys.modules:
+                # Mezzanine urls uses some "if installed" conditions.
+                reload(sys.modules['mezzanine.urls'])
+                clear_url_caches()
+
+            import_module('mezzanine.forms.page_processors')
+            return super(TestRunner, self).run_suite(suite, **kwargs)
+
+    def teardown_databases(self, old_config, **kwargs):
+        with modify_settings(INSTALLED_APPS={'append': self.install}):
+            return super(TestRunner, self).teardown_databases(old_config,
+                                                              **kwargs)
 
 
 class TestCase(BaseTestCase):
