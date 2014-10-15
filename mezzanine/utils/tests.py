@@ -31,10 +31,12 @@ User = get_user_model()
 
 # Apps required by tests, assumed to always be installed.
 MANDATORY_APPS = (
-    "mezzanine.boot",
+    "mezzanine.boot",  # Mezzanine.boot and mezzanine.core have to be in
+                       # INSTALLED_APPS anyway.
     "mezzanine.conf",
     "mezzanine.core",
-    "mezzanine.generic",
+    "mezzanine.generic",  # TODO: Also needs to be in INSTALLED_APPS due
+                          #       to some COMMENTS_APP related checks.
     "mezzanine.blog",
     # "mezzanine.forms",
     "mezzanine.pages",
@@ -95,7 +97,6 @@ class modify_settings(base_modify_settings):
         # TODO: Now, this is properly hackish :-) See Django ticket: #23641.
         old_app_ids = {_make_id(a): a.label for a in apps.get_app_configs()}
         super(modify_settings, self).enable()
-        apps.set_installed_apps(settings.INSTALLED_APPS)
         new_app_ids = {a.label: _make_id(a) for a in apps.get_app_configs()}
         for signal in (pre_migrate, post_migrate, pre_syncdb, post_syncdb):
             for index, ((receiver_id, sender_id), receiver) in enumerate(
@@ -147,16 +148,15 @@ class TestRunner(DiscoverRunner):
 
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
         test_labels = list(test_labels)
-        installed_apps = [a.name for a in apps.get_app_configs()]
+        installed_apps = [a.name for a in apps.get_app_configs() if
+                          not a.name.startswith("django.contrib")]
         if "installed_apps" in test_labels:
             test_labels.remove("installed_apps")
-            test_labels.extend(a for a in installed_apps if
-                               not a.startswith("django.contrib"))
+            test_labels.extend(installed_apps)
         elif "installed_nonoptional_apps" in test_labels:
             test_labels.remove("installed_nonoptional_apps")
             test_labels.extend(a for a in installed_apps if
-                               a not in settings.OPTIONAL_APPS and
-                               not a.startswith("django.contrib"))
+                               a not in settings.OPTIONAL_APPS)
 
         suite = super(TestRunner, self).build_suite(
             test_labels=test_labels, extra_tests=extra_tests, **kwargs)
@@ -169,13 +169,16 @@ class TestRunner(DiscoverRunner):
                      "loaded for the tests.".format(app))
                 if app not in install:
                     install.append(app)
-                    # TODO: Still need to import defaults for the mandatory
-                    #       apps, despite importing from tests. Replace with
-                    #       some reautodiscovery and suite rebuilding?
                     import_defaults(app)
         self.install = install
 
-        return suite
+        # Rebuild the suite after loading defaults, some additional modules
+        # now may be imported successfully.
+        # TODO: In the long term strive to avoid using settings on the
+        #       module level, and ensure that everything can be imported
+        #       before any kind of autodiscovery is run.
+        return super(TestRunner, self).build_suite(
+            test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
     def setup_databases(self, **kwargs):
         with modify_settings(INSTALLED_APPS={"append": self.install}):
@@ -185,7 +188,7 @@ class TestRunner(DiscoverRunner):
         with modify_settings(INSTALLED_APPS={"append": self.install}):
             if "mezzanine.urls" in sys.modules:
                 # Mezzanine urls uses some "if installed" conditions,
-                # and we're overriding installed apps.
+                # and we've just changed installed apps.
                 reload(sys.modules["mezzanine.urls"])
                 clear_url_caches()
             for app_config in apps.get_app_configs():
@@ -202,21 +205,30 @@ class TestRunner(DiscoverRunner):
             return super(TestRunner, self).teardown_databases(old_config,
                                                               **kwargs)
 
-
     def suite_apps(self, suite):
         """
         Analyzes test cases in the ``suite`` trying to determine apps which
         the tests belong to.
 
-        Only supports: ``app/tests.py`` and ``app/tests/module.py``.
+        Only supports: ``app/tests.py`` and ``app/tests/*/module.py``, but
+        works for modules that fail to import during discovery.
         """
         suite_apps = []
         for test in suite:
-            test_method = getattr(test, test._testMethodName)
-            test_package = getmodule(test_method).__package__
-            if test_package.endswith(".tests"):
-                test_package = test_package[:-6]
-            suite_apps.append(test_package)
+            if test.__class__.__name__ == "ModuleImportFailure":
+                # Only partial test method name is preserved -- we'll have to
+                # guess where the method could have been defined.
+                test_app = test._testMethodName
+            else:
+                # This is somewhat more resilent, but only works if for tests
+                # that are importable without any app setup.
+                test_method = getattr(test, test._testMethodName)
+                test_app = getmodule(test_method).__package__
+            try:
+                test_app = test_app[:test_app.index(".tests")]
+            except ValueError:
+                pass
+            suite_apps.append(test_app)
         return suite_apps
 
 
