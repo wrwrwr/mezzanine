@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.forms.fields import DateField, DateTimeField
 from django.utils.http import int_to_base36
 
-from mezzanine.accounts import ProfileNotConfigured, defaults
+from mezzanine.accounts import ProfileNotConfigured
 from mezzanine.accounts.forms import ProfileForm
 from mezzanine.conf import settings
 from mezzanine.utils.models import get_user_model

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
-from mezzanine.forms import defaults, fields
+from mezzanine.forms import fields
 from mezzanine.forms.models import Form
 from mezzanine.utils.tests import TestCase
 

@@ -8,7 +8,6 @@ except ImportError:
 from django.core.urlresolvers import reverse
 from django.utils.unittest import skipUnless
 
-from mezzanine.blog import defaults
 from mezzanine.blog.models import BlogPost
 from mezzanine.conf import settings
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED

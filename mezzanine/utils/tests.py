@@ -30,15 +30,18 @@ User = get_user_model()
 
 
 # Apps required by tests, assumed to always be installed.
+# TODO: The idea here is to have some apps guaranteed in tests, but not
+#       necessarily require users to install them, however. at the time of
+#       writing you have to have the whole set in INSTALLED_APPS or some
+#       tests will fail, mostly due to module-level defaults usage and
+#       installation checks.
 MANDATORY_APPS = (
-    "mezzanine.boot",  # Mezzanine.boot and mezzanine.core have to be in
-                       # INSTALLED_APPS anyway.
+    "mezzanine.boot",
     "mezzanine.conf",
     "mezzanine.core",
-    "mezzanine.generic",  # TODO: Also needs to be in INSTALLED_APPS due
-                          #       to some COMMENTS_APP related checks.
-    "mezzanine.blog",
-    # "mezzanine.forms",
+    "mezzanine.generic",
+    # "mezzanine.blog",
+    "mezzanine.forms",
     "mezzanine.pages",
     # "mezzanine.galleries",
     # "mezzanine.twitter",
@@ -113,7 +116,8 @@ class modify_settings(base_modify_settings):
 
         # Loading new models with foreign keys to those loaded previously
         # should invalidate related object caches.
-        # TODO: Any cleaner solution to "missing" related fields?
+        # TODO: Condsider also proposing a fix in Django, the problem can
+        #       probably appear with typical modify_settings usage.
         for model in apps.get_models():
             opts = model._meta
             related_caches = ("_related_objects_cache",
@@ -181,11 +185,11 @@ class TestRunner(DiscoverRunner):
             test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
     def setup_databases(self, **kwargs):
-        with modify_settings(INSTALLED_APPS={"append": self.install}):
+        with self.install_tested_and_mandatory():
             return super(TestRunner, self).setup_databases(**kwargs)
 
     def run_suite(self, suite, **kwargs):
-        with modify_settings(INSTALLED_APPS={"append": self.install}):
+        with self.install_tested_and_mandatory():
             if "mezzanine.urls" in sys.modules:
                 # Mezzanine urls uses some "if installed" conditions,
                 # and we've just changed installed apps.
@@ -201,7 +205,7 @@ class TestRunner(DiscoverRunner):
                 return super(TestRunner, self).run_suite(suite, **kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
-        with modify_settings(INSTALLED_APPS={"append": self.install}):
+        with self.install_tested_and_mandatory():
             return super(TestRunner, self).teardown_databases(old_config,
                                                               **kwargs)
 
@@ -218,6 +222,8 @@ class TestRunner(DiscoverRunner):
             if test.__class__.__name__ == "ModuleImportFailure":
                 # Only partial test method name is preserved -- we'll have to
                 # guess where the method could have been defined.
+                # TODO: Remove this case once everything is guaranteed to be
+                #       unconditionally importable.
                 test_app = test._testMethodName
             else:
                 # This is somewhat more resilent, but only works if for tests
@@ -230,6 +236,9 @@ class TestRunner(DiscoverRunner):
                 pass
             suite_apps.append(test_app)
         return suite_apps
+
+    def install_tested_and_mandatory(self):
+        return modify_settings(INSTALLED_APPS={"append": self.install})
 
 
 class TestCase(BaseTestCase):

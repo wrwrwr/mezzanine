@@ -9,7 +9,6 @@ from mezzanine.blog.models import BlogPost
 from mezzanine.conf import settings
 
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
-from mezzanine.generic import defaults
 from mezzanine.generic.forms import RatingForm
 from mezzanine.generic.models import (AssignedKeyword, Keyword,
                                       ThreadedComment, Rating)
