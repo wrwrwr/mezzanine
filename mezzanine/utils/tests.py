@@ -16,7 +16,8 @@ from django.db.models.signals import (pre_migrate, post_migrate,
 from django.dispatch.dispatcher import _make_id
 from django.template import Context, Template
 from django.test import (TestCase as BaseTestCase,
-                         modify_settings as base_modify_settings)
+                         modify_settings as base_modify_settings,
+                         override_settings)
 from django.test.runner import DiscoverRunner
 
 from mezzanine.conf import import_defaults, settings
@@ -146,60 +147,88 @@ class TestRunner(DiscoverRunner):
 
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
         test_labels = list(test_labels)
+        installed_apps = [a.name for a in apps.get_app_configs()]
         if "installed_apps" in test_labels:
             test_labels.remove("installed_apps")
-            test_labels.extend(a for a in settings.INSTALLED_APPS if
-                                not a.startswith("django.contrib"))
+            test_labels.extend(a for a in installed_apps if
+                               not a.startswith("django.contrib"))
         elif "installed_nonoptional_apps" in test_labels:
             test_labels.remove("installed_nonoptional_apps")
-            test_labels.extend(a for a in settings.INSTALLED_APPS if
-                                a not in settings.OPTIONAL_APPS and
-                                not a.startswith("django.contrib"))
+            test_labels.extend(a for a in installed_apps if
+                               a not in settings.OPTIONAL_APPS and
+                               not a.startswith("django.contrib"))
 
         suite = super(TestRunner, self).build_suite(
             test_labels=test_labels, extra_tests=extra_tests, **kwargs)
 
-        install = list(MANDATORY_APPS)
-        for test in suite:
-            test_method = getattr(test, test._testMethodName)
-            test_package = getmodule(test_method).__package__
-            if not apps.is_installed(test_package):
+        install = []
+        for app in list(MANDATORY_APPS) + self.suite_apps(suite):
+            if not apps.is_installed(app):
                 warn("Package {} is to be tested or is mandatory for "
                      "testing, but is not in INSTALLED_APPS, it will be "
-                     "loaded for the tests.".format(test_package))
-                if test_package not in install:
-                    install.append(test_package)
-        for package in install:
-            import_defaults(package)
+                     "loaded for the tests.".format(app))
+                if app not in install:
+                    install.append(app)
+                    # TODO: Still need to import defaults for the mandatory
+                    #       apps, despite importing from tests. Replace with
+                    #       some reautodiscovery and suite rebuilding?
+                    import_defaults(app)
         self.install = install
 
         return suite
 
     def setup_databases(self, **kwargs):
-        with modify_settings(INSTALLED_APPS={'append': self.install}):
+        with modify_settings(INSTALLED_APPS={"append": self.install}):
             return super(TestRunner, self).setup_databases(**kwargs)
 
     def run_suite(self, suite, **kwargs):
-        with modify_settings(INSTALLED_APPS={'append': self.install}):
-            if 'mezzanine.urls' in sys.modules:
-                # Mezzanine urls uses some "if installed" conditions.
-                reload(sys.modules['mezzanine.urls'])
+        with modify_settings(INSTALLED_APPS={"append": self.install}):
+            if "mezzanine.urls" in sys.modules:
+                # Mezzanine urls uses some "if installed" conditions,
+                # and we're overriding installed apps.
+                reload(sys.modules["mezzanine.urls"])
                 clear_url_caches()
             for app_config in apps.get_app_configs():
                 # Some newly installed apps can have page processors.
                 import_page_processors(app_config.name)
-            return super(TestRunner, self).run_suite(suite, **kwargs)
+            # Mezzanine tests need project urls, while Django in general
+            # recommends tests not relying on user-defined urls.
+            TestCase.urls = settings.ROOT_URLCONF
+            with override_settings(ROOT_URLCONF="mezzanine.utils.test_urls"):
+                return super(TestRunner, self).run_suite(suite, **kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
-        with modify_settings(INSTALLED_APPS={'append': self.install}):
+        with modify_settings(INSTALLED_APPS={"append": self.install}):
             return super(TestRunner, self).teardown_databases(old_config,
                                                               **kwargs)
+
+
+    def suite_apps(self, suite):
+        """
+        Analyzes test cases in the ``suite`` trying to determine apps which
+        the tests belong to.
+
+        Only supports: ``app/tests.py`` and ``app/tests/module.py``.
+        """
+        suite_apps = []
+        for test in suite:
+            test_method = getattr(test, test._testMethodName)
+            test_package = getmodule(test_method).__package__
+            if test_package.endswith(".tests"):
+                test_package = test_package[:-6]
+            suite_apps.append(test_package)
+        return suite_apps
 
 
 class TestCase(BaseTestCase):
     """
     This is the base test case providing common features for all tests
     across the different apps in Mezzanine.
+
+    Among other things it sets the ``ROOT_URLCONF`` to the project
+    urls (as defined in your settings), whereas an empty urls file is
+    used for test cases not deriving from this one to support testing
+    ``django.contrib`` apps.
     """
 
     def setUp(self):
