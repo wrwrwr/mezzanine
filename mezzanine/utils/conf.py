@@ -98,7 +98,7 @@ def set_dynamic_settings(s):
     storage = "django.contrib.messages.storage.cookie.CookieStorage"
     s.setdefault("MESSAGE_STORAGE", storage)
 
-    if s["TESTING"]:
+    if s["TESTING"] and VERSION < (1, 7):
         # Following bits are work-arounds for some assumptions that
         # Django 1.5's tests make.
 
@@ -113,7 +113,7 @@ def set_dynamic_settings(s):
             "django.contrib.redirects.middleware.RedirectFallbackMiddleware")
 
     else:
-        # Setup for optional apps.
+        # Setup for optional apps, also done for testing with 1.7+.
         optional = list(s.get("OPTIONAL_APPS", []))
         if s.get("USE_SOUTH") and VERSION < (1, 7):
             optional.append("south")
@@ -181,7 +181,7 @@ def set_dynamic_settings(s):
     # Ensure Grappelli is after Mezzanine in app order so that
     # admin templates are loaded in the correct order.
     grappelli_name = s.get("PACKAGE_NAME_GRAPPELLI")
-    if s["TESTING"]:
+    if s["TESTING"] and VERSION < (1, 7):
         # Optional apps aren't installed when testing, but we need
         # grappelli to perform some admin tests for certain HTML.
         try:
@@ -209,8 +209,12 @@ def set_dynamic_settings(s):
         except ValueError:
             pass
 
-    # Use Mezzanine's test runner wrapper.
-    s.setdefault("TEST_RUNNER", "mezzanine.utils.tests.TestRunner")
+    # Use Mezzanine's test runner wrapper, DiscoverRunner was introduced in
+    # 1.6, but the wrapper is only 1.7 compatible (assumes Apps).
+    if VERSION >= (1, 7):
+        s.setdefault("TEST_RUNNER", "mezzanine.utils.tests.TestRunner")
+    else:
+        s.setdefault("TEST_RUNNER", "django.test.simple.DjangoTestSuiteRunner")
 
     # Add missing apps if existing apps depend on them.
     if "mezzanine.blog" in s["INSTALLED_APPS"]:

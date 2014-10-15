@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from future.builtins import open, range, str
 
 from _ast import PyCF_ONLY_AST
+from contextlib import contextmanager
 from inspect import getmodule
 import os
 from shutil import copyfile, copytree
@@ -32,8 +33,8 @@ User = get_user_model()
 # Apps required by tests, assumed to always be installed.
 # TODO: The idea here is to have some apps guaranteed in tests, but not
 #       necessarily require users to install them, however. at the time of
-#       writing you have to have the whole set in INSTALLED_APPS or some
-#       tests will fail, mostly due to module-level defaults usage and
+#       writing, you have to have the whole set in INSTALLED_APPS or some
+#       tests will fail, mostly due to module-level settings usage and
 #       installation checks.
 MANDATORY_APPS = (
     "mezzanine.boot",
@@ -177,7 +178,7 @@ class TestRunner(DiscoverRunner):
         self.install = install
 
         # Rebuild the suite after loading defaults, some additional modules
-        # now may be imported successfully.
+        # may now be imported successfully.
         # TODO: In the long term strive to avoid using settings on the
         #       module level, and ensure that everything can be imported
         #       before any kind of autodiscovery is run.
@@ -198,10 +199,7 @@ class TestRunner(DiscoverRunner):
             for app_config in apps.get_app_configs():
                 # Some newly installed apps can have page processors.
                 import_page_processors(app_config.name)
-            # Mezzanine tests need project urls, while Django in general
-            # recommends tests not relying on user-defined urls.
-            TestCase.urls = settings.ROOT_URLCONF
-            with override_settings(ROOT_URLCONF="mezzanine.utils.test_urls"):
+            with self.django_contrib_tests_environment():
                 return super(TestRunner, self).run_suite(suite, **kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
@@ -212,9 +210,9 @@ class TestRunner(DiscoverRunner):
     def suite_apps(self, suite):
         """
         Analyzes test cases in the ``suite`` trying to determine apps which
-        the tests belong to.
+        they belong to.
 
-        Only supports: ``app/tests.py`` and ``app/tests/*/module.py``, but
+        Only supports: ``app/tests.py`` and ``app/tests/**/module.py``, but
         works for modules that fail to import during discovery.
         """
         suite_apps = []
@@ -226,7 +224,7 @@ class TestRunner(DiscoverRunner):
                 #       unconditionally importable.
                 test_app = test._testMethodName
             else:
-                # This is somewhat more resilent, but only works if for tests
+                # This is somewhat more resilient, but only works for tests
                 # that are importable without any app setup.
                 test_method = getattr(test, test._testMethodName)
                 test_app = getmodule(test_method).__package__
@@ -238,7 +236,31 @@ class TestRunner(DiscoverRunner):
         return suite_apps
 
     def install_tested_and_mandatory(self):
+        """
+        Installs apps that likely need to be installed for the given
+        test labels.
+        """
         return modify_settings(INSTALLED_APPS={"append": self.install})
+
+    @contextmanager
+    def django_contrib_tests_environment(self):
+        """
+        Prepares environment in which some ``django.contrib`` tests can
+        be used.
+        """
+        #TODO: "Some" does not include auth and contenttypes. On the
+        #       other hand is enough to detect a problem with gis and
+        #       admin used together (missed by the Django runtests).
+        old_testcase_urls = getattr(TestCase, "urls", None)
+        try:
+            # Mezzanine tests need project urls, while Django in general
+            # recommends tests not relying on user-defined urls.
+            # TODO: .urls is deprecated as of 1.8.
+            TestCase.urls = settings.ROOT_URLCONF
+            with override_settings(ROOT_URLCONF="mezzanine.utils.test_urls"):
+                yield
+        finally:
+            TestCase.urls = old_testcase_urls
 
 
 class TestCase(BaseTestCase):
