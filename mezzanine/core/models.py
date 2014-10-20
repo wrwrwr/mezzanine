@@ -273,25 +273,41 @@ class Displayable(Slugged, MetaData, TimeStamped):
 
     def set_short_url(self):
         """
-        Sets the ``short_url`` attribute using the bit.ly credentials
-        if they have been specified, and saves it. Used by the
-        ``set_short_url_for`` template tag, and ``TweetableAdmin``.
+        Makes a new short URL for every translation of the object.
+
+        Used by the ``set_short_url_for`` template tag, and ``TweetableAdmin``.
         """
-        if not self.short_url:
-            from mezzanine.conf import settings
-            settings.use_editable()
-            parts = (self.site.domain, self.get_absolute_url())
-            self.short_url = "http://%s%s" % parts
-            if settings.BITLY_ACCESS_TOKEN:
-                url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
-                    "access_token": settings.BITLY_ACCESS_TOKEN,
-                    "uri": self.short_url,
-                })
-                response = loads(urlopen(url).read().decode("utf-8"))
-                if response["status_code"] == 200:
-                    self.short_url = response["data"]["url"]
+        class Nonlocal:
+            pass
+        n = Nonlocal()
+        n.save = False
+
+        def generate_translated_short_url():
+            with disable_fallbacks():
+                no_short_url = not self.short_url
+            if no_short_url:
+                self.short_url = self.generate_short_url()
+                n.save = True
+        for_all_languages(generate_translated_short_url)
+        if n.save:
             self.save()
-        return ""
+
+    def generate_short_url(self):
+        """
+        Generates a short URL using the bit.ly credentials if they have been
+        specified.
+        """
+        from mezzanine.conf import settings
+        settings.use_editable()
+        if settings.BITLY_ACCESS_TOKEN:
+            url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
+                "access_token": settings.BITLY_ACCESS_TOKEN,
+                "uri": self.short_url,
+            })
+            response = loads(urlopen(url).read().decode("utf-8"))
+            if response["status_code"] == 200:
+                return response["data"]["url"]
+        return "http://%s%s" % (self.site.domain, self.get_absolute_url())
 
     def _get_next_or_previous_by_publish_date(self, is_next, **kwargs):
         """
