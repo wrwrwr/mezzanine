@@ -132,6 +132,9 @@ def set_dynamic_settings(s):
             else:
                 s["INSTALLED_APPS"].append(app)
     s["USE_MODELTRANSLATION"] = "modeltranslation" in s["INSTALLED_APPS"]
+    if s["USE_MODELTRANSLATION"]:
+        # On default, auto-registration is enabled only if USE_I18N is true.
+        s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True
 
     # To support migrations for both Django 1.7 and South, Sotuh's old
     # migrations for each app were moved into "app.migrations.south"
