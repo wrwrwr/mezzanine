@@ -17,7 +17,7 @@ from django.templatetags.static import static
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.utils.html import strip_tags
-from django.utils.unittest import skipUnless
+from django.utils.unittest import skipIf, skipUnless
 from django.test.utils import override_settings
 
 from mezzanine.conf import settings
@@ -375,3 +375,86 @@ class CoreTests(TestCase):
         self.assertContains(response, site2.name)
         site1.delete()
         site2.delete()
+
+
+@skipIf(settings.USE_MODELTRANSLATION,
+        "only meaningful with content translation disabled")
+class ContentTranslationSwitchTest(TestCase):
+    def test_switch(self):
+        """
+        Verifies that if ``USE_MODELTRANSLATION`` is set to false,
+        ``modeltranslation`` does not get loaded.
+        """
+        self.assertTrue("modeltranslation", settings.INSTALLED_APPS)
+        try:
+            from modeltranslation.translator import translator
+        except ImportError:
+            pass
+        else:
+            self.assertEqual(len(translator.get_registered_models()), 0)
+
+
+@skipUnless(settings.USE_MODELTRANSLATION,
+            "only meaningful with content translation enabled")
+class ContentTranslationTests(TestCase):
+    def test_registration_switch(self):
+        """
+        Makes sure we are going to have our models registered even if
+        ``USE_I18N`` is false. Meaningless with ``USE_I18N`` set to true.
+
+        Unfortunately, instead of a failure in this test you're more likely
+        to see a ``NotRegistered`` exception during admin auto-discovery.
+        """
+        self.assertTrue(settings.MODELTRANSLATION_ENABLE_REGISTRATIONS)
+
+    def test_models_registration(self):
+        """
+        Checks if all models that have fields looking as translatable
+        are registered for translation.
+
+        Meant as a reminder on adding new fields to ``translation.py``.
+        Please, add fields that are detected, but should not be translatable
+        to the exceptions list.
+        """
+        from modeltranslation.translator import NotRegistered, translator
+        textual_fields_classes = (models.CharField, models.TextField)
+        textual_fields_exceptions = (
+            # Registering contrib models for translation, that's an idea,
+            # but in general will probably have to wait for some built-in
+            # content translation support.
+            r"^django\.contrib\.",
+            # Users translating their comments, hmmm interesting.
+            r"^mezzanine\.generic\.models\.ThreadedComment",
+            r"^mezzanine\.conf\.models\.Setting",  # TODO: Not yet.
+            # Page.in_menus is really a tuple of integers, while
+            # Page.content_model is an untranslated model name.
+            r"\.(in_menus|content_model)$",
+            # Form email addresses; having a diffrent accounts for
+            # different languages is rather uncommon.
+            r"\.(email_copies|email_from)$",
+            # User-provided form values.
+            r"mezzanine\.forms\.models\.FieldEntry\.value"
+        )
+        for model in models.get_models():
+            model_path = "{}.{}".format(model.__module__, model.__name__)
+            textual_fields = set(
+                f.name for f in model._meta.fields if
+                isinstance(f, textual_fields_classes) and
+                not hasattr(f, "translated_field") and
+                not any(re.search(pattern, "{}.{}".format(model_path, f.name))
+                        for pattern in textual_fields_exceptions))
+            if not textual_fields:
+                # You don't need to register models without any translatable
+                # fields.
+                continue
+            try:
+                translation_options = translator.get_options_for_model(model)
+            except NotRegistered:
+                self.fail(
+                    "model {} has textual fields {}, but is not registered "
+                    "for translation.".format(model, tuple(textual_fields)))
+            registered_fields = set(translation_options.get_field_names())
+            unregistered_textual_fields = textual_fields - registered_fields
+            self.assertTrue(textual_fields.issubset(registered_fields),
+                "some textual fields on {} are not registered for translation "
+                "{}".format(model_path, tuple(unregistered_textual_fields)))
