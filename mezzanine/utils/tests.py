@@ -5,9 +5,9 @@ from _ast import PyCF_ONLY_AST
 import os
 from shutil import copyfile, copytree
 
+from django import VERSION
 from django.core.management import call_command
 from django.db import connection
-from django.db.models.signals import post_migrate
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
 from django.test.simple import DjangoTestSuiteRunner
@@ -15,6 +15,14 @@ from django.test.simple import DjangoTestSuiteRunner
 from mezzanine.conf import settings
 from mezzanine.utils.importing import path_for_import
 from mezzanine.utils.models import get_user_model
+
+if "south" in settings.INSTALLED_APPS:
+    from south.signals import post_migrate
+else:
+    if VERSION >= (1, 7):
+        from django.db.models.signals import post_migrate
+    else:
+        from django.db.models.signals import post_syncdb as post_migrate
 
 
 User = get_user_model()
@@ -65,6 +73,8 @@ class TestRunner(DjangoTestSuiteRunner):
         """
         if settings.USE_MODELTRANSLATION:
             def create_translation_fields(sender, **kwargs):
+                kwargs.setdefault('verbosity', 0)
+                kwargs.setdefault('interactive', False)
                 call_command("sync_translation_fields", **kwargs)
                 call_command("update_translation_fields", **kwargs)
             # Note: the signal is purposefully not disconnected, to support

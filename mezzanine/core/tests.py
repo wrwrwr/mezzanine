@@ -433,7 +433,11 @@ class ContentTranslationTests(TestCase):
             # different languages is rather uncommon.
             r"\.(email_copies|email_from)$",
             # User-provided form values.
-            r"mezzanine\.forms\.models\.FieldEntry\.value"
+            r"^mezzanine\.forms\.models\.FieldEntry\.value",
+            # Before Django 1.7, South would often be an installed apps.
+            r"^south\.",
+            # Modeltranslation has some unregistered textual fields in tests.
+            r"^modeltranslation\.",
         )
         for model in models.get_models():
             model_path = "{}.{}".format(model.__module__, model.__name__)
