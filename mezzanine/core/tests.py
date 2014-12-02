@@ -21,7 +21,7 @@ from django.forms.models import modelform_factory
 from django.templatetags.static import static
 from django.test.utils import override_settings
 from django.utils.html import strip_tags
-from django.utils.unittest import skipUnless
+from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
 from mezzanine.core.admin import BaseDynamicInlineAdmin
@@ -510,3 +510,42 @@ class SiteRelatedTestCase(TestCase):
 
         site1.delete()
         site2.delete()
+
+
+@skipIf(settings.USE_MODELTRANSLATION,
+        "modeltranslation must be enabled before Django setup")
+class NoContentTranslationTests(TestCase):
+    """
+    Disabled content translation should be equivalent to no content
+    translation.
+    """
+    def test_switch(self):
+        """
+        If ``USE_MODELTRANSLATION`` is set to false, modeltranslation
+        should not get loaded.
+        """
+        self.assertTrue("modeltranslation", settings.INSTALLED_APPS)
+        try:
+            from modeltranslation.translator import translator
+        except ImportError:
+            pass
+        else:
+            self.assertEqual(len(translator.get_registered_models()), 0)
+
+
+@skipUnless(settings.USE_MODELTRANSLATION,
+            "modeltranslation must be disabled before Django setup")
+class ContentTranslationTests(TestCase):
+    """
+    Core aspects of content translation should function properly.
+    """
+
+    @skipIf(settings.USE_I18N, "I18N must be disabled before Django setup")
+    def test_registration_switch(self):
+        """
+        Models should be registered even if ``USE_I18N`` is false.
+
+        Unfortunately, instead of a failure in this test you're more likely
+        to see a ``NotRegistered`` exception during admin auto-discovery.
+        """
+        self.assertTrue(settings.MODELTRANSLATION_ENABLE_REGISTRATIONS)
