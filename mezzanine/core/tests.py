@@ -21,6 +21,7 @@ from django.forms.models import modelform_factory
 from django.templatetags.static import static
 from django.test.utils import override_settings
 from django.utils.html import strip_tags
+from django.utils.translation import get_language, override
 from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
@@ -28,13 +29,14 @@ from mezzanine.core.admin import BaseDynamicInlineAdmin
 from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager
 from mezzanine.core.models import (CONTENT_STATUS_DRAFT,
-                                   CONTENT_STATUS_PUBLISHED)
+                                   CONTENT_STATUS_PUBLISHED, Slugged)
 from mezzanine.forms.admin import FieldAdmin
 from mezzanine.forms.models import Form
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.importing import import_dotted_path
 from mezzanine.utils.tests import (TestCase, run_pyflakes_for_package,
                                              run_pep8_for_package)
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 from mezzanine.utils.html import TagCloser
 
 
@@ -532,6 +534,24 @@ class NoContentTranslationTests(TestCase):
         else:
             self.assertEqual(len(translator.get_registered_models()), 0)
 
+    def test_for_all_languages(self):
+        """
+        The provided function should be executed exactly once.
+        """
+        nl = {'calls': 0}  # nonlocal
+
+        def function():
+            nl['calls'] += 1
+        for_all_languages(function)
+        self.assertEqual(nl['calls'], 1)
+
+    def test_disable_fallbacks(self):
+        """
+        Without content translation, disable fallbacks should do nothing.
+        """
+        with disable_fallbacks():
+            pass
+
 
 @skipUnless(settings.USE_MODELTRANSLATION,
             "modeltranslation must be disabled before Django setup")
@@ -539,6 +559,7 @@ class ContentTranslationTests(TestCase):
     """
     Core aspects of content translation should function properly.
     """
+    from modeltranslation import settings as mt_settings
 
     @skipIf(settings.USE_I18N, "I18N must be disabled before Django setup")
     def test_registration_switch(self):
@@ -605,3 +626,35 @@ class ContentTranslationTests(TestCase):
             self.assertTrue(textual_fields.issubset(registered_fields),
                 "some textual fields on {} are not registered for translation "
                 "{}".format(model_path, tuple(unregistered_textual_fields)))
+
+    def test_for_all_languages(self):
+        """
+        The provided function should be executed once for each language.
+        This is supposed to also work with disabled I18N.
+        """
+        nl = {'languages': set(l[0] for l in settings.LANGUAGES)}  # nonlocal
+
+        def function():
+            nl['languages'].remove(get_language())
+        for_all_languages(function)
+        self.assertEqual(len(nl['languages']), 0)
+
+    @skipUnless(mt_settings.ENABLE_FALLBACKS,
+                "can't test fallbacks when they're disabled")
+    @skipUnless(len(mt_settings.FALLBACK_LANGUAGES['default']) > 1,
+                "there has to be something to fallback to")
+    def test_disable_fallbacks(self):
+        """
+        The value for the current language should be visible, even if empty.
+        """
+        # Value from this language is a sure candidate for a fallback.
+        to_language = self.mt_settings.FALLBACK_LANGUAGES['default'][0]
+        # The following language will fall back to something.
+        from_language = self.mt_settings.FALLBACK_LANGUAGES['default'][1]
+        with override(to_language):
+            model = Slugged(title="a")
+        with override(from_language):
+            model.title = ""
+            self.assertEqual(model.title, "a")
+            with disable_fallbacks():
+                self.assertEqual(model.title, "")
