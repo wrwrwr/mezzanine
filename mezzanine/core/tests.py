@@ -658,3 +658,65 @@ class ContentTranslationTests(TestCase):
             self.assertEqual(model.title, "a")
             with disable_fallbacks():
                 self.assertEqual(model.title, "")
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of Slugged")
+    def test_slugs_generation(self):
+        """
+        Slugs for all languages should be generated when a ``Slugged``
+        subclass is saved.
+        """
+        from mezzanine.pages.models import Page
+        slugged = Page(title="a")
+        slugged.save()
+
+        def assert_slug():
+            self.assertTrue(slugged.slug)
+        with disable_fallbacks():
+            for_all_languages(assert_slug)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of MetaData")
+    def test_descriptions_generation(self):
+        """
+        Descriptions should be generated for all languages when a ``MetaData``
+        subclass is saved.
+        """
+        from mezzanine.pages.models import Page
+        metadata = Page(title="a")
+        metadata.save()
+
+        def assert_description():
+            self.assertTrue(metadata.description)
+        with disable_fallbacks():
+            for_all_languages(assert_description)
+
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of MetaData")
+    @skipUnless(len(mt_settings.AVAILABLE_LANGUAGES) > 1,
+                "needs at least two languages enabled")
+    def test_descriptions_independence(self):
+        """
+        Description for one language should not be based on description for
+        another one.
+        """
+        from mezzanine.pages.models import Page
+        first_lang, second_lang = self.mt_settings.AVAILABLE_LANGUAGES[:2]
+        with override(first_lang):
+            metadata = Page(title="a")
+            metadata.save()
+            with override(second_lang):
+                metadata.title = "b"
+                metadata.save()
+                self.assertEqual(metadata.description, "b")
+
+    def test_short_url_generation(self):
+        """
+        """
+
+    def test_save_performance(self):
+        """
+        Saving models with content translation enabled should not require
+        many more queries than without it.
+        """
+        # (1 + #langs * .5) * vanilla queries?
