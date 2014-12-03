@@ -11,6 +11,7 @@ from django.db.models import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.translation import ugettext_lazy as _
+from django.views.decorators.http import require_POST
 
 from mezzanine.conf import settings
 from mezzanine.generic.forms import ThreadedCommentForm, RatingForm
@@ -86,6 +87,7 @@ def initial_validation(request, prefix):
     return obj, post_data
 
 
+@require_POST
 def comment(request, template="generic/comments.html"):
     """
     Handle a ``ThreadedCommentForm`` submission and redirect back to its
@@ -116,6 +118,7 @@ def comment(request, template="generic/comments.html"):
     return response
 
 
+@require_POST
 def rating(request):
     """
     Handle a ``RatingForm`` submission and redirect back to its

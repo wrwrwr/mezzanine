@@ -84,16 +84,33 @@ class DynamicInlineAdmin(admin.options.InlineModelAdmin):
     form = DynamicInlineAdminForm
     extra = 20
 
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super(DynamicInlineAdmin, self).get_fieldsets(request, obj)
+    def get_fields(self, request, obj=None):
+        fields = super(BaseDynamicInlineAdmin, self).get_fields(request, obj)
         if issubclass(self.model, Orderable):
-            fields = fieldsets[0][1]["fields"]
-            fields.remove("_order")
+            fields = list(fields)
+            try:
+                fields.remove("_order")
+            except ValueError:
+                pass
             fields.append("_order")
+        return fields
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(BaseDynamicInlineAdmin, self).get_fieldsets(
+                                                            request, obj)
+        if issubclass(self.model, Orderable):
+            for fieldset in fieldsets:
+                fields = list(fieldset[1]["fields"])
+                try:
+                    fields.remove("_order")
+                except ValueError:
+                    pass
+                fieldset[1]["fields"] = fields
+            fieldsets[-1][1]["fields"].append("_order")
         return fieldsets
 
 
-class TabularDynamicInlineAdmin(DynamicInlineAdmin):
+class TabularDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.TabularInline):
     template = "admin/includes/dynamic_inline_tabular.html"
 
 

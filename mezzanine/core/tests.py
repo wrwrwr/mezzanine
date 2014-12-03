@@ -9,26 +9,34 @@ except ImportError:
     # Python 2
     from urllib import urlencode
 
+from django import VERSION
+from django.contrib.admin import AdminSite
+from django.contrib.admin.options import InlineModelAdmin
+from django.contrib.sites.models import Site
+from django.core import mail
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import Textarea
 from django.forms.models import modelform_factory
-from django.contrib.sites.models import Site
 from django.templatetags.static import static
-from django.core.urlresolvers import reverse
-from django.core import mail
-from django.utils.html import strip_tags
-from django.utils.unittest import skipIf, skipUnless
 from django.test.utils import override_settings
+from django.utils.html import strip_tags
+from django.utils.translation import get_language, override
+from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
+from mezzanine.core.admin import BaseDynamicInlineAdmin
+from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager
 from mezzanine.core.models import (CONTENT_STATUS_DRAFT,
-                                   CONTENT_STATUS_PUBLISHED)
-from mezzanine.core.fields import RichTextField
+                                   CONTENT_STATUS_PUBLISHED, Slugged)
+from mezzanine.forms.admin import FieldAdmin
+from mezzanine.forms.models import Form
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.importing import import_dotted_path
 from mezzanine.utils.tests import (TestCase, run_pyflakes_for_package,
                                              run_pep8_for_package)
+from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 from mezzanine.utils.html import TagCloser
 
 
@@ -323,7 +331,6 @@ class CoreTests(TestCase):
         response = self.client.get(url)
         csrf = self._get_csrftoken(response)
         url = self._get_formurl(response)
-        from django import VERSION
         if VERSION < (1, 6):
             return
         response = self.client.post(url, {
@@ -376,14 +383,148 @@ class CoreTests(TestCase):
         site1.delete()
         site2.delete()
 
+    def test_dynamic_inline_admins(self):
+        """
+        Verifies that ``BaseDynamicInlineAdmin`` properly adds the ``_order``
+        field for admins of ``Orderable`` subclasses.
+        """
+        request = self._request_factory.get('/admin/')
+        request.user = self._user
+        field_admin = FieldAdmin(Form, AdminSite())
+        fieldsets = field_admin.get_fieldsets(request)
+        self.assertEqual(fieldsets[0][1]['fields'][-1], '_order')
+        if VERSION >= (1, 7):
+            fields = field_admin.get_fields(request)
+            self.assertEqual(fields[-1], '_order')
+
+    def test_dynamic_inline_admins_fields_tuple(self):
+        """
+        Checks if moving the ``_order`` field works with non-mutable sequences.
+        """
+        class MyModelInline(BaseDynamicInlineAdmin, InlineModelAdmin):
+            # Any model would work since we're only instantiating the class and
+            # not actually using it.
+            model = RichTextPage
+            fields = ('a', '_order', 'b')
+
+        request = self._request_factory.get('/admin/')
+        inline = MyModelInline(None, None)
+        fields = inline.get_fieldsets(request)[0][1]['fields']
+        self.assertSequenceEqual(fields, ('a', 'b', '_order'))
+
+    def test_dynamic_inline_admins_fields_without_order(self):
+        """
+        Checks that ``_order`` field will be added if ``fields`` are listed
+        without it.
+        """
+        class MyModelInline(BaseDynamicInlineAdmin, InlineModelAdmin):
+            model = RichTextPage
+            fields = ('a', 'b')
+
+        request = self._request_factory.get('/admin/')
+        inline = MyModelInline(None, None)
+        fields = inline.get_fieldsets(request)[0][1]['fields']
+        self.assertSequenceEqual(fields, ('a', 'b', '_order'))
+
+    def test_dynamic_inline_admins_fieldsets(self):
+        """
+        Tests if ``_order`` is moved to the end of the last fieldsets fields.
+        """
+        class MyModelInline(BaseDynamicInlineAdmin, InlineModelAdmin):
+            model = RichTextPage
+            fieldsets = (("Fieldset 1", {'fields': ('a',)}),
+                         ("Fieldset 2", {'fields': ('_order', 'b')}),
+                         ("Fieldset 3", {'fields': ('c')}))
+
+        request = self._request_factory.get('/admin/')
+        inline = MyModelInline(None, None)
+        fieldsets = inline.get_fieldsets(request)
+        self.assertEqual(fieldsets[-1][1]["fields"][-1], '_order')
+        self.assertNotIn('_order', fieldsets[1][1]["fields"])
+
+
+@skipUnless("mezzanine.pages" in settings.INSTALLED_APPS,
+            "pages app required")
+class SiteRelatedTestCase(TestCase):
+
+    def test_update_site(self):
+        from django.conf import settings
+        from mezzanine.utils.sites import current_site_id
+
+        # setup
+        try:
+            old_site_id = settings.SITE_ID
+        except:
+            old_site_id = None
+
+        site1 = Site.objects.create(domain="site1.com")
+        site2 = Site.objects.create(domain="site2.com")
+
+        # default behaviour, page gets assigned current site
+        settings.SITE_ID = site2.pk
+        self.assertEqual(settings.SITE_ID, current_site_id())
+        page = RichTextPage()
+        page.save()
+        self.assertEqual(page.site_id, site2.pk)
+
+        # Subsequent saves do not update site to current site
+        page.site = site1
+        page.save()
+        self.assertEqual(page.site_id, site1.pk)
+
+        # resave w/ update_site=True, page gets assigned current site
+        settings.SITE_ID = site1.pk
+        page.site = site2
+        page.save(update_site=True)
+        self.assertEqual(page.site_id, site1.pk)
+
+        # resave w/ update_site=False, page does not update site
+        settings.SITE_ID = site2.pk
+        page.save(update_site=False)
+        self.assertEqual(page.site_id, site1.pk)
+
+        # When update_site=True, new page gets assigned current site
+        settings.SITE_ID = site2.pk
+        page = RichTextPage()
+        page.site = site1
+        page.save(update_site=True)
+        self.assertEqual(page.site_id, site2.pk)
+
+        # When update_site=False, new page keeps current site
+        settings.SITE_ID = site2.pk
+        page = RichTextPage()
+        page.site = site1
+        page.save(update_site=False)
+        self.assertEqual(page.site_id, site1.pk)
+
+        # When site explicitly assigned, new page keeps assigned site
+        settings.SITE_ID = site2.pk
+        page = RichTextPage()
+        page.site = site1
+        page.save()
+        self.assertEqual(page.site_id, site1.pk)
+
+        # tear down
+        if old_site_id:
+            settings.SITE_ID = old_site_id
+        else:
+            del settings.SITE_ID
+
+        site1.delete()
+        site2.delete()
+
 
 @skipIf(settings.USE_MODELTRANSLATION,
-        "only meaningful with content translation disabled")
-class ContentTranslationSwitchTest(TestCase):
+        "modeltranslation must be enabled before Django setup")
+class NoContentTranslationTests(TestCase):
+    """
+    Disabled content translation should be equivalent to no content
+    translation.
+    """
     def test_switch(self):
         """
-        Verifies that if ``USE_MODELTRANSLATION`` is set to false,
-        ``modeltranslation`` does not get loaded.
+        If ``USE_MODELTRANSLATION`` is set to false, modeltranslation
+        should not get loaded.
         """
         self.assertTrue("modeltranslation", settings.INSTALLED_APPS)
         try:
@@ -393,14 +534,37 @@ class ContentTranslationSwitchTest(TestCase):
         else:
             self.assertEqual(len(translator.get_registered_models()), 0)
 
+    def test_for_all_languages(self):
+        """
+        The provided function should be executed exactly once.
+        """
+        nl = {'calls': 0}  # nonlocal
+
+        def function():
+            nl['calls'] += 1
+        for_all_languages(function)
+        self.assertEqual(nl['calls'], 1)
+
+    def test_disable_fallbacks(self):
+        """
+        Without content translation, disable fallbacks should do nothing.
+        """
+        with disable_fallbacks():
+            pass
+
 
 @skipUnless(settings.USE_MODELTRANSLATION,
-            "only meaningful with content translation enabled")
+            "modeltranslation must be disabled before Django setup")
 class ContentTranslationTests(TestCase):
+    """
+    Core aspects of content translation should function properly.
+    """
+    from modeltranslation import settings as mt_settings
+
+    @skipIf(settings.USE_I18N, "I18N must be disabled before Django setup")
     def test_registration_switch(self):
         """
-        Makes sure we are going to have our models registered even if
-        ``USE_I18N`` is false. Meaningless with ``USE_I18N`` set to true.
+        Models should be registered even if ``USE_I18N`` is false.
 
         Unfortunately, instead of a failure in this test you're more likely
         to see a ``NotRegistered`` exception during admin auto-discovery.
@@ -462,3 +626,35 @@ class ContentTranslationTests(TestCase):
             self.assertTrue(textual_fields.issubset(registered_fields),
                 "some textual fields on {} are not registered for translation "
                 "{}".format(model_path, tuple(unregistered_textual_fields)))
+
+    def test_for_all_languages(self):
+        """
+        The provided function should be executed once for each language.
+        This is supposed to also work with disabled I18N.
+        """
+        nl = {'languages': set(l[0] for l in settings.LANGUAGES)}  # nonlocal
+
+        def function():
+            nl['languages'].remove(get_language())
+        for_all_languages(function)
+        self.assertEqual(len(nl['languages']), 0)
+
+    @skipUnless(mt_settings.ENABLE_FALLBACKS,
+                "can't test fallbacks when they're disabled")
+    @skipUnless(len(mt_settings.FALLBACK_LANGUAGES['default']) > 1,
+                "there has to be something to fallback to")
+    def test_disable_fallbacks(self):
+        """
+        The value for the current language should be visible, even if empty.
+        """
+        # Value from this language is a sure candidate for a fallback.
+        to_language = self.mt_settings.FALLBACK_LANGUAGES['default'][0]
+        # The following language will fall back to something.
+        from_language = self.mt_settings.FALLBACK_LANGUAGES['default'][1]
+        with override(to_language):
+            model = Slugged(title="a")
+        with override(from_language):
+            model.title = ""
+            self.assertEqual(model.title, "a")
+            with disable_fallbacks():
+                self.assertEqual(model.title, "")

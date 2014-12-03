@@ -6,6 +6,33 @@ from django.utils.translation import activate, get_language
 from mezzanine.conf import settings
 
 
+def patch_trans_null():
+    """
+    Allows changing the current language with Django's I18N disabled.
+
+    Functions from Django's ``trans_null`` (used when USE_I18N is false)
+    do more or less nothing. To allow content translation to work without
+    enabling the static translation machinery we need the language set by
+    ``activate`` to be returned by following ``get_language()`` calls.
+
+    TODO: That's a potential candidate for a Django ticket.
+    """
+    from django.utils.translation import _trans
+
+    def activate(language):
+        settings.LANGUAGE_CODE = language
+
+    def get_language():
+        return settings.LANGUAGE_CODE
+
+    _trans.activate = activate
+    _trans.get_language = get_language
+
+
+if settings.USE_MODELTRANSLATION and not settings.USE_I18N:
+    patch_trans_null()
+
+
 def for_all_languages(function):
     """
     Executes ``function`` once for each of the available languages.

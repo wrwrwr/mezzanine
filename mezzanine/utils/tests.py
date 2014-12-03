@@ -10,6 +10,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
+from django.test.client import RequestFactory
 from django.test.simple import DjangoTestSuiteRunner
 
 from mezzanine.conf import settings
@@ -91,8 +92,9 @@ class TestCase(BaseTestCase):
 
     def setUp(self):
         """
-        Creates an admin user and sets up the debug cursor, so that
-        we can track the number of queries used in various places.
+        Creates an admin user, sets up the debug cursor, so that we can
+        track the number of queries used in various places, and creates
+        a request factory for views testing.
         """
         self._username = "test"
         self._password = "test"
@@ -100,6 +102,7 @@ class TestCase(BaseTestCase):
         args = (self._username, self._emailaddress, self._password)
         self._user = User.objects.create_superuser(*args)
         self._debug_cursor = connection.use_debug_cursor
+        self._request_factory = RequestFactory()
         connection.use_debug_cursor = True
 
     def tearDown(self):
