@@ -5,7 +5,7 @@ from django.contrib.comments.admin import CommentsAdmin
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
-from mezzanine.core.admin import TranslationAdmin
+from mezzanine.core.admin import TranslationModelAdmin
 from mezzanine.generic.models import ThreadedComment, Keyword
 
 
@@ -35,7 +35,7 @@ class ThreadedCommentAdmin(CommentsAdmin):
         return False
 
 
-class KeywordAdmin(TranslationAdmin):
+class KeywordAdmin(TranslationModelAdmin):
     """
     Admin for translating keywords.
     """
