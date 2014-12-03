@@ -558,6 +558,9 @@ class NoContentTranslationTests(TestCase):
 class ContentTranslationTests(TestCase):
     """
     Core aspects of content translation should function properly.
+
+    Some of these tests may need more than one language enabled to be
+    effective.
     """
     from modeltranslation import settings as mt_settings
 
