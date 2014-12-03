@@ -73,7 +73,7 @@ class DisplayableAdmin(TranslationAdmin):
             pass
 
 
-class DynamicInlineAdmin(admin.options.InlineModelAdmin):
+class BaseDynamicInlineAdmin(object):
     """
     Admin inline that uses JS to inject an "Add another" link which
     when clicked, dynamically reveals another fieldset. Also handles
@@ -114,7 +114,7 @@ class TabularDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.TabularInline):
     template = "admin/includes/dynamic_inline_tabular.html"
 
 
-class StackedDynamicInlineAdmin(DynamicInlineAdmin):
+class StackedDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.StackedInline):
     template = "admin/includes/dynamic_inline_stacked.html"
 
     def __init__(self, *args, **kwargs):
