@@ -136,7 +136,7 @@ def set_dynamic_settings(s):
             warn("USE_MODELTRANSLATION is true, but modeltranslation could "
                  "not be loaded. Is it on the PYTHONPATH?")
             s["USE_MODELTRANSLATION"] = False
-        # On default, auto-registration is enabled only if USE_I18N is true.
+        # By default, auto-registration is enabled only if USE_I18N is true.
         s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True
 
     # To support migrations for both Django 1.7 and South, Sotuh's old
