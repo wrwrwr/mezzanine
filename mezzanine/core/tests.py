@@ -527,7 +527,7 @@ class NoContentTranslationTests(TestCase):
         If ``USE_MODELTRANSLATION`` is set to false, modeltranslation
         should not get loaded.
         """
-        self.assertTrue("modeltranslation", settings.INSTALLED_APPS)
+        self.assertNotIn("modeltranslation", settings.INSTALLED_APPS)
         try:
             from modeltranslation.translator import translator
         except ImportError:
