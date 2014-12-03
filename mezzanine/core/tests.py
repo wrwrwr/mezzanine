@@ -539,7 +539,7 @@ class NoContentTranslationTests(TestCase):
         """
         The provided function should be executed exactly once.
         """
-        nl = {'calls': 0}  # nonlocal
+        nl = {'calls': 0}  # Python 3+: nonlocal
 
         def function():
             nl['calls'] += 1
@@ -646,7 +646,8 @@ class ContentTranslationTests(TestCase):
         The provided function should be executed once for each language.
         This is supposed to also work with disabled I18N.
         """
-        nl = {'languages': set(l[0] for l in settings.LANGUAGES)}  # nonlocal
+        languages = self.mt_settings.AVAILABLE_LANGUAGES
+        nl = {'languages': languages}  # Python 3+: nonlocal
 
         def function():
             nl['languages'].remove(get_language())
