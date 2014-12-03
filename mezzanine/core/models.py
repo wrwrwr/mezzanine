@@ -277,19 +277,16 @@ class Displayable(Slugged, MetaData, TimeStamped):
 
         Used by the ``set_short_url_for`` template tag, and ``TweetableAdmin``.
         """
-        class Nonlocal:
-            pass
-        n = Nonlocal()
-        n.save = False
+        nl = {'save': False}  # Python 3+: nonlocal
 
         def generate_translated_short_url():
             with disable_fallbacks():
                 no_short_url = not self.short_url
             if no_short_url:
                 self.short_url = self.generate_short_url()
-                n.save = True
+                nl['save'] = True
         for_all_languages(generate_translated_short_url)
-        if n.save:
+        if nl['save']:
             self.save()
 
     def generate_short_url(self):
