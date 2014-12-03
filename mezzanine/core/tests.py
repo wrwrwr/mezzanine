@@ -546,12 +546,31 @@ class NoContentTranslationTests(TestCase):
         for_all_languages(function)
         self.assertEqual(nl['calls'], 1)
 
+    def test_for_all_languages_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        def function():
+            raise RuntimeError()
+
+        with self.assertRaises(RuntimeError):
+            for_all_languages(function)
+
     def test_disable_fallbacks(self):
         """
-        Without content translation, disable fallbacks should do nothing.
+        Without content translation, disabling fallbacks should have no
+        effect.
         """
         with disable_fallbacks():
             pass
+
+    def test_disable_fallbacks_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        with self.assertRaises(RuntimeError):
+            with disable_fallbacks():
+                raise RuntimeError
 
     @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
                 "needs the Page model to be migrated and registered")
@@ -646,13 +665,23 @@ class ContentTranslationTests(TestCase):
         The provided function should be executed once for each language.
         This is supposed to also work with disabled I18N.
         """
-        languages = self.mt_settings.AVAILABLE_LANGUAGES
+        languages = set(self.mt_settings.AVAILABLE_LANGUAGES)
         nl = {'languages': languages}  # Python 3+: nonlocal
 
         def function():
             nl['languages'].remove(get_language())
         for_all_languages(function)
         self.assertEqual(len(nl['languages']), 0)
+
+    def test_for_all_languages_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        def function():
+            raise RuntimeError()
+
+        with self.assertRaises(RuntimeError):
+            for_all_languages(function)
 
     @skipUnless(mt_settings.ENABLE_FALLBACKS,
                 "can't test fallbacks when they're disabled")
@@ -673,6 +702,14 @@ class ContentTranslationTests(TestCase):
             self.assertEqual(model.title, "a")
             with disable_fallbacks():
                 self.assertEqual(model.title, "")
+
+    def test_disable_fallbacks_exception(self):
+        """
+        The helper shouldn't hide exceptions.
+        """
+        with self.assertRaises(RuntimeError):
+            with disable_fallbacks():
+                raise RuntimeError
 
     @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
                 "needs a registered, concrete subclass of Slugged")
