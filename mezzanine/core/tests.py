@@ -666,12 +666,11 @@ class ContentTranslationTests(TestCase):
         This is supposed to also work with disabled I18N.
         """
         languages = set(self.mt_settings.AVAILABLE_LANGUAGES)
-        nl = {'languages': languages}  # Python 3+: nonlocal
 
         def function():
-            nl['languages'].remove(get_language())
+            languages.remove(get_language())
         for_all_languages(function)
-        self.assertEqual(len(nl['languages']), 0)
+        self.assertFalse(languages)
 
     def test_for_all_languages_exception(self):
         """
