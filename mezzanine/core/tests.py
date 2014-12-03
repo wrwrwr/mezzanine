@@ -34,6 +34,7 @@ from mezzanine.forms.admin import FieldAdmin
 from mezzanine.forms.models import Form
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.importing import import_dotted_path
+from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.tests import (TestCase, run_pyflakes_for_package,
                                              run_pep8_for_package)
 from mezzanine.utils.translation import for_all_languages, disable_fallbacks
@@ -710,9 +711,20 @@ class ContentTranslationTests(TestCase):
                 metadata.save()
                 self.assertEqual(metadata.description, "b")
 
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete subclass of Displayable")
     def test_short_url_generation(self):
         """
+        Separate ``short_url`` for each language should be generated.
         """
+        from mezzanine.pages.models import Page
+        displayable = Page(site_id=current_site_id(), title="a")
+        displayable.set_short_url()
+
+        def assert_short_url():
+            self.assertTrue(displayable.short_url)
+        with disable_fallbacks():
+            for_all_languages(assert_short_url)
 
     def test_save_performance(self):
         """
