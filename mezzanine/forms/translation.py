@@ -1,4 +1,3 @@
-
 from mezzanine.forms.models import Form, Field
 
 from modeltranslation.translator import TranslationOptions, translator

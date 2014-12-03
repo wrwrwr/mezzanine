@@ -1,4 +1,3 @@
-
 from mezzanine.blog.models import BlogPost, BlogCategory
 
 from modeltranslation.translator import TranslationOptions, translator

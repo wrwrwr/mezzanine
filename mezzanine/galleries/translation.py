@@ -1,4 +1,3 @@
-
 from mezzanine.galleries.models import Gallery, GalleryImage
 
 from modeltranslation.translator import TranslationOptions, translator
