@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from future.builtins import str
 
 from django import VERSION
+from django.contrib.admin import AdminSite
 from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.template import Context, Template
@@ -10,6 +11,7 @@ from django.test.utils import override_settings, skipUnless
 from mezzanine.conf import settings
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
 from mezzanine.core.request import current_request
+from mezzanine.pages.admin import PageAdmin
 from mezzanine.pages.models import Page, RichTextPage
 from mezzanine.urls import PAGES_SLUG
 from mezzanine.utils.models import get_user_model
@@ -298,3 +300,12 @@ class ContentTranslationTests(TestCase):
             self.assertTrue(page.titles)
         with disable_fallbacks():
             for_all_languages(assert_titles)
+
+    def test_page_admin_fields(self):
+        """
+        One copy of each translation field is present in admin forms.
+        """
+        request = self._request_factory.get('/admin/')
+        page_admin = PageAdmin(RichTextPage, AdminSite())
+        fields = page_admin.get_fieldsets(request)[0][1]['fields']
+        self.assertEqual(len(set(fields)), len(fields))  # No duplicates.
