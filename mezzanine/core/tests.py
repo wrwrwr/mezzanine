@@ -720,11 +720,11 @@ class ContentTranslationTests(TestCase):
         """
         The value for the current language should be visible, even if empty.
         """
-        # Value from this language is a sure candidate for a fallback.
-        to_language = self.mt_settings.FALLBACK_LANGUAGES['default'][0]
-        # The following language will fall back to something.
-        from_language = self.mt_settings.FALLBACK_LANGUAGES['default'][1]
+        fallback_languages = self.mt_settings.FALLBACK_LANGUAGES
+        to_language, from_language = fallback_languages['default'][:2]
         with override(to_language):
+            # Set a value for a "default fallback" language, so we have
+            # something to fallback to.
             model = Slugged(title="a")
         with override(from_language):
             model.title = ""
