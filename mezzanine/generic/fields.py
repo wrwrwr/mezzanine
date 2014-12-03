@@ -247,12 +247,7 @@ class KeywordsField(BaseGenericRelation):
         """
         assigned = related_manager.select_related("keyword")
 
-        class Nonlocal:
-            # With Python 3 this artificial scope can be replaced by just a
-            # ``nonlocal`` keyword before the assignment inside the function.
-            pass
-        n = Nonlocal()
-        n.save = False
+        nl = {'save': False}  # Python 3+: nonlocal
 
         def generate_keywords_string():
             keywords = " ".join([str(a.keyword) for a in assigned])
@@ -260,9 +255,9 @@ class KeywordsField(BaseGenericRelation):
                                 self.related_field_name
             if getattr(instance, string_field_name) != keywords:
                 setattr(instance, string_field_name, keywords)
-                n.save = True
+                nl['save'] = True
         for_all_languages(generate_keywords_string)
-        if n.save:
+        if nl['save']:
             instance.save()
 
 
