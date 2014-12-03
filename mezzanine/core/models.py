@@ -299,15 +299,16 @@ class Displayable(Slugged, MetaData, TimeStamped):
         """
         from mezzanine.conf import settings
         settings.use_editable()
+        uri = "http://%s%s" % (self.site.domain, self.get_absolute_url())
         if settings.BITLY_ACCESS_TOKEN:
             url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
                 "access_token": settings.BITLY_ACCESS_TOKEN,
-                "uri": self.short_url,
+                "uri": uri,
             })
             response = loads(urlopen(url).read().decode("utf-8"))
             if response["status_code"] == 200:
                 return response["data"]["url"]
-        return "http://%s%s" % (self.site.domain, self.get_absolute_url())
+        return uri
 
     def _get_next_or_previous_by_publish_date(self, is_next, **kwargs):
         """
