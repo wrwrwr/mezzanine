@@ -79,14 +79,14 @@ class Page(BasePage):
         if self.id is None:
             self.content_model = self._meta.object_name.lower()
 
-        def generate_translated_titles():
+        def generate_titles():
             titles = [self.title]
             parent = self.parent
             while parent is not None:
                 titles.insert(0, parent.title)
                 parent = parent.parent
             self.titles = " / ".join(titles)
-        for_all_languages(generate_translated_titles)
+        for_all_languages(generate_titles)
         super(Page, self).save(*args, **kwargs)
 
     def description_from_content(self):
