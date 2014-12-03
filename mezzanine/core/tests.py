@@ -565,11 +565,8 @@ class ContentTranslationTests(TestCase):
     def test_registration_switch(self):
         """
         Models should be registered even if ``USE_I18N`` is false.
-
-        Unfortunately, instead of a failure in this test you're more likely
-        to see a ``NotRegistered`` exception during admin auto-discovery.
         """
-        self.assertTrue(settings.MODELTRANSLATION_ENABLE_REGISTRATIONS)
+        self.assertTrue(self.mt_settings.ENABLE_REGISTRATIONS)
 
     def test_models_registration(self):
         """

@@ -103,11 +103,11 @@ USE_MODELTRANSLATION = False
 # missing default translations of non-nullable fields are filled.
 MODELTRANSLATION_AUTO_POPULATE = 'required'
 
-# On default all translation fields are hidden from South to avoid clashes
-# with migrations distributed with Mezzanine updates. If you let South handle
-# schema changes due to translation fields note that some original field
-# changes may need nontrivial migration merging.
-MODELTRANSLATION_SOUTH_IGNORE = True
+# On default all translation fields are hidden from migrations auto-detection
+# to avoid clashes with migrations distributed in Mezzanine updates. When a
+# translatable field changes in Mezzanine, the changes need to be repeated for
+# all its translation fields, but their set depends on enabled languages.
+MODELTRANSLATION_MIGRATIONS_IGNORE = True
 
 
 ########################
