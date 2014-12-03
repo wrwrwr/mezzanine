@@ -131,8 +131,11 @@ def set_dynamic_settings(s):
                 pass
             else:
                 s["INSTALLED_APPS"].append(app)
-    s["USE_MODELTRANSLATION"] = "modeltranslation" in s["INSTALLED_APPS"]
     if s["USE_MODELTRANSLATION"]:
+        if "modeltranslation" not in s["INSTALLED_APPS"]:
+            warn("USE_MODELTRANSLATION is true, but modeltranslation could "
+                 "not be loaded. Is it on the PYTHONPATH?")
+            s["USE_MODELTRANSLATION"] = False
         # On default, auto-registration is enabled only if USE_I18N is true.
         s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True
 
