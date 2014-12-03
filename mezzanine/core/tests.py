@@ -609,7 +609,7 @@ class ContentTranslationTests(TestCase):
         Checks if all models that have fields looking as translatable
         are registered for translation.
 
-        Meant as a reminder on adding new fields to ``translation.py``.
+        This is a reminder about adding new fields to ``translation.py``.
         Please, add fields that are detected, but should not be translatable
         to the exceptions list.
         """
