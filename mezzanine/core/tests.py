@@ -553,6 +553,19 @@ class NoContentTranslationTests(TestCase):
         with disable_fallbacks():
             pass
 
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs the Page model to be migrated and registered")
+    def test_save_performance(self):
+        """
+        Reference for the test in ``ContentTranslationTests``, if you change
+        the count in this one, please also update it there.
+        """
+        from mezzanine.pages.models import Page
+        with self.assertNumQueries(6):
+            # Note: Should be 3 at most -- site query, page query and insert.
+            page = Page(title="a")
+            page.save()
+
 
 @skipUnless(settings.USE_MODELTRANSLATION,
             "modeltranslation must be disabled before Django setup")
@@ -726,9 +739,14 @@ class ContentTranslationTests(TestCase):
         with disable_fallbacks():
             for_all_languages(assert_short_url)
 
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs the Page model to be migrated and registered")
     def test_save_performance(self):
         """
         Saving models with content translation enabled should not require
-        many more queries than without it.
+        more queries than without it.
         """
-        # (1 + #langs * .5) * vanilla queries?
+        from mezzanine.pages.models import Page
+        with self.assertNumQueries(4):
+            page = Page(title="a")
+            page.save()
