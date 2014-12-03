@@ -74,7 +74,7 @@ class PageAdmin(DisplayableAdmin):
             except (AttributeError, TypeError):
                 pass
             if settings.USE_MODELTRANSLATION:
-                # Avoid adding fields handled by TranslationAdmin.
+                # Avoid adding fields handled by translation admin.
                 from modeltranslation.translator import (NotRegistered,
                                                          translator)
                 try:

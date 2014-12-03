@@ -26,7 +26,8 @@ from django.utils.translation import get_language, override
 from django.utils.unittest import skipIf, skipUnless
 
 from mezzanine.conf import settings
-from mezzanine.core.admin import (BaseDynamicInlineAdmin, TranslationAdmin,
+from mezzanine.core.admin import (BaseDynamicInlineAdmin,
+                                  TranslationModelAdmin,
                                   TranslationInlineModelAdmin)
 from mezzanine.core.fields import RichTextField
 from mezzanine.core.managers import DisplayableManager
@@ -589,10 +590,10 @@ class NoContentTranslationTests(TestCase):
 
     def test_admins_bases(self):
         """
-        Without content translation, deriving from ``TranslationAdmin`` should
-        be as good as deriving from ``ModelAdmin``.
+        Without content translation, deriving from ``TranslationModelAdmin``
+        should be as good as deriving from ``ModelAdmin``.
         """
-        class Admin1(TranslationAdmin):
+        class Admin1(TranslationModelAdmin):
             pass
 
         class Admin2(ModelAdmin):
@@ -827,4 +828,4 @@ class ContentTranslationTests(TestCase):
         for model in models:
             model_admin = admin_site._registry.get(model)
             if model_admin is not None:
-                self.assertIsInstance(model_admin, TranslationAdmin)
+                self.assertIsInstance(model_admin, TranslationModelAdmin)

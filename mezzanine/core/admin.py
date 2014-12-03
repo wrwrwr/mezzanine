@@ -21,10 +21,10 @@ User = get_user_model()
 
 
 if settings.USE_MODELTRANSLATION:
-    from modeltranslation.admin import (TranslationAdmin,
-                                        TranslationInlineModelAdmin)
+    from modeltranslation.admin import (
+        TranslationAdmin as TranslationModelAdmin, TranslationInlineModelAdmin)
 else:
-    TranslationAdmin = admin.ModelAdmin
+    TranslationModelAdmin = admin.ModelAdmin
     TranslationInlineModelAdmin = admin.options.InlineModelAdmin
 
 
@@ -39,7 +39,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class DisplayableAdmin(TranslationAdmin):
+class DisplayableAdmin(TranslationModelAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
