@@ -660,7 +660,7 @@ class ContentTranslationTests(TestCase):
                 "some textual fields on {} are not registered for translation "
                 "{}".format(model_path, tuple(unregistered_textual_fields)))
 
-    def test_admins_registration(self):
+    def test_admins_bases(self):
         """
         Admins of models with translatable fields should derive from one
         of translation admins.
