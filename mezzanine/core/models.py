@@ -79,11 +79,12 @@ class Slugged(SiteRelated):
 
     def save(self, *args, **kwargs):
         """
-        If no slug is provided, generates one before saving. Slugs are based
-        on titles, a translatable field, so the slug processing needs to be
-        repeated for each available language.
+        If no slug is provided, generates one before saving.
+
+        Slugs are based on titles, a translatable field, so slug generation
+        needs to be repeated for each available language.
         """
-        def generate_translated_slug():
+        def generate_slug_if_none():
             with disable_fallbacks():
                 # With fallbacks enabled, self.slug could seem non-empty due
                 # to getting a fallback value from another language. However
@@ -91,7 +92,7 @@ class Slugged(SiteRelated):
                 no_slug = not self.slug
             if no_slug:
                 self.slug = self.generate_unique_slug()
-        for_all_languages(generate_translated_slug)
+        for_all_languages(generate_slug_if_none)
         super(Slugged, self).save(*args, **kwargs)
 
     def generate_unique_slug(self):
@@ -142,9 +143,9 @@ class MetaData(models.Model):
         Set the description field on save.
         """
         if self.gen_description:
-            def generate_translated_description():
+            def generate_description():
                 self.description = strip_tags(self.description_from_content())
-            for_all_languages(generate_translated_description)
+            for_all_languages(generate_description)
         super(MetaData, self).save(*args, **kwargs)
 
     def meta_title(self):
@@ -279,13 +280,13 @@ class Displayable(Slugged, MetaData, TimeStamped):
         """
         nl = {'save': False}  # Python 3+: nonlocal
 
-        def generate_translated_short_url():
+        def generate_short_url_if_none():
             with disable_fallbacks():
                 no_short_url = not self.short_url
             if no_short_url:
                 self.short_url = self.generate_short_url()
                 nl['save'] = True
-        for_all_languages(generate_translated_short_url)
+        for_all_languages(generate_short_url_if_none)
         if nl['save']:
             self.save()
 
