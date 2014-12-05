@@ -110,6 +110,52 @@ MODELTRANSLATION_AUTO_POPULATE = 'required'
 MODELTRANSLATION_MIGRATIONS_IGNORE = True
 
 
+#################################
+# INTERNATIONALIZATION SETTINGS #
+#################################
+
+# Languages for this installation, if you use content translation the first
+# one will be the default, fallback language. All language codes can be found
+# here: http://www.i18nguy.com/unicode/language-identifiers.html
+LANGUAGES = (
+    ('en', _("English")),
+)
+LANGUAGE_CODE = LANGUAGES[0][0]
+
+# If you set this to False, Django will make some optimizations so as not
+# to load the internationalization machinery. If you want to use more than
+# one static translation or select language based on request, also uncomment
+# the i18n context processor and make sure the locale middleware is enabled.
+USE_I18N = False
+
+# If you'd like to translate your content, enable this and ensure that the
+# ``modeltranslation`` app is available. After adding new languages or fields
+# for translation you need to create columns for translation fields in the
+# database by running the ``makemigrations`` / ``migrate`` commands. If you
+# declare fields for translation that you already have some data for, you may
+# want to fill their default translation with a copy of values from original
+# fields using ``update_translation_fields``.
+# Finally, after adding new languages or loading fixtures without translations
+# you should run ``update_generated_fields`` to resave models with derived
+# fields, giving them a chance to generate translated values.
+USE_MODELTRANSLATION = False
+
+# When translated models are loaded from an untranslated fixture using
+# ``loaddata`` (e.g. example content) and the default language is not English,
+# default translation of fields like ``Slugged.title`` may end up null (and in
+# this case at least some non-empty fallback is necessary for slug generation).
+# Auto population fixes that by reproducing the provided value for all / some
+# translation fields; ``required`` is the minimum level to avoid errors -- only
+# missing default translations of non-nullable fields are filled.
+MODELTRANSLATION_AUTO_POPULATE = 'required'
+
+# On default all translation fields are hidden from migrations auto-detection
+# to avoid clashes with migrations distributed in Mezzanine updates. When a
+# translatable field changes in Mezzanine, the changes need to be repeated for
+# all its translation fields, but their set depends on enabled languages.
+MODELTRANSLATION_MIGRATIONS_IGNORE = True
+
+
 ########################
 # MAIN DJANGO SETTINGS #
 ########################
@@ -137,20 +183,6 @@ TIME_ZONE = None
 
 # If you set this to True, Django will use timezone-aware datetimes.
 USE_TZ = True
-
-# If you set this to False, Django will make some optimizations so as not
-# to load the internationalization machinery. If you want to use more than
-# one static translation or select language based on request, alsod uncomment
-# the i18n context processor and make sure the locale middleware is enabled.
-USE_I18N = False
-
-# Languages for this installation, if you use content translation the first one
-# will be the default, fallback language. All language codes can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGES = (
-    ('en', _("English")),
-)
-LANGUAGE_CODE = LANGUAGES[0][0]
 
 # A boolean that turns on/off debug mode. When set to ``True``, stack traces
 # are displayed for error pages. Should always be set to ``False`` in

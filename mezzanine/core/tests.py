@@ -676,13 +676,13 @@ class ContentTranslationTests(TestCase):
         from_language, to_language = self.no_fallback_pair
 
         with override(to_language):
-            page = Page.objects.create(title="Title")
+            slugged = Page.objects.create(title="Title")
             # Translation fields are (unnecessarily) nullable, so save works
             # even with a missing value for a language.
-            page.save()
+            slugged.save()
         with override(from_language):
             # Having an empty slug may cause issues with address resolution.
-            self.assertTrue(page.slug)
+            self.assertTrue(slugged.slug)
 
     def test_models_registration(self):
         """
@@ -702,7 +702,6 @@ class ContentTranslationTests(TestCase):
             r"^django\.contrib\.",
             # Users translating their comments, hmmm interesting.
             r"^mezzanine\.generic\.models\.ThreadedComment",
-            r"^mezzanine\.conf\.models\.Setting",  # TODO: Not yet.
             # Page.in_menus is really a tuple of integers, while
             # Page.content_model is an untranslated model name.
             r"\.(in_menus|content_model)$",

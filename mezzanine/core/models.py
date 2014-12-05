@@ -276,7 +276,7 @@ class Displayable(Slugged, MetaData, TimeStamped):
         """
         Makes a new short URL for every translation of the object.
 
-        Used by the ``set_short_url_for`` template tag, and ``TweetableAdmin``.
+        Used by the ``set_short_url_for`` template tag and ``TweetableAdmin``.
         """
         nl = {'save': False}  # Python 3+: nonlocal
 
