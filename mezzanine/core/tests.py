@@ -519,7 +519,7 @@ class SiteRelatedTestCase(TestCase):
 
 
 @skipIf(settings.USE_MODELTRANSLATION,
-        "modeltranslation must be enabled before Django setup")
+        "modeltranslation must be disabled before Django setup")
 class NoContentTranslationTests(TestCase):
     """
     Disabled content translation should be equivalent to no content
@@ -617,7 +617,7 @@ class NoContentTranslationTests(TestCase):
 
 
 @skipUnless(settings.USE_MODELTRANSLATION,
-            "modeltranslation must be disabled before Django setup")
+            "modeltranslation must be enabled before Django setup")
 class ContentTranslationTests(TestCase):
     """
     Core aspects of content translation should function properly.
