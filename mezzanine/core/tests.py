@@ -905,6 +905,8 @@ class ContentTranslationTests(TestCase):
         slugged = Page.objects.get(pk=slugged.pk)
         self.assertTrue(slugged.slug)
 
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a concrete subclasses of MetaData")
     def test_resavemodels_descriptions(self):
         """
         ``MetaData`` descriptions should be regenerated only when

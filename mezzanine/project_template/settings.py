@@ -110,7 +110,7 @@ USE_I18N = False
 # fields using ``update_translation_fields``.
 # Finally, after adding new languages or loading fixtures without translations
 # you should run ``resavemodels`` to give models with derived fields a chance
-# to generate translated values.
+# to generate values for new columns.
 USE_MODELTRANSLATION = False
 
 # When translated models are loaded from an untranslated fixture using
