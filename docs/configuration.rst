@@ -28,6 +28,8 @@ each setting you want to define which takes several keyword arguments:
     setting is editable.
   * ``append``: If registering an existing setting, the default value
     given will be appended to the current.
+  * ``translatable``: If content translation is activated, this setting
+    will store a value for each language separately.
 
 .. note::
 

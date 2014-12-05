@@ -680,6 +680,8 @@ class ContentTranslationTests(ContentTranslationTestCase):
             # but in general will probably have to wait for some built-in
             # content translation support.
             r"^django\.contrib\.",
+            # Setting names are internal identifiers.
+            r"^mezzanine\.conf\.models\.Setting\.name",
             # User-provided form values.
             r"^mezzanine\.forms\.models\.FieldEntry\.value",
             # Users translating their comments, hmmm interesting.
