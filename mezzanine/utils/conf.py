@@ -197,6 +197,8 @@ def set_dynamic_settings(s):
     else:
         s["GRAPPELLI_INSTALLED"] = True
 
+    setup_internationalization(s)
+
     # Ensure admin is at the bottom of the app order so that admin
     # templates are loaded in the correct order, and that staticfiles
     # is also at the end so its runserver can be overridden.
@@ -230,8 +232,6 @@ def set_dynamic_settings(s):
         s["MIDDLEWARE_CLASSES"] = [mw for mw in s["MIDDLEWARE_CLASSES"] if not
                                    (mw.endswith("UpdateCacheMiddleware") or
                                     mw.endswith("FetchFromCacheMiddleware"))]
-
-    setup_internationalization(s)
 
     # Revert tuple settings back to tuples.
     for setting in tuple_list_settings:
