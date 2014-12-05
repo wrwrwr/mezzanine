@@ -112,25 +112,26 @@ def set_dynamic_settings(s):
         remove("MIDDLEWARE_CLASSES",
             "django.contrib.redirects.middleware.RedirectFallbackMiddleware")
 
-    # Setup for optional apps.
-    optional = list(s.get("OPTIONAL_APPS", []))
-    if s.get("USE_SOUTH") and VERSION < (1, 7):
-        optional.append("south")
-    elif not s.get("USE_SOUTH", True) and "south" in s["INSTALLED_APPS"]:
-        s["INSTALLED_APPS"].remove("south")
-    if s.get("USE_MODELTRANSLATION", False):
-        optional.append("modeltranslation")
-    elif (not s.get("USE_MODELTRANSLATION") and
-          "modeltranslation" in s["INSTALLED_APPS"]):
-        s["INSTALLED_APPS"].remove("modeltranslation")
-    for app in optional:
-        if app not in s["INSTALLED_APPS"]:
-            try:
-                __import__(app)
-            except ImportError:
-                pass
-            else:
-                s["INSTALLED_APPS"].append(app)
+    else:
+        # Setup for optional apps.
+        optional = list(s.get("OPTIONAL_APPS", []))
+        if s.get("USE_SOUTH") and VERSION < (1, 7):
+            optional.append("south")
+        elif not s.get("USE_SOUTH", True) and "south" in s["INSTALLED_APPS"]:
+            s["INSTALLED_APPS"].remove("south")
+        if s.get("USE_MODELTRANSLATION", False):
+            optional.append("modeltranslation")
+        elif (not s.get("USE_MODELTRANSLATION") and
+              "modeltranslation" in s["INSTALLED_APPS"]):
+            s["INSTALLED_APPS"].remove("modeltranslation")
+        for app in optional:
+            if app not in s["INSTALLED_APPS"]:
+                try:
+                    __import__(app)
+                except ImportError:
+                    pass
+                else:
+                    s["INSTALLED_APPS"].append(app)
     if s["USE_MODELTRANSLATION"]:
         if "modeltranslation" not in s["INSTALLED_APPS"]:
             warn("USE_MODELTRANSLATION is true, but modeltranslation could "
