@@ -231,6 +231,8 @@ def set_dynamic_settings(s):
                                    (mw.endswith("UpdateCacheMiddleware") or
                                     mw.endswith("FetchFromCacheMiddleware"))]
 
+    setup_internationalization(s)
+
     # Revert tuple settings back to tuples.
     for setting in tuple_list_settings:
         s[setting] = tuple(s[setting])
@@ -247,8 +249,6 @@ def set_dynamic_settings(s):
         elif shortname == "mysql":
             # Required MySQL collation for tests.
             s["DATABASES"][key]["TEST_COLLATION"] = "utf8_general_ci"
-
-    setup_internationalization(s)
 
 
 def setup_internationalization(s):
@@ -271,7 +271,8 @@ def setup_internationalization(s):
     elif use_modeltranslation and not modeltranslation_installed:
         s["INSTALLED_APPS"].append("modeltranslation")
 
-    # By default, auto-registration is enabled only if USE_I18N is true, but
-    # we want to support content translation without static translations.
+    # By default, model registration auto-discovery is enabled only if
+    # USE_I18N is true, however we want to support content translation
+    # with static translations machinery disabled.
     if use_modeltranslation:
         s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True
