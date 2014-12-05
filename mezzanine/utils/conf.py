@@ -119,11 +119,6 @@ def set_dynamic_settings(s):
             optional.append("south")
         elif not s.get("USE_SOUTH", True) and "south" in s["INSTALLED_APPS"]:
             s["INSTALLED_APPS"].remove("south")
-        if s.get("USE_MODELTRANSLATION", False):
-            optional.append("modeltranslation")
-        elif (not s.get("USE_MODELTRANSLATION") and
-              "modeltranslation" in s["INSTALLED_APPS"]):
-            s["INSTALLED_APPS"].remove("modeltranslation")
         for app in optional:
             if app not in s["INSTALLED_APPS"]:
                 try:
@@ -132,13 +127,6 @@ def set_dynamic_settings(s):
                     pass
                 else:
                     s["INSTALLED_APPS"].append(app)
-    if s["USE_MODELTRANSLATION"]:
-        if "modeltranslation" not in s["INSTALLED_APPS"]:
-            warn("USE_MODELTRANSLATION is true, but modeltranslation could "
-                 "not be loaded. Is it on the PYTHONPATH?")
-            s["USE_MODELTRANSLATION"] = False
-        # By default, auto-registration is enabled only if USE_I18N is true.
-        s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True
 
     # To support migrations for both Django 1.7 and South, Sotuh's old
     # migrations for each app were moved into "app.migrations.south"
@@ -243,13 +231,6 @@ def set_dynamic_settings(s):
                                    (mw.endswith("UpdateCacheMiddleware") or
                                     mw.endswith("FetchFromCacheMiddleware"))]
 
-    # If only LANGUAGE_CODE has been defined, ensure the other required
-    # settings for translations are configured.
-    if (s.get("LANGUAGE_CODE") and len(s.get("LANGUAGES", [])) == 1 and
-            s["LANGUAGE_CODE"] != s["LANGUAGES"][0][0]):
-        s["USE_I18N"] = True
-        s["LANGUAGES"] = [(s["LANGUAGE_CODE"], "")]
-
     # Revert tuple settings back to tuples.
     for setting in tuple_list_settings:
         s[setting] = tuple(s[setting])
@@ -266,3 +247,31 @@ def set_dynamic_settings(s):
         elif shortname == "mysql":
             # Required MySQL collation for tests.
             s["DATABASES"][key]["TEST_COLLATION"] = "utf8_general_ci"
+
+    setup_internationalization(s)
+
+
+def setup_internationalization(s):
+    """
+    Preprocess settings related to static and dynamic translation.
+    """
+    # If only LANGUAGE_CODE has been defined, ensure the other required
+    # settings for translations are configured.
+    if (s.get("LANGUAGE_CODE") and len(s.get("LANGUAGES", [])) == 1 and
+            s["LANGUAGE_CODE"] != s["LANGUAGES"][0][0]):
+        s["USE_I18N"] = True
+        s["LANGUAGES"] = [(s["LANGUAGE_CODE"], "")]
+
+    # Ensure that modeltranslation is in installed apps if and only if
+    # USE_MODELTRANSLATION is true.
+    use_modeltranslation = s.get("USE_MODELTRANSLATION", False)
+    modeltranslation_installed = ("modeltranslation" in s["INSTALLED_APPS"])
+    if not use_modeltranslation and modeltranslation_installed:
+        s["INSTALLED_APPS"].remove("modeltranslation")
+    elif use_modeltranslation and not modeltranslation_installed:
+        s["INSTALLED_APPS"].append("modeltranslation")
+
+    # By default, auto-registration is enabled only if USE_I18N is true, but
+    # we want to support content translation without static translations.
+    if use_modeltranslation:
+        s["MODELTRANSLATION_ENABLE_REGISTRATIONS"] = True

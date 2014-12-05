@@ -527,10 +527,10 @@ class NoContentTranslationTests(TestCase):
     """
     def test_switch(self):
         """
-        If ``USE_MODELTRANSLATION`` is set to false, modeltranslation
-        should not get loaded.
+        If ``USE_MODELTRANSLATION`` is false, modeltranslation should not be
+        loaded.
         """
-        self.assertNotIn("modeltranslation", settings.INSTALLED_APPS)
+        self.assertNotIn('modeltranslation', settings.INSTALLED_APPS)
         try:
             from modeltranslation.translator import translator
         except ImportError:
@@ -652,6 +652,13 @@ class ContentTranslationTests(TestCase):
             if non_fallbacks:
                 cls.no_fallback_pair = (language, next(iter(non_fallbacks)))
                 break
+
+    def test_switch(self):
+        """
+        If ``USE_MODELTRANSLATION`` is true, modeltranslation should be
+        loaded.
+        """
+        self.assertIn('modeltranslation', settings.INSTALLED_APPS)
 
     def test_registration_switch(self):
         """
