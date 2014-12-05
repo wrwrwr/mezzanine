@@ -625,7 +625,20 @@ class ContentTranslationTests(TestCase):
     Some of these tests may need more than one language enabled to be
     effective.
     """
-    from modeltranslation import settings as mt_settings
+    @classmethod
+    def setUpClass(cls):
+        # At this point we know that USE_MODELTRANSLATION is true, so we may
+        # try to import its modules.
+        from modeltranslation import settings as mt_settings
+        cls.mt_settings = mt_settings
+        # Content translation languages (may not be the same as LANGUAGES).
+        cls.languages = mt_settings.AVAILABLE_LANGUAGES
+        # Languages that may potentially be falled back to.
+        cls.fallback_languages = itertools.chain.from_iterable(
+                                cls.mt_settings.FALLBACK_LANGUAGES.values())
+        # Language that will certainly not be falled back to (may be None).
+        cls.non_fallback_language = next(iter(
+                    set(cls.languages) - set(cls.fallback_languages)), None)
 
     @skipIf(settings.USE_I18N, "I18N must be disabled before Django setup")
     def test_registration_switch(self):
