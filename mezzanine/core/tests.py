@@ -721,6 +721,8 @@ class ContentTranslationTests(TestCase):
             r"^south\.",
             # Modeltranslation has some unregistered textual fields in tests.
             r"^modeltranslation\.",
+            # TODO: Remove once settings translation is implemented.
+            r"^mezzanine\.conf\.models\.Setting",
         )
         for model in models.get_models():
             model_path = "{}.{}".format(model.__module__, model.__name__)
