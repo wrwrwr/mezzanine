@@ -3,17 +3,17 @@ from django.db.models import get_models
 
 
 class Command(NoArgsCommand):
-    help = ("Resaves all models that have some fields auto-generated on model "
-            "save (such as slugs, descriptions, titles) to let them set values "
-            "for new languages.")
+    help = ("Resaves all models that have resave_models class attribute set. "
+            "Some fields are auto-generated on model save (such as slugs, "
+            "descriptions, titles) resaving models lets them fill in missing "
+            "values.")
 
     def handle_noargs(self, **options):
         verbosity = int(options.get("verbosity", 0))
 
         for model in get_models():
-            generated_fields = getattr(model, "generated_fields", [])
-            if generated_fields:
+            if getattr(model, "resave_models", False):
                 if verbosity > 1:
-                    print("Updating %s" % model.__name__)
+                    print("Resaving %s" % model.__name__)
                 for instance in model.objects.all():
                     instance.save()

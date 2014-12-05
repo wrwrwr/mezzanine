@@ -46,8 +46,6 @@ class Page(BasePage):
     login_required = models.BooleanField(_("Login required"), default=False,
         help_text=_("If checked, only logged in users can view this page"))
 
-    generated_fields = ["titles"]
-
     class Meta:
         verbose_name = _("Page")
         verbose_name_plural = _("Pages")

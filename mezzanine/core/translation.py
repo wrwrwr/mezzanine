@@ -26,3 +26,10 @@ translator.register(Slugged, SluggedTranslationOptions)
 translator.register(MetaData, MetaDataTranslationOptions)
 translator.register(Displayable, DisplayableTranslationOptions)
 translator.register(RichText, RichTextTranslationOptions)
+
+
+# Slugged.slug and MetaData.description are generated when the model is
+# saved. After new translation columns are added, proper values need to
+# be created. Opt-in for the resavemodels command.
+Slugged.resave_models = True
+MetaData.resave_models = True

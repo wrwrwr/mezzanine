@@ -346,19 +346,14 @@ class ContentTranslationTests(TestCase):
             self.assertEqual(child.slug, "renamed_parent/child")
         for_all_languages(assert_changed_slugs)
 
-
-class UpdateGeneratedFieldsTests(TestCase):
-    """
-    Tests for the ``update_generated_fields`` command.
-    """
-    def test_titles(self):
+    def test_resavemodels(self):
         """
         Empty ``Page.titles`` should be updated.
         """
         page = Page(title="Title")
         page.save()
         Page.objects.all().update(titles="")
-        call_command('update_generated_fields')
+        call_command('resavemodels')
         # Django 1.8+: page.refresh_from_db(fields=['titles']).
         page = Page.objects.get(pk=page.pk)
         self.assertTrue(page.titles)

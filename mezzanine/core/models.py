@@ -71,10 +71,6 @@ class Slugged(SiteRelated):
             help_text=_("Leave blank to have the URL auto-generated from "
                         "the title."))
 
-    # List of fields auto-derived from other fields, that may be updated or
-    # reset with the update_generated_fields command (by resaving the model).
-    generated_fields = ["slug"]
-
     class Meta:
         abstract = True
 
@@ -138,8 +134,6 @@ class MetaData(models.Model):
                     "generated from content. Uncheck if you want to manually "
                     "set a custom description."), default=True)
     keywords = KeywordsField(verbose_name=_("Keywords"))
-
-    generated_fields = ["description"]
 
     class Meta:
         abstract = True

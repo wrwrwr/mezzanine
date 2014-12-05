@@ -109,8 +109,8 @@ USE_I18N = False
 # want to fill their default translation with a copy of values from original
 # fields using ``update_translation_fields``.
 # Finally, after adding new languages or loading fixtures without translations
-# you should run ``update_generated_fields`` to resave models with derived
-# fields, giving them a chance to generate translated values.
+# you should run ``resavemodels`` to give models with derived fields a chance
+# to generate translated values.
 USE_MODELTRANSLATION = False
 
 # When translated models are loaded from an untranslated fixture using

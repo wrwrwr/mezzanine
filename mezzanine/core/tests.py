@@ -888,15 +888,9 @@ class ContentTranslationTests(TestCase):
             if model_admin is not None:
                 self.assertIsInstance(model_admin, TranslationModelAdmin)
 
-
-@skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
-            "needs a concrete subclasses of Slugged and MetaData")
-class UpdateGeneratedFieldsTests(TestCase):
-    """
-    Tests for the ``update_generated_fields`` command (with and without
-    content translation).
-    """
-    def test_slug(self):
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a concrete subclasses of Slugged")
+    def test_resavemodels_slugs(self):
         """
         Slugs that are empty should be generated.
         """
@@ -906,12 +900,12 @@ class UpdateGeneratedFieldsTests(TestCase):
         # You end up with empty slugs after adding columns for new languages,
         # but to simplify things we'll just manually reset the value.
         Page.objects.all().update(slug="")
-        call_command('update_generated_fields')
+        call_command('resavemodels')
         # Django 1.8+: slugged.refresh_from_db(fields=['slug']).
         slugged = Page.objects.get(pk=slugged.pk)
         self.assertTrue(slugged.slug)
 
-    def test_description(self):
+    def test_resavemodels_descriptions(self):
         """
         ``MetaData`` descriptions should be regenerated only when
         ``gen_description`` is true.
@@ -922,7 +916,7 @@ class UpdateGeneratedFieldsTests(TestCase):
         displayable_man_desc = Page(title="Title", gen_description=False)
         displayable_man_desc.save()
         Page.objects.all().update(description="")
-        call_command('update_generated_fields')
+        call_command('resavemodels')
         # Django 1.8+: refresh_from_db(fields=['description']).
         displayable_auto_desc = Page.objects.get(pk=displayable_auto_desc.pk)
         self.assertTrue(displayable_auto_desc.description)

@@ -82,7 +82,7 @@ def create_pages(app, created_models, verbosity, interactive, **kwargs):
             #       moment of writing, the required/optional content is not
             #       loaded with 1.7 -- ``created_models`` does not contain
             #       models created for "migrated" apps.
-            call_command("update_generated_fields", verbosity)
+            call_command("resavemodels", verbosity)
 
 
 def create_site(app, created_models, verbosity, interactive, **kwargs):
