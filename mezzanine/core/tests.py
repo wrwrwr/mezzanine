@@ -660,6 +660,30 @@ class ContentTranslationTests(TestCase):
         """
         self.assertTrue(self.mt_settings.ENABLE_REGISTRATIONS)
 
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "needs a registered, concrete Slugged subclass")
+    def test_auto_population(self):
+        """
+        Creating objects with with a non-default language active, should not
+        cause any trouble.
+
+        In particular, loading fixtures with the default language other than
+        English, should not create models with empty slugs/titles.
+        """
+        from mezzanine.pages.models import Page
+        if self.no_fallback_pair is None:
+            self.skipTest("needs a language that will not fall back")
+        from_language, to_language = self.no_fallback_pair
+
+        with override(to_language):
+            page = Page.objects.create(title="Title")
+            # Translation fields are (unnecessarily) nullable, so save works
+            # even with a missing value for a language.
+            page.save()
+        with override(from_language):
+            # Having an empty slug may cause issues with address resolution.
+            self.assertTrue(page.slug)
+
     def test_models_registration(self):
         """
         Checks if all models that have fields looking as translatable
