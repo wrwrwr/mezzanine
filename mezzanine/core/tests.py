@@ -640,10 +640,10 @@ class ContentTranslationTests(TestCase):
         cls.non_fallback_language = next(iter(
                     set(cls.languages) - set(cls.fallback_languages)), None)
 
-    @skipIf(settings.USE_I18N, "I18N must be disabled before Django setup")
     def test_registration_switch(self):
         """
-        Models should be registered even if ``USE_I18N`` is false.
+        Models should be registered even if ``USE_I18N`` is false (the test
+        is only interesting if it is).
         """
         self.assertTrue(self.mt_settings.ENABLE_REGISTRATIONS)
 
