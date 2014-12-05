@@ -4,6 +4,7 @@ from future.builtins import str
 from django import VERSION
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import AnonymousUser
+from django.core.management import call_command
 from django.db import connection
 from django.forms.models import modelform_factory
 from django.template import Context, Template
@@ -344,3 +345,20 @@ class ContentTranslationTests(TestCase):
             self.assertEqual(parent.slug, "renamed_parent")
             self.assertEqual(child.slug, "renamed_parent/child")
         for_all_languages(assert_changed_slugs)
+
+
+class UpdateGeneratedFieldsTests(TestCase):
+    """
+    Tests for the ``update_generated_fields`` command.
+    """
+    def test_titles(self):
+        """
+        Empty ``Page.titles`` should be updated.
+        """
+        page = Page(title="Title")
+        page.save()
+        Page.objects.all().update(titles="")
+        call_command('update_generated_fields')
+        # Django 1.8+: page.refresh_from_db(fields=['titles']).
+        page = Page.objects.get(pk=page.pk)
+        self.assertTrue(page.titles)

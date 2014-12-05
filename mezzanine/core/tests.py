@@ -893,8 +893,8 @@ class ContentTranslationTests(TestCase):
             "needs a concrete subclasses of Slugged and MetaData")
 class UpdateGeneratedFieldsTests(TestCase):
     """
-    Tests for the ``update_generated_fields`` command, with and without
-    content translation.
+    Tests for the ``update_generated_fields`` command (with and without
+    content translation).
     """
     def test_slug(self):
         """
