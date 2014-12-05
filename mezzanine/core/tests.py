@@ -632,13 +632,26 @@ class ContentTranslationTests(TestCase):
         from modeltranslation import settings as mt_settings
         cls.mt_settings = mt_settings
         # Content translation languages (may not be the same as LANGUAGES).
-        cls.languages = mt_settings.AVAILABLE_LANGUAGES
-        # Languages that may potentially be falled back to.
-        cls.fallback_languages = itertools.chain.from_iterable(
-                                cls.mt_settings.FALLBACK_LANGUAGES.values())
-        # Language that will certainly not be falled back to (may be None).
-        cls.non_fallback_language = next(iter(
-                    set(cls.languages) - set(cls.fallback_languages)), None)
+        # AVAILABLE_LANGUAGES is a generator, so we need to tuple it.
+        cls.languages = tuple(mt_settings.AVAILABLE_LANGUAGES)
+
+        # Some tests need falling or non-falling back languages, to prepare
+        # for various cases lets resolve fallbacks for all languages.
+        from modeltranslation.utils import resolution_order
+        cls.fallbacks = dict((l, resolution_order(l)) for l in cls.languages)
+        # First language in the pair will first fall back to the second one.
+        cls.fallback_pair = None
+        for language, language_fallbacks in cls.fallbacks.items():
+            if len(language_fallbacks) > 1:
+                cls.fallback_pair = (language, language_fallbacks[1])
+                break
+        # The first language will certainly not fall back to the second one.
+        cls.no_fallback_pair = None
+        for language, language_fallbacks in cls.fallbacks.items():
+            non_fallbacks = set(cls.languages) - set(language_fallbacks)
+            if non_fallbacks:
+                cls.no_fallback_pair = (language, next(iter(non_fallbacks)))
+                break
 
     def test_registration_switch(self):
         """
