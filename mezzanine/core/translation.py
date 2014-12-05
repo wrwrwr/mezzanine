@@ -31,5 +31,5 @@ translator.register(RichText, RichTextTranslationOptions)
 # Slugged.slug and MetaData.description are generated when the model is
 # saved. After new translation columns are added, proper values need to
 # be created. Opt-in for the resavemodels command.
-Slugged.resave_models = True
-MetaData.resave_models = True
+Slugged.resavemodels_command = True
+MetaData.resavemodels_command = True

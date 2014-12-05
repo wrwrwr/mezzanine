@@ -12,4 +12,4 @@ translator.register((RichTextPage, Link,))
 
 
 # Titles is only generated on save. Opt-in for the resavemodels command.
-Page.resave_models = True
+Page.resavemodels_command = True
