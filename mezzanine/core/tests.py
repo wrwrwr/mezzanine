@@ -745,7 +745,7 @@ class ContentTranslationTests(TestCase):
         The provided function should be executed once for each language.
         This is supposed to also work with disabled I18N.
         """
-        languages = set(self.mt_settings.AVAILABLE_LANGUAGES)
+        languages = set(self.languages)
 
         def function():
             languages.remove(get_language())
@@ -762,16 +762,14 @@ class ContentTranslationTests(TestCase):
         with self.assertRaises(RuntimeError):
             for_all_languages(function)
 
-    @skipUnless(mt_settings.ENABLE_FALLBACKS,
-                "can't test fallbacks when they're disabled")
-    @skipUnless(len(mt_settings.FALLBACK_LANGUAGES['default']) > 1,
-                "there has to be something to fallback to")
     def test_disable_fallbacks(self):
         """
         The value for the current language should be visible, even if empty.
         """
-        fallback_languages = self.mt_settings.FALLBACK_LANGUAGES
-        to_language, from_language = fallback_languages['default'][:2]
+        if self.fallback_pair is None:
+            self.skipTest("there have to be some fallbacks defined")
+        from_language, to_language = self.fallback_pair
+
         with override(to_language):
             # Set a value for a "default fallback" language, so we have
             # something to fallback to.
@@ -824,22 +822,23 @@ class ContentTranslationTests(TestCase):
 
     @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
                 "needs a registered, concrete subclass of MetaData")
-    @skipUnless(len(mt_settings.AVAILABLE_LANGUAGES) > 1,
-                "needs at least two languages enabled")
     def test_descriptions_independence(self):
         """
         Description for one language should not be based on description for
         another one.
         """
+        if len(self.languages) < 2:
+            self.skipTest("needs at least two languages enabled")
+
         from mezzanine.pages.models import Page
-        first_lang, second_lang = self.mt_settings.AVAILABLE_LANGUAGES[:2]
-        with override(first_lang):
+        first_language, second_language = self.languages[:2]
+        with override(first_language):
             metadata = Page(title="a")
             metadata.save()
-            with override(second_lang):
-                metadata.title = "b"
-                metadata.save()
-                self.assertEqual(metadata.description, "b")
+        with override(second_language):
+            metadata.title = "b"
+            metadata.save()
+            self.assertEqual(metadata.description, "b")
 
     @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
                 "needs a registered, concrete subclass of Displayable")
