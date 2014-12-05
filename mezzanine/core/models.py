@@ -165,12 +165,12 @@ class MetaData(models.Model):
         for field_type in (RichTextField, models.TextField):
             if not description:
                 for field in self._meta.fields:
-                    if isinstance(field, field_type) and \
-                            not field.name.startswith("description"):
+                    if (isinstance(field, field_type) and
+                            not field.name.startswith("description")):
                         description = getattr(self, field.name)
                         if description:
                             from mezzanine.core.templatetags.mezzanine_tags \
-                            import richtext_filters
+                                                    import richtext_filters
                             description = richtext_filters(description)
                             break
         # Fall back to the title if description couldn't be determined.
@@ -274,8 +274,10 @@ class Displayable(Slugged, MetaData, TimeStamped):
 
     def set_short_url(self):
         """
-        Makes a new short URL for every translation of the object.
+        Generates the ``short_url`` attribute if the model does not already
+        have one.
 
+        A separate shortened URL is created for each translation of the model.
         Used by the ``set_short_url_for`` template tag and ``TweetableAdmin``.
         """
         nl = {'save': False}  # Python 3+: nonlocal
@@ -292,8 +294,8 @@ class Displayable(Slugged, MetaData, TimeStamped):
 
     def generate_short_url(self):
         """
-        Generates a short URL using the bit.ly credentials if they have been
-        specified.
+        Returns a new short URL generated using bit.ly if credentials for the
+        service have been specified. Otherwise returns model's absolute URL.
         """
         from mezzanine.conf import settings
         settings.use_editable()
