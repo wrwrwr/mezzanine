@@ -211,8 +211,8 @@ class KeywordsField(BaseGenericRelation):
         # Convert the data into AssignedKeyword instances.
         if data:
             data = [AssignedKeyword(keyword_id=i) for i in new_ids]
-        # Remove Keyword instances than no longer have a
-        # related AssignedKeyword instance.
+        # Remove Keyword instances that no longer have a related
+        # AssignedKeyword instance.
         existing = AssignedKeyword.objects.filter(keyword__id__in=removed_ids)
         existing_ids = set([str(a.keyword_id) for a in existing])
         unused_ids = removed_ids - existing_ids
