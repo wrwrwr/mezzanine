@@ -3,6 +3,7 @@ from future.utils import native_str
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.utils.translation import get_language
 from django.utils.unittest import skipUnless
 
 from mezzanine.blog.models import BlogPost
@@ -14,6 +15,7 @@ from mezzanine.generic.models import (AssignedKeyword, Keyword,
                                       ThreadedComment, Rating)
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.tests import TestCase
+from mezzanine.utils.translation import for_all_languages
 
 
 class GenericTests(TestCase):
@@ -107,3 +109,34 @@ class GenericTests(TestCase):
         page = RichTextPage.objects.get(id=page.id)
         self.assertEqual(keywords, set(page.keywords_string.split()))
         page.delete()
+
+
+class ContentTranslationTests(TestCase):
+    """
+    Content translation issues within the generic app.
+
+    Unregistered dynamic <keywords-field-name>_string fields get picked
+    by the core registration test, so we don't need a special case here.
+    """
+    @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
+                "a concrete model with search_fields is required")
+    def test_keywords(self):
+        """
+        Keyword strings for all languages should be set when assigning
+        new keywords.
+        """
+        keyword = Keyword()
+
+        def set_language_title():
+            keyword.title = get_language()
+        for_all_languages(set_language_title)
+        keyword.save()
+
+        page = RichTextPage.objects.create(title="Keywords")
+        page.keywords.add(AssignedKeyword(keyword=keyword))
+        # Django 1.8+: refresh_from_db()
+        page = RichTextPage.objects.get(pk=page.pk)
+
+        def assert_keywords_string():
+            self.assertEqual(get_language(), page.keywords_string)
+        for_all_languages(assert_keywords_string)
