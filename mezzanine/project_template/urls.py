@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.conf.urls import include, url
+from django.conf.urls import patterns, include, url
 from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 
@@ -19,7 +19,7 @@ urlpatterns = i18n_patterns("",
     ("^admin/", include(admin.site.urls)),
 )
 
-urlpatterns += i18n_patterns('',
+urlpatterns += patterns('',
 
     # We don't want to presume how your homepage works, so here are a
     # few patterns you can use to set it up.
