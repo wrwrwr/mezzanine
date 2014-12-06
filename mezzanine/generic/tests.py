@@ -110,6 +110,20 @@ class GenericTests(TestCase):
         self.assertEqual(keywords, set(page.keywords_string.split()))
         page.delete()
 
+    def test_delete_unused(self):
+        """
+        Only ``Keyword`` instances without any assignments should be deleted.
+        """
+        assigned_keyword = Keyword.objects.create(title="assigned")
+        Keyword.objects.create(title="unassigned")
+        AssignedKeyword.objects.create(keyword_id=assigned_keyword.id,
+                                       content_object=RichTextPage(pk=1))
+        Keyword.objects.delete_unused(keyword_ids=[assigned_keyword.id])
+        self.assertEqual(Keyword.objects.count(), 2)
+        Keyword.objects.delete_unused()
+        self.assertEqual(Keyword.objects.count(), 1)
+        self.assertEqual(Keyword.objects.all()[0].id, assigned_keyword.id)
+
 
 class ContentTranslationTests(TestCase):
     """
