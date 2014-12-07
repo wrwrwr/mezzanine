@@ -601,7 +601,8 @@ class NoContentTranslationTests(TestCase):
         class Admin2(ModelAdmin):
             pass
 
-        self.assertEqual(inspect.getmro(Admin1), inspect.getmro(Admin2))
+        self.assertEqual(inspect.getmro(Admin1)[1:],
+                         inspect.getmro(Admin2)[1:])
 
     def test_inline_admins_bases(self):
         """
@@ -614,8 +615,8 @@ class NoContentTranslationTests(TestCase):
         class InlineAdmin2(InlineModelAdmin):
             pass
 
-        self.assertEqual(inspect.getmro(InlineAdmin1),
-                         inspect.getmro(InlineAdmin2))
+        self.assertEqual(inspect.getmro(InlineAdmin1)[1:],
+                         inspect.getmro(InlineAdmin2)[1:])
 
 
 class ContentTranslationTests(ContentTranslationTestCase):
