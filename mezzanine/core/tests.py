@@ -39,8 +39,9 @@ from mezzanine.forms.models import Form
 from mezzanine.pages.models import RichTextPage
 from mezzanine.utils.importing import import_dotted_path
 from mezzanine.utils.sites import current_site_id
-from mezzanine.utils.tests import (TestCase, run_pyflakes_for_package,
-                                             run_pep8_for_package)
+from mezzanine.utils.tests import (ContentTranslationTestCase, TestCase,
+                                   run_pep8_for_package,
+                                   run_pyflakes_for_package)
 from mezzanine.utils.translation import for_all_languages, disable_fallbacks
 from mezzanine.utils.html import TagCloser
 
@@ -617,42 +618,13 @@ class NoContentTranslationTests(TestCase):
                          inspect.getmro(InlineAdmin2))
 
 
-@skipUnless(settings.USE_MODELTRANSLATION,
-            "modeltranslation must be enabled before Django setup")
-class ContentTranslationTests(TestCase):
+class ContentTranslationTests(ContentTranslationTestCase):
     """
     Core aspects of content translation should function properly.
 
     Some of these tests may need more than one language enabled to be
     effective.
     """
-    @classmethod
-    def setUpClass(cls):
-        # At this point we know that USE_MODELTRANSLATION is true, so we may
-        # try to import its modules.
-        from modeltranslation import settings as mt_settings
-        cls.mt_settings = mt_settings
-        # Content translation languages (may not be the same as LANGUAGES).
-        # AVAILABLE_LANGUAGES is a generator, so we need to tuple it.
-        cls.languages = tuple(mt_settings.AVAILABLE_LANGUAGES)
-
-        # Some tests need falling or non-falling back languages, to prepare
-        # for various cases lets resolve fallbacks for all languages.
-        from modeltranslation.utils import resolution_order
-        cls.fallbacks = dict((l, resolution_order(l)) for l in cls.languages)
-        # First language in the pair will first fall back to the second one.
-        cls.fallback_pair = None
-        for language, language_fallbacks in cls.fallbacks.items():
-            if len(language_fallbacks) > 1:
-                cls.fallback_pair = (language, language_fallbacks[1])
-                break
-        # The first language will certainly not fall back to the second one.
-        cls.no_fallback_pair = None
-        for language, language_fallbacks in cls.fallbacks.items():
-            non_fallbacks = set(cls.languages) - set(language_fallbacks)
-            if non_fallbacks:
-                cls.no_fallback_pair = (language, next(iter(non_fallbacks)))
-                break
 
     def test_switch(self):
         """

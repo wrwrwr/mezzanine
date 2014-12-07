@@ -8,7 +8,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.forms.models import modelform_factory
 from django.template import Context, Template
-from django.test.utils import override_settings, skipUnless
+from django.test.utils import override_settings
 
 from mezzanine.conf import settings
 from mezzanine.core.models import CONTENT_STATUS_PUBLISHED
@@ -17,7 +17,7 @@ from mezzanine.pages.admin import PageAdmin, PageAdminForm
 from mezzanine.pages.models import Page, RichTextPage
 from mezzanine.urls import PAGES_SLUG
 from mezzanine.utils.models import get_user_model
-from mezzanine.utils.tests import TestCase
+from mezzanine.utils.tests import ContentTranslationTestCase, TestCase
 from mezzanine.utils.translation import disable_fallbacks, for_all_languages
 
 
@@ -285,9 +285,7 @@ class PagesTests(TestCase):
         self.assertEqual(test_page_processor(current_request(), page), {})
 
 
-@skipUnless(settings.USE_MODELTRANSLATION,
-            "modeltranslation must be disabled before Django setup")
-class ContentTranslationTests(TestCase):
+class ContentTranslationTests(ContentTranslationTestCase):
     """
     Content translation pieces in the pages app.
     """

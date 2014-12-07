@@ -14,7 +14,7 @@ from mezzanine.generic.forms import RatingForm
 from mezzanine.generic.models import (AssignedKeyword, Keyword,
                                       ThreadedComment, Rating)
 from mezzanine.pages.models import RichTextPage
-from mezzanine.utils.tests import TestCase
+from mezzanine.utils.tests import ContentTranslationTestCase, TestCase
 from mezzanine.utils.translation import for_all_languages
 
 
@@ -125,7 +125,7 @@ class GenericTests(TestCase):
         self.assertEqual(Keyword.objects.all()[0].id, assigned_keyword.id)
 
 
-class ContentTranslationTests(TestCase):
+class ContentTranslationTests(ContentTranslationTestCase):
     """
     Content translation issues within the generic app.
 
