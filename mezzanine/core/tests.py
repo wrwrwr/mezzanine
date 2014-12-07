@@ -690,6 +690,10 @@ class ContentTranslationTests(ContentTranslationTestCase):
             r"\.(email_copies|email_from)$",
             # User-provided form values.
             r"^mezzanine\.forms\.models\.FieldEntry\.value",
+            # TwitterQuery.type uses choices (stored value is an identifier).
+            r"^mezzanine\.twitter\.models\.Query\.type",
+            # Tweets are sourced from Twitter.
+            r"^mezzanine\.twitter\.models.Tweet",
             # Before Django 1.7, South would often be an installed apps.
             r"^south\.",
             # Modeltranslation has some unregistered textual fields in tests.
