@@ -686,6 +686,10 @@ class ContentTranslationTests(ContentTranslationTestCase):
             r"^mezzanine\.forms\.models\.FieldEntry\.value",
             # Users translating their comments, hmmm interesting.
             r"^mezzanine\.generic\.models\.ThreadedComment",
+            # TwitterQuery.type uses choices (stored value is an identifier).
+            r"^mezzanine\.twitter\.models\.Query\.type",
+            # Tweets are sourced from Twitter.
+            r"^mezzanine\.twitter\.models.Tweet",
             # Page.in_menus is really a tuple of integers, while
             # Page.content_model is an untranslated model name.
             r"\.(in_menus|content_model)$",
