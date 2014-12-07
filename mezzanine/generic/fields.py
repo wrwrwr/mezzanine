@@ -211,8 +211,11 @@ class KeywordsField(BaseGenericRelation):
         # Convert the data into AssignedKeyword instances.
         if data:
             data = [AssignedKeyword(keyword_id=i) for i in new_ids]
-        # Remove keywords that are no longer assigned to anything.
-        Keyword.objects.delete_unused(removed_ids)
+        if not settings.USE_MODELTRANSLATION:
+            # Remove keywords that are no longer assigned to anything.
+            # With content translation, it's better to let the unused keywords
+            # stay, as the user may want to reuse their translations.
+            Keyword.objects.delete_unused(removed_ids)
         super(KeywordsField, self).save_form_data(instance, data)
 
     def contribute_to_class(self, cls, name):

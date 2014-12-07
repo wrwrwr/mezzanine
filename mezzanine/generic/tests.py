@@ -3,6 +3,7 @@ from future.utils import native_str
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.forms import ModelForm
 from django.utils.translation import get_language
 from django.utils.unittest import skipUnless
 
@@ -134,7 +135,7 @@ class ContentTranslationTests(ContentTranslationTestCase):
     """
     @skipUnless('mezzanine.pages' in settings.INSTALLED_APPS,
                 "a concrete model with search_fields is required")
-    def test_keywords(self):
+    def test_keyword_strings(self):
         """
         Keyword strings for all languages should be set when assigning
         new keywords.
@@ -154,3 +155,24 @@ class ContentTranslationTests(ContentTranslationTestCase):
         def assert_keywords_string():
             self.assertEqual(get_language(), page.keywords_string)
         for_all_languages(assert_keywords_string)
+
+    def test_save_unused_keyword_translations(self):
+        """
+        Unused keywords should not be automatically deleted (at least those
+        that have translations).
+        """
+        if len(self.languages) < 2:
+            self.skipTest("with a single language deleting is acceptable")
+
+        class KeywordsForm(ModelForm):
+            class Meta:
+                model = RichTextPage
+                fields = ["keywords"]
+        # Keyword with all translations.
+        keyword = Keyword.objects.populate("all").create(title="keyword")
+        # Assign the keyword.
+        page = KeywordsForm({"keywords_0": str(keyword.id)}).save()
+        self.assertTrue(page.keywords.count())
+        # Drop the assignment.
+        KeywordsForm({}, instance=page).save()
+        self.assertTrue(Keyword.objects.count())
