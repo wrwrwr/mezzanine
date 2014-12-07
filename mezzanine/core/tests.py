@@ -455,7 +455,6 @@ class SiteRelatedTestCase(TestCase):
 
     def test_update_site(self):
         from django.conf import settings
-        from mezzanine.utils.sites import current_site_id
 
         # setup
         try:
