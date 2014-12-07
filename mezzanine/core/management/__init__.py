@@ -83,8 +83,11 @@ def create_pages(app, created_models, verbosity, interactive, **kwargs):
                               "Gallery. (yes/no): ")
             while confirm not in ("yes", "no"):
                 confirm = input("Please enter either 'yes' or 'no': ")
-            if confirm == "yes":
-                install_optional_data(verbosity)
+            install_optional = (confirm == "yes")
+        else:
+            install_optional = True
+        if install_optional:
+            install_optional_data(verbosity)
         if settings.USE_MODELTRANSLATION:
             # Initial data fixtures have slugs only for one languague, not
             # necessarily loaded for the default one.
