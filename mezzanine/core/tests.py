@@ -680,6 +680,8 @@ class ContentTranslationTests(ContentTranslationTestCase):
             # but in general will probably have to wait for some built-in
             # content translation support.
             r"^django\.contrib\.",
+            # Settings names are internal identifiers.
+            r"^mezzanine\.conf\.models\.Setting\.name",
             # Users translating their comments, hmmm interesting.
             r"^mezzanine\.generic\.models\.ThreadedComment",
             # Page.in_menus is really a tuple of integers, while
@@ -698,8 +700,6 @@ class ContentTranslationTests(ContentTranslationTestCase):
             r"^south\.",
             # Modeltranslation has some unregistered textual fields in tests.
             r"^modeltranslation\.",
-            # TODO: Remove once settings translation is implemented.
-            r"^mezzanine\.conf\.models\.Setting",
         )
         for model in models.get_models():
             model_path = "{}.{}".format(model.__module__, model.__name__)

@@ -4,12 +4,15 @@ from future.builtins import int
 from collections import defaultdict
 
 from django import forms
+from django import settings
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import (get_language, override,
+                                      ugettext_lazy as _)
 from django.template.defaultfilters import urlize
 
 from mezzanine.conf import settings, registry
 from mezzanine.conf.models import Setting
+from mezzanine.utils.translation import for_all_languages
 
 
 FIELD_TYPES = {
@@ -42,9 +45,23 @@ class SettingsForm(forms.Form):
                 if setting["choices"]:
                     field_class = forms.ChoiceField
                     kwargs["choices"] = setting["choices"]
-                self.fields[name] = field_class(**kwargs)
                 css_class = field_class.__name__.lower()
-                self.fields[name].widget.attrs["class"] = css_class
+
+                def create_field():
+                    field_name = name + "_" + get_language()
+                    self.fields[field_name] = field_class(**kwargs)
+                    self.fields[field_name].widget.attrs["class"] = css_class
+                if setting["translatable"]:
+                    for_all_languages(create_field)
+                else:
+                    if settings.USE_MODELTRANSLATION:
+                        # Save value as the default translation for non-translatable
+                        # settings with modeltranslation enabled.
+                        from modeltranslation.settings import DEFAULT_LANGUAGE
+                        override(DEFAULT_LANGUAGE:
+                            create_field()
+                    else:
+                        create_field()
 
     def __iter__(self):
         """
@@ -68,9 +85,11 @@ class SettingsForm(forms.Form):
         Save each of the settings to the DB.
         """
         for (name, value) in self.cleaned_data.items():
-            setting_obj, created = Setting.objects.get_or_create(name=name)
-            setting_obj.value = value
-            setting_obj.save()
+            setting_name, language = name.rsplit("_", 1)
+            setting, _ = Setting.objects.get_or_create(name=setting_name)
+            with override(language):
+                setting.value = value
+            setting.save()
 
     def format_help(self, description):
         """
