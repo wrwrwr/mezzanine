@@ -30,7 +30,7 @@ class SettingsForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__(*args, **kwargs)
         settings.use_editable()
-        # Create a form field for each editable setting's from its type.
+        # Create a form field for each editable setting from its type.
         for name in sorted(registry.keys()):
             setting = registry[name]
             if setting["editable"]:
