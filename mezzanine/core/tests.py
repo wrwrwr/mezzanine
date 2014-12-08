@@ -682,20 +682,20 @@ class ContentTranslationTests(ContentTranslationTestCase):
             r"^django\.contrib\.",
             # Settings names are internal identifiers.
             r"^mezzanine\.conf\.models\.Setting\.name",
-            # Users translating their comments, hmmm interesting.
-            r"^mezzanine\.generic\.models\.ThreadedComment",
-            # Page.in_menus is really a tuple of integers, while
-            # Page.content_model is an untranslated model name.
-            r"\.(in_menus|content_model)$",
-            # Form email addresses; having a diffrent accounts for
-            # different languages is rather uncommon.
-            r"\.(email_copies|email_from)$",
             # User-provided form values.
             r"^mezzanine\.forms\.models\.FieldEntry\.value",
+            # Users translating their comments, hmmm interesting.
+            r"^mezzanine\.generic\.models\.ThreadedComment",
             # TwitterQuery.type uses choices (stored value is an identifier).
             r"^mezzanine\.twitter\.models\.Query\.type",
             # Tweets are sourced from Twitter.
             r"^mezzanine\.twitter\.models.Tweet",
+            # Page.in_menus is really a tuple of integers, while
+            # Page.content_model is an untranslated model name.
+            r"\.(in_menus|content_model)$",
+            # Form email addresses; having a different accounts for
+            # different languages is rather uncommon.
+            r"\.(email_copies|email_from)$",
             # Before Django 1.7, South would often be an installed apps.
             r"^south\.",
             # Modeltranslation has some unregistered textual fields in tests.
