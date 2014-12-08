@@ -238,6 +238,15 @@ def set_dynamic_settings(s):
         s["USE_I18N"] = True
         s["LANGUAGES"] = [(s["LANGUAGE_CODE"], "")]
 
+    # As of Django 1.7, using a plain string as the value for LOGIN_URL with
+    # i18n_patterns is not a decent configuration -- users end up redirected
+    # to the default language version of the login page and the next parameter
+    # gets encoded. Default to mezzanine.accounts pattern names instead.
+    if s["USE_I18N"] and "mezzanine.accounts" in s["INSTALLED_APPS"]:
+        s.setdefault("LOGIN_REDIRECT_URL", "profile_update")
+        s.setdefault("LOGIN_URL", "login")
+        s.setdefault("LOGOUT_URL", "logout")
+
     # Revert tuple settings back to tuples.
     for setting in tuple_list_settings:
         s[setting] = tuple(s[setting])
