@@ -20,11 +20,12 @@ def patch_trans_null():
     from django.utils.translation import _trans
 
     def activate(language):
-        settings.LANGUAGE_CODE = language
+        _trans.active_language = language
 
     def get_language():
-        return settings.LANGUAGE_CODE
+        return _trans.active_language
 
+    _trans.active_language = settings.LANGUAGE_CODE
     _trans.activate = activate
     _trans.get_language = get_language
 
