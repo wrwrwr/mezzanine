@@ -362,6 +362,7 @@ register_setting(
         "example of this towards its end."),
     editable=False,
     default="",
+    translatable=True,
 )
 
 register_setting(
@@ -371,6 +372,7 @@ register_setting(
         "appended to the content of the HTML title tags on every page."),
     editable=True,
     default="Mezzanine",
+    translatable=True,
 )
 
 register_setting(
@@ -379,6 +381,7 @@ register_setting(
     description=_("A tag line that will appear at the top of all pages."),
     editable=True,
     default=_("An open source content management platform."),
+    translatable=True,
 )
 
 register_setting(
@@ -499,6 +502,7 @@ register_setting(
         "whose", "why", "will", "with", "within", "without", "would",
         "yet", "you", "your", "yours", "yourself", "yourselves", "the",
     ),
+    translatable=True,
 )
 
 register_setting(

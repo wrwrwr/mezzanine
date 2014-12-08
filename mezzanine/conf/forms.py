@@ -4,7 +4,6 @@ from future.builtins import int
 from collections import defaultdict
 
 from django import forms
-from django import settings
 from django.utils.safestring import mark_safe
 from django.utils.translation import (get_language, override,
                                       ugettext_lazy as _)
@@ -55,10 +54,10 @@ class SettingsForm(forms.Form):
                     for_all_languages(create_field)
                 else:
                     if settings.USE_MODELTRANSLATION:
-                        # Save value as the default translation for non-translatable
-                        # settings with modeltranslation enabled.
+                        # Store values of non-translatable settings as the
+                        # default translation.
                         from modeltranslation.settings import DEFAULT_LANGUAGE
-                        override(DEFAULT_LANGUAGE:
+                        with override(DEFAULT_LANGUAGE):
                             create_field()
                     else:
                         create_field()

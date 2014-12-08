@@ -67,4 +67,5 @@ register_setting(
     description=_("Slug of the page object for the blog."),
     editable=False,
     default="blog",
+    translatable=True,
 )
