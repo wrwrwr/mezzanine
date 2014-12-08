@@ -18,12 +18,18 @@ Starting a multi-language project
 3. urls.py: patterns --> i18n_patterns
 4. createdb
 
+Making fields translatable
+==========================
+
+1. register in translation.py
+2. the same commands as with new languages
+
 Adding new languages
 ====================
 
-0. sync_translation_fields
-1. update_translation_fields
-2. resavemodels
+1. sync_translation_fields
+2. update_translation_fields
+3. resavemodels
 
 Advanced commands and options
 =============================
