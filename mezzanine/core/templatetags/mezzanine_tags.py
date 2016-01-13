@@ -282,6 +282,9 @@ def thumbnail(image_url, width, height, upscale=True, quality=95, left=.5,
     except ImportError:
         return ""
 
+    # Tolerate broken image files.
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+
     image_url = unquote(str(image_url)).split("?")[0]
     if image_url.startswith(settings.MEDIA_URL):
         image_url = image_url.replace(settings.MEDIA_URL, "", 1)
